@@ -154,6 +154,11 @@
 
   /* ===== Por qué elegirnos (trio, como Boza) ===== */
   .why-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:26px;}
+
+  /* ===== Video institucional ===== */
+  .video-wrap{max-width:860px; margin:0 auto; border-radius:var(--radius); overflow:hidden; box-shadow:0 20px 50px rgba(10,61,115,.15); border:1px solid var(--line);}
+  .video-responsive{position:relative; width:100%; padding-top:56.25%;}
+  .video-responsive iframe{position:absolute; inset:0; width:100%; height:100%; border:0;}
   .why-card{text-align:center; padding:10px;}
   .why-card .ico{width:56px; height:56px; border-radius:50%; background:var(--teal-light); display:flex; align-items:center; justify-content:center; margin:0 auto 14px; font-size:1.5rem;}
   .why-card h3{font-size:1.02rem;}
@@ -247,7 +252,6 @@
             <li><a href="#servicios">Medicina general y controles</a></li>
             <li><a href="#servicios">Odontología</a></li>
             <li><a href="#servicios">Matronería y salud sexual</a></li>
-            <li><a href="#servicios">Ecografía</a></li>
             <li><a href="#servicios">Vacunación (PNI)</a></li>
             <li><a href="#servicios">Salud mental</a></li>
             <li><a href="#servicios">Programas de salud cardiovascular</a></li>
@@ -256,6 +260,7 @@
         <li><a href="#sedes">Postas y sedes</a></li>
         <li><a href="#noticias">Noticias</a></li>
         <li><a href="#tramites">Trámites / OIRS</a></li>
+        <li><a href="#recepcion-conforme">Funcionarios</a></li>
         <li><a href="#contacto" class="nav-cta">Pedir hora</a></li>
       </ul>
     </nav>
@@ -278,14 +283,14 @@
           <img src="assets/slide-2.jpg" alt="" class="slide-bg" aria-hidden="true">
           <img src="assets/slide-2.jpg" alt="Capacitación del equipo de salud en educación sexual" class="slide-fg" loading="lazy">
         </div>
-        <div class="slide-caption"><h2>Desarrollo Nuevo Centro de Salud Familiar</h2><p>Reunión de trabajo encabezada por el Director del Servicio de Salud O'Higgins, Carlos Saavedra, junto al alcalde Claudio Cumsille Chomalí, los concejales de la comuna, el presidente de la Comisión de Salud del Concejo Municipal, concejal Luis Cáceres, además de funcionarios municipales y el equipo de la Seremi de Salud..</p></div>
+        <div class="slide-caption"><h2>Capacitación de nuestro equipo</h2><p>Formación continua para entregar una atención de mejor calidad.</p></div>
       </div>
       <div class="slide">
         <div class="slide-media">
           <img src="assets/slide-3.jpg" alt="" class="slide-bg" aria-hidden="true">
           <img src="assets/slide-3.jpg" alt="Reconocimiento a funcionario del CESFAM Peralillo" class="slide-fg" loading="lazy">
         </div>
-        <div class="slide-caption"><h2>jornada de la capacitación para líderes comunitarios</h2><p>Agradecemos la participación y el compromiso de toda la comunidad durante este proceso formativo.</p></div>
+        <div class="slide-caption"><h2>Reconociendo a nuestro equipo</h2><p>Valoramos el compromiso de quienes cuidan la salud de Peralillo.</p></div>
       </div>
       <div class="slide">
         <div class="slide-media">
@@ -306,14 +311,14 @@
           <img src="assets/slide-6.jpg" alt="" class="slide-bg" aria-hidden="true">
           <img src="assets/slide-6.jpg" alt="Actividad por el Día del Buen Trato al Adulto Mayor" class="slide-fg" loading="lazy">
         </div>
-        <div class="slide-caption"><h2>Programa Más Adultos Mayores Autovalentes</h2><p>actividad “Romería saludable”, en conmemoración de todos los socios colaboradores de cubles de adultos mayores y seres queridos que han partido, en el marco del mes del adulto mayor.</p></div>
+        <div class="slide-caption"><h2>Buen trato al adulto mayor</h2><p>Encuentros y actividades dedicadas a nuestros usuarios mayores.</p></div>
       </div>
       <div class="slide">
         <div class="slide-media">
           <img src="assets/slide-7.jpg" alt="" class="slide-bg" aria-hidden="true">
           <img src="assets/slide-7.jpg" alt="Taller comunitario Vivir Sano del CESFAM Peralillo" class="slide-fg" loading="lazy">
         </div>
-        <div class="slide-caption"><h2>Reconociendo a nuestro equipo</h2><p>Valoramos el compromiso de quienes cuidan la salud de Peralillo.</p></div>
+        <div class="slide-caption"><h2>Taller "Envejecer es Vivir Sano"</h2><p>Espacios educativos y de encuentro para nuestra comunidad.</p></div>
       </div>
       <div class="slide">
         <div class="slide-media">
@@ -372,6 +377,20 @@
       </div>
     </div>
   </div>
+
+  <section class="tinted">
+    <div class="container">
+      <div class="section-head">
+        <span class="eyebrow">Conócenos</span>
+        <h2>Video institucional</h2>
+      </div>
+      <div class="video-wrap">
+        <div class="video-responsive">
+          <iframe src="https://www.youtube.com/embed/HY43H8JYxjY" title="Video institucional CESFAM Peralillo" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen loading="lazy"></iframe>
+        </div>
+      </div>
+    </div>
+  </section>
 
   <section id="servicios">
     <div class="container">
@@ -634,6 +653,41 @@
     </div>
   </section>
 
+  <section id="recepcion-conforme">
+    <div class="container">
+      <div class="section-head">
+        <span class="eyebrow">Área funcionarios</span>
+        <h2>Recepción conforme de documentos</h2>
+        <p>Revisa el documento vigente y confirma tu recepción con tus datos.</p>
+      </div>
+      <div class="info-split">
+        <div class="info-card">
+          <h3>📄 Documento vigente</h3>
+          <p id="rc-doc-title">Circular N° — [nombre del documento a confirmar]</p>
+          <p style="font-size:.85rem; color:var(--gray);">Reemplaza este texto y el archivo PDF cada vez que subas un nuevo documento (ver instrucciones en el README).</p>
+          <a class="btn btn-outline" href="assets/documento-recepcion.pdf" target="_blank" rel="noopener">Ver / descargar documento</a>
+        </div>
+        <div class="info-card">
+          <h3>✅ Confirmar recepción</h3>
+          <form id="recepcionForm">
+            <label for="rc-nombre">Nombre completo</label>
+            <input type="text" id="rc-nombre" required>
+            <label for="rc-rut">RUT</label>
+            <input type="text" id="rc-rut" required>
+            <label for="rc-cargo">Cargo / estamento</label>
+            <input type="text" id="rc-cargo" required>
+            <label style="display:flex; gap:8px; align-items:flex-start; font-weight:400; margin-bottom:16px;">
+              <input type="checkbox" id="rc-check" required style="width:auto; margin-top:4px;">
+              <span>Declaro que he leído y recibido conforme el documento indicado.</span>
+            </label>
+            <button type="submit" class="btn btn-primary" style="width:100%; border:none; cursor:pointer;">Confirmar recepción</button>
+            <p id="rc-status" style="margin-top:12px; font-size:.9rem;"></p>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
+
 </main>
 
 <footer>
@@ -759,6 +813,57 @@
   document.getElementById('text-normal').addEventListener('click', () => body.classList.remove('text-lg','text-xl'));
   document.getElementById('text-lg').addEventListener('click', () => { body.classList.remove('text-xl'); body.classList.add('text-lg'); });
   document.getElementById('text-xl').addEventListener('click', () => { body.classList.remove('text-lg'); body.classList.add('text-xl'); });
+
+  // ===== Recepción conforme → Google Sheets =====
+  // 1. Sigue las instrucciones del README para crear el Google Apps Script.
+  // 2. Pega aquí la URL de despliegue que te entrega Google (termina en /exec).
+  const RECEPCION_SHEET_URL = "PEGA_AQUI_TU_URL_DE_GOOGLE_APPS_SCRIPT";
+
+  const recepcionForm = document.getElementById('recepcionForm');
+  if (recepcionForm) {
+    recepcionForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      const status = document.getElementById('rc-status');
+      const btn = recepcionForm.querySelector('button[type="submit"]');
+      const documento = document.getElementById('rc-doc-title').textContent.trim();
+
+      if (RECEPCION_SHEET_URL.includes('PEGA_AQUI')) {
+        status.style.color = '#B33A3A';
+        status.textContent = 'Falta conectar el formulario a Google Sheets (revisa el README).';
+        return;
+      }
+
+      const data = {
+        nombre: document.getElementById('rc-nombre').value,
+        rut: document.getElementById('rc-rut').value,
+        cargo: document.getElementById('rc-cargo').value,
+        documento: documento,
+        fecha: new Date().toLocaleString('es-CL')
+      };
+
+      btn.disabled = true;
+      status.style.color = 'var(--gray)';
+      status.textContent = 'Enviando...';
+
+      fetch(RECEPCION_SHEET_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify(data)
+      })
+        .then(() => {
+          status.style.color = 'var(--teal)';
+          status.textContent = '✅ Recepción registrada correctamente. ¡Gracias!';
+          recepcionForm.reset();
+          btn.disabled = false;
+        })
+        .catch(() => {
+          status.style.color = '#B33A3A';
+          status.textContent = 'Ocurrió un error al enviar. Inténtalo nuevamente.';
+          btn.disabled = false;
+        });
+    });
+  }
 </script>
 
 </body>
