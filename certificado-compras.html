@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Certificado de Recepción Conforme — CESFAM Peralillo</title>
+<link rel="icon" type="image/jpeg" href="assets/logo-cesfam.jpeg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root{
+    --teal-deep:#0A3D73;
+    --teal:#1B7FC2;
+    --teal-light:#E7F2FB;
+    --sky:#F4FAFE;
+    --gold:#12A6D6;
+    --ink:#1C2B36;
+    --gray:#5A6B78;
+    --white:#FFFFFF;
+    --line:#DCE7F0;
+    --radius:16px;
+    --font-head:'Poppins', sans-serif;
+    --font-body:'Atkinson Hyperlegible', system-ui, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; font-family:var(--font-body); color:var(--ink); background:var(--teal-light); line-height:1.6; font-size:17px;}
+  h1,h2,h3{font-family:var(--font-head); color:var(--teal-deep); margin:0 0 .5em; line-height:1.2;}
+  p{margin:0 0 1em; color:var(--gray);}
+  a{color:var(--teal-deep);}
+  .container{max-width:900px; margin:0 auto; padding:0 24px;}
+
+  header.site-header{background:#fff; border-bottom:1px solid var(--line);}
+  .site-header .container{display:flex; align-items:center; justify-content:space-between; padding:16px 24px; max-width:1180px;}
+  .brand{display:flex; align-items:center; gap:12px; text-decoration:none;}
+  .brand-logo{width:48px; height:48px; border-radius:50%; object-fit:cover; border:1.5px solid var(--line);}
+  .brand-text .eyebrow{display:block; font-size:.7rem; letter-spacing:.07em; text-transform:uppercase; color:var(--teal); font-weight:700;}
+  .brand-text .name{font-family:var(--font-head); font-weight:700; font-size:1.1rem; color:var(--teal-deep);}
+  .back-link{font-weight:700; font-size:.9rem; text-decoration:none; color:var(--teal-deep);}
+  .back-link:hover{text-decoration:underline;}
+
+  main{padding:44px 0 70px;}
+  .page-head{text-align:center; margin-bottom:32px;}
+  .page-head .eyebrow{color:var(--gold); font-weight:700; text-transform:uppercase; letter-spacing:.07em; font-size:.8rem;}
+
+  .cert-form{background:#fff; border:1px solid var(--line); border-radius:var(--radius); padding:30px; box-shadow:0 20px 50px rgba(10,61,115,.08);}
+  .cert-form fieldset{border:1.5px solid var(--line); border-radius:10px; padding:16px 18px; margin:0 0 18px;}
+  .cert-form legend{font-weight:700; color:var(--teal-deep); padding:0 8px; font-size:.95rem;}
+  .cert-form label{display:block; font-weight:700; font-size:.9rem; margin-bottom:6px; color:var(--teal-deep);}
+  .cert-form input, .cert-form textarea{width:100%; padding:11px 13px; border:1.5px solid var(--line); border-radius:10px; margin-bottom:16px; font-family:var(--font-body); font-size:.95rem;}
+  .cert-form textarea{min-height:80px; resize:vertical;}
+  .form-grid{display:grid; grid-template-columns:1fr 1fr; gap:0 20px;}
+  .radio-group{display:flex; gap:18px; flex-wrap:wrap; margin-bottom:16px;}
+  .radio-group label{display:flex; align-items:center; gap:6px; font-weight:400; margin-bottom:0; color:var(--ink);}
+  .radio-group input{width:auto; margin:0;}
+  .hint{font-size:.82rem; color:var(--gray); margin-top:-10px; margin-bottom:14px;}
+
+  .btn{display:inline-block; text-decoration:none; font-weight:700; padding:14px 26px; border-radius:999px; font-family:var(--font-body); font-size:1rem; border:none; cursor:pointer;}
+  .btn-primary{background:var(--gold); color:#fff; width:100%; font-size:1.05rem; padding:16px;}
+  .btn-primary:hover{background:#0E86AC;}
+  .btn-outline{background:#fff; color:var(--teal-deep); border:2px solid var(--teal-deep); padding:11px 20px; font-size:.92rem;}
+  .btn-outline:hover{background:var(--teal-light);}
+
+  .doc-row{display:flex; gap:12px; align-items:flex-start; flex-wrap:wrap; border:1px solid var(--line); border-radius:10px; padding:14px; margin-bottom:12px; background:var(--sky);}
+  .doc-row .doc-name{flex:1 1 220px; margin-bottom:0;}
+  .doc-row .doc-name label{margin-bottom:6px;}
+  .doc-row .doc-radio{display:flex; gap:14px; align-items:center; padding-top:28px;}
+  .doc-row .doc-radio label{display:flex; align-items:center; gap:6px; font-weight:400; margin-bottom:0; color:var(--ink);}
+  .doc-row .doc-radio input{width:auto; margin:0;}
+  .doc-row .doc-remove{background:none; border:none; color:#B33A3A; font-weight:700; cursor:pointer; font-size:.85rem; padding-top:28px;}
+  .doc-row .doc-remove:hover{text-decoration:underline;}
+
+  .template-link{text-align:center; margin-top:20px; font-size:.9rem;}
+
+  @media (max-width:700px){
+    .form-grid{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="container">
+    <a href="index.html" class="brand">
+      <img class="brand-logo" src="assets/logo-cesfam.jpeg" alt="Logo CESFAM Peralillo">
+      <span class="brand-text">
+        <span class="eyebrow">Servicio de Salud O'Higgins</span>
+        <span class="name">CESFAM Peralillo</span>
+      </span>
+    </a>
+    <a class="back-link" href="index.html">← Volver al sitio</a>
+  </div>
+</header>
+
+<main>
+  <div class="container">
+    <div class="page-head">
+      <span class="eyebrow">Área funcionarios · Departamento de Salud Municipal</span>
+      <h1>Certificado de Recepción Conforme</h1>
+      <p>Completa los datos de la compra, prestación o actividad recibida. Al enviar, se genera automáticamente un Excel con el mismo formato del certificado oficial, listo para imprimir y firmar.</p>
+    </div>
+
+    <form id="certForm" class="cert-form">
+
+      <fieldset>
+        <legend>Datos generales</legend>
+        <div class="form-grid">
+          <div>
+            <label for="cf-numero">N° de certificado</label>
+            <input type="text" id="cf-numero" placeholder="Ej: 001-2026">
+          </div>
+          <div>
+            <label for="cf-fecha">Fecha</label>
+            <input type="date" id="cf-fecha" required>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>1. Datos del servicio (Adquisición - Prestación - Actividad)</legend>
+        <label for="cf-servicio">Nombre del servicio</label>
+        <input type="text" id="cf-servicio" required>
+
+        <label for="cf-producto">Producto o servicio entregado</label>
+        <input type="text" id="cf-producto" required>
+        <div class="radio-group" role="radiogroup" aria-label="Validación del producto o servicio entregado">
+          <label><input type="radio" name="cf-producto-cumple" value="cumple" required> Cumple</label>
+          <label><input type="radio" name="cf-producto-cumple" value="no_cumple"> No cumple</label>
+        </div>
+
+        <label for="cf-plazo">Plazo de entrega</label>
+        <input type="date" id="cf-plazo">
+      </fieldset>
+
+      <fieldset>
+        <legend>2. Datos de la compra</legend>
+        <div class="form-grid">
+          <div><label for="cf-oc">Orden de compra</label><input type="text" id="cf-oc"></div>
+          <div><label for="cf-monto-oc">Monto orden de compra</label><input type="text" id="cf-monto-oc" placeholder="$"></div>
+        </div>
+        <label for="cf-licitacion">ID Licitación</label>
+        <input type="text" id="cf-licitacion">
+      </fieldset>
+
+      <fieldset>
+        <legend>3. Datos del proveedor</legend>
+        <div class="form-grid">
+          <div><label for="cf-prov-nombre">Nombre</label><input type="text" id="cf-prov-nombre" required></div>
+          <div><label for="cf-prov-rut">RUT</label><input type="text" id="cf-prov-rut" required></div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>4. Datos del cobro</legend>
+        <div class="form-grid">
+          <div><label for="cf-factura">N° Factura o boleta</label><input type="text" id="cf-factura"></div>
+          <div><label for="cf-monto-factura">Monto factura o boleta</label><input type="text" id="cf-monto-factura" placeholder="$"></div>
+        </div>
+        <label>Recepción</label>
+        <div class="radio-group" role="radiogroup" aria-label="Tipo de recepción">
+          <label><input type="radio" name="cf-recepcion" value="total" required> Total</label>
+          <label><input type="radio" name="cf-recepcion" value="parcial"> Parcial</label>
+        </div>
+        <label for="cf-justificacion">Justificación en caso de ser parcial</label>
+        <textarea id="cf-justificacion"></textarea>
+      </fieldset>
+
+      <fieldset>
+        <legend>Documentos de respaldo que validan el pago</legend>
+        <p class="hint">Agrega cada documento de respaldo (ej: guía de despacho, factura, acta de recepción) e indica si cumple o no cumple. Máximo 6 documentos.</p>
+        <div id="docsList"></div>
+        <button type="button" id="addDocBtn" class="btn btn-outline" style="width:100%;">+ Agregar documento</button>
+      </fieldset>
+
+      <fieldset>
+        <legend>5. Evaluación de calidad técnica</legend>
+        <p class="hint">Solo en caso de equipamiento crítico-relevante según EQ 1.1. El equipamiento cumple con los requisitos técnicos solicitados en la licitación/compra ágil.</p>
+        <div class="radio-group" role="radiogroup" aria-label="Evaluación de calidad técnica">
+          <label><input type="radio" name="cf-calidad" value="cumple"> Cumple</label>
+          <label><input type="radio" name="cf-calidad" value="no_cumple"> No cumple</label>
+          <label><input type="radio" name="cf-calidad" value="no_aplica" checked> No aplica</label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>6. Tecnovigilancia</legend>
+        <p class="hint">Solo en caso de dispositivos médicos (DM). Declaración de DM en el sistema institucional de tecnovigilancia.</p>
+        <div class="radio-group" role="radiogroup" aria-label="Tecnovigilancia">
+          <label><input type="radio" name="cf-tecno" value="cumple"> Cumple</label>
+          <label><input type="radio" name="cf-tecno" value="no_cumple"> No cumple</label>
+          <label><input type="radio" name="cf-tecno" value="no_aplica" checked> No aplica</label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Observaciones</legend>
+        <label for="cf-observaciones">Observaciones del servicio (indicar en caso de bienes inventariables el lugar donde quedarán)</label>
+        <textarea id="cf-observaciones"></textarea>
+      </fieldset>
+
+      <fieldset>
+        <legend>Responsable del certificado</legend>
+        <div class="form-grid">
+          <div><label for="cf-nombre-resp">Nombre responsable</label><input type="text" id="cf-nombre-resp" required></div>
+          <div><label for="cf-cargo">Cargo</label><input type="text" id="cf-cargo" required></div>
+        </div>
+        <label for="cf-unidad">Unidad / Programa / Sector</label>
+        <input type="text" id="cf-unidad" required>
+        <p class="hint">La firma y el Vº Bº del Director CESFAM se realizan de forma manuscrita sobre el Excel generado, una vez impreso.</p>
+      </fieldset>
+
+      <button type="submit" class="btn btn-primary">📥 Generar y descargar certificado en Excel</button>
+      <p id="cf-status" style="margin-top:12px; font-size:.9rem; text-align:center;"></p>
+    </form>
+
+    <p class="template-link">
+      <a href="assets/plantilla-recepcion-conforme.xlsx" target="_blank" rel="noopener">Descargar plantilla en blanco</a>
+    </p>
+  </div>
+</main>
+
+<script>
+  const certForm = document.getElementById('certForm');
+
+  // ===== Lista dinámica de documentos de respaldo =====
+  const MAX_DOCS = 6;
+  const docsList = document.getElementById('docsList');
+  const addDocBtn = document.getElementById('addDocBtn');
+  let docCounter = 0;
+
+  function addDocRow() {
+    const currentRows = docsList.querySelectorAll('.doc-row').length;
+    if (currentRows >= MAX_DOCS) return;
+    docCounter++;
+    const rowId = 'doc-' + docCounter;
+    const row = document.createElement('div');
+    row.className = 'doc-row';
+    row.innerHTML =
+      '<div class="doc-name">' +
+        '<label for="' + rowId + '-nombre">Documento</label>' +
+        '<input type="text" id="' + rowId + '-nombre" placeholder="Ej: Guía de despacho N° 123">' +
+      '</div>' +
+      '<div class="doc-radio" role="radiogroup" aria-label="Validación del documento">' +
+        '<label><input type="radio" name="' + rowId + '-cumple" value="cumple"> Cumple</label>' +
+        '<label><input type="radio" name="' + rowId + '-cumple" value="no_cumple"> No cumple</label>' +
+      '</div>' +
+      '<button type="button" class="doc-remove" aria-label="Quitar documento">✕ Quitar</button>';
+    row.querySelector('.doc-remove').addEventListener('click', () => {
+      row.remove();
+      updateAddDocBtn();
+    });
+    docsList.appendChild(row);
+    updateAddDocBtn();
+  }
+
+  function updateAddDocBtn() {
+    const currentRows = docsList.querySelectorAll('.doc-row').length;
+    addDocBtn.style.display = currentRows >= MAX_DOCS ? 'none' : 'block';
+  }
+
+  function getDocs() {
+    const rows = docsList.querySelectorAll('.doc-row');
+    const docs = [];
+    rows.forEach(row => {
+      const nombre = row.querySelector('input[type="text"]').value.trim();
+      const checked = row.querySelector('input[type="radio"]:checked');
+      const cumple = checked ? checked.value : '';
+      if (nombre || cumple) docs.push({ nombre, cumple });
+    });
+    return docs;
+  }
+
+  addDocBtn.addEventListener('click', addDocRow);
+  addDocRow(); // fila inicial
+  if (certForm) {
+    certForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      const status = document.getElementById('cf-status');
+      const btn = certForm.querySelector('button[type="submit"]');
+
+      const val = id => (document.getElementById(id) ? document.getElementById(id).value.trim() : '');
+      const radio = name => {
+        const el = certForm.querySelector('input[name="' + name + '"]:checked');
+        return el ? el.value : '';
+      };
+      const fmtFecha = iso => {
+        if (!iso) return '';
+        const [y, m, d] = iso.split('-');
+        return d + '/' + m + '/' + y;
+      };
+
+      const d = {
+        numero: val('cf-numero'),
+        fecha: fmtFecha(val('cf-fecha')),
+        servicio: val('cf-servicio'),
+        producto: val('cf-producto'),
+        productoCumple: radio('cf-producto-cumple'),
+        plazo: fmtFecha(val('cf-plazo')),
+        oc: val('cf-oc'),
+        montoOc: val('cf-monto-oc'),
+        licitacion: val('cf-licitacion'),
+        provNombre: val('cf-prov-nombre'),
+        provRut: val('cf-prov-rut'),
+        factura: val('cf-factura'),
+        montoFactura: val('cf-monto-factura'),
+        recepcion: radio('cf-recepcion'),
+        justificacion: val('cf-justificacion'),
+        docs: getDocs(),
+        calidad: radio('cf-calidad'),
+        tecno: radio('cf-tecno'),
+        observaciones: val('cf-observaciones'),
+        nombreResp: val('cf-nombre-resp'),
+        cargo: val('cf-cargo'),
+        unidad: val('cf-unidad')
+      };
+
+      btn.disabled = true;
+      status.style.color = 'var(--gray)';
+      status.textContent = 'Generando Excel...';
+
+      try {
+        const rows = 55, cols = 7;
+        const grid = Array.from({ length: rows }, () => Array(cols).fill(''));
+        const set = (r, c, v) => { grid[r - 1][c - 1] = v; };
+
+        set(1, 1, 'I. MUNICIPALIDAD DE PERALILLO');
+        set(2, 1, 'DEPARTAMENTO DE SALUD MUNICIPAL');
+        set(4, 1, 'CERTIFICADO DE RECEPCION CONFORME');
+        set(4, 4, 'Nº');
+        set(4, 5, d.numero);
+        set(6, 3, 'FECHA (dd/mm/aa)');
+        set(6, 4, d.fecha);
+        set(8, 1, 'Por el presente, certifico la conformidad en la recepción de los siguientes Servicios:');
+        set(10, 1, '1.     Datos del Servicio (Adquisición - Prestación - Actividad)');
+        set(11, 1, '1.1 Nombre del Servicio');
+        set(11, 3, d.servicio);
+        set(12, 1, 'VALIDACION DE LOS REQUISITOS ESTABLECIDOS');
+        set(13, 1, '1.2 Producto o Servicio Entregado');
+        set(13, 4, 'CUMPLE');
+        set(13, 5, 'NO CUMPLE');
+        set(14, 1, d.producto);
+        if (d.productoCumple === 'cumple') set(14, 4, 'X'); else if (d.productoCumple === 'no_cumple') set(14, 5, 'X');
+        set(19, 1, '1.3 Plazo de Entrega');
+        set(19, 3, 'dd/mm/aa');
+        set(19, 4, d.plazo);
+        set(20, 1, '2.     Datos de la Compra');
+        set(21, 1, '2.1 Orden de Compra');
+        set(21, 3, d.oc);
+        set(22, 1, '2.2 Monto Orden de Compra');
+        set(22, 3, d.montoOc);
+        set(23, 1, '2.3 ID Licitación');
+        set(23, 3, d.licitacion);
+        set(24, 1, '3.     Datos del Proveedor');
+        set(25, 1, '3.1 Nombre');
+        set(25, 3, d.provNombre);
+        set(26, 1, '3.2 Rut');
+        set(26, 3, d.provRut);
+        set(27, 1, '4.     Datos del Cobro');
+        set(28, 1, '4.1 N° Factura o Boleta');
+        set(28, 3, d.factura);
+        set(29, 1, '4.2 Monto Factura o Boleta');
+        set(29, 3, d.montoFactura);
+        set(30, 1, '4.3 Recepción (Marque una X)');
+        set(30, 3, d.recepcion === 'total' ? 'Total:   X' : 'Total:   ');
+        set(30, 4, d.recepcion === 'parcial' ? 'Parcial: X' : 'Parcial: ');
+        set(31, 1, '4.4 Justificación en caso de ser parcial');
+        set(31, 3, d.justificacion);
+        set(32, 1, 'DOCUMENTOS DE RESPALDO QUE VALIDAN EL PAGO SEGÚN LO ESTABLECIDO');
+        set(32, 4, 'CUMPLE');
+        set(32, 5, 'NO CUMPLE');
+        d.docs.forEach((doc, i) => {
+          const row = 33 + i; // filas 33 a 38 en la plantilla original
+          if (row > 38) return; // resguardo por si se superara el máximo
+          set(row, 1, doc.nombre);
+          if (doc.cumple === 'cumple') set(row, 4, 'X'); else if (doc.cumple === 'no_cumple') set(row, 5, 'X');
+        });
+        set(39, 1, '5. EVALUACIÓN DE CALIDAD TÉCNICA (En caso de equipamiento crítico-relevante según EQ 1.1)');
+        set(39, 3, 'El equipamiento cumple con los requisitos técnicos solicitados en la licitación/compra ágil');
+        if (d.calidad === 'cumple') set(39, 4, 'X'); else if (d.calidad === 'no_cumple') set(39, 5, 'X'); else set(39, 6, 'No aplica');
+        set(40, 1, '6. TECNOVIGILANCIA (En caso de DM)');
+        set(40, 3, 'Declaración de DM en el sistema institucional de tecnovigilancia');
+        if (d.tecno === 'cumple') set(40, 4, 'X'); else if (d.tecno === 'no_cumple') set(40, 5, 'X'); else set(40, 6, 'No aplica');
+        set(41, 1, 'Observaciones del servicio (Indicar en caso de bienes inventariables el lugar donde quedarán)');
+        set(41, 3, d.observaciones);
+        set(43, 1, 'Según lo declarado en el presente instrumento y, habiendo verificado el cumplimiento de los requisitos estipulado en el Servicio contratado, certifico la conformidad de su recepción.');
+        set(45, 1, 'Nombre responsable del certificado');
+        set(45, 2, d.nombreResp);
+        set(46, 1, 'Cargo');
+        set(46, 2, d.cargo);
+        set(46, 3, 'Unidad/Programa/Sector');
+        set(46, 4, d.unidad);
+        set(50, 1, 'Firma');
+        set(52, 3, 'Vº Bº Director CESFAM');
+        set(54, 1, 'A:');
+        set(54, 2, 'Jefe de Departamento de Salud Municipal');
+        set(55, 2, 'Presente');
+
+        const ws = XLSX.utils.aoa_to_sheet(grid);
+
+        const mergeRanges = [
+          'A1:B1','A2:B2','A4:C4','D6:E6','A8:E8','A11:B11','C11:E11','A12:E12',
+          'A13:C13','A14:C14','A15:C15','A16:C16','A17:C17','A18:C18','A19:B19','D19:E19',
+          'A20:E20','A21:B21','C21:E21','A22:B22','C22:E22','A23:B23','C23:E23','A24:E24',
+          'A25:B25','C25:E25','A26:B26','C26:E26','A27:E27','A28:B28','C28:E28','A29:B29',
+          'C29:E29','A30:B30','D30:E30','A31:B31','C31:E31','A32:C32','A33:C33','A34:C34',
+          'A35:C35','A36:C36','A37:C37','A38:C38','A41:B41','C41:E41','A43:E43','D46:E46',
+          'A50:B50','C52:E52'
+        ];
+        ws['!merges'] = mergeRanges.map(r => XLSX.utils.decode_range(r));
+        ws['!cols'] = [{ wch: 12 }, { wch: 26 }, { wch: 31 }, { wch: 16 }, { wch: 17 }, { wch: 8 }, { wch: 8 }];
+
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Recepción Conforme');
+
+        const nombreArchivo = 'Recepcion_Conforme_' + (d.numero || 'sin_numero').replace(/[^\w-]/g, '_') + '.xlsx';
+        XLSX.writeFile(wb, nombreArchivo);
+
+        status.style.color = 'var(--teal)';
+        status.textContent = '✅ Excel generado y descargado. Imprímelo para la firma y el Vº Bº del Director.';
+        certForm.reset();
+      } catch (err) {
+        status.style.color = '#B33A3A';
+        status.textContent = 'Ocurrió un error al generar el archivo. Inténtalo nuevamente.';
+        console.error(err);
+      }
+      btn.disabled = false;
+    });
+  }
+</script>
+
+</body>
+</html>
