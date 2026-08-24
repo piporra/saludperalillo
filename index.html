@@ -261,6 +261,7 @@
         <li><a href="#noticias">Noticias</a></li>
         <li><a href="#tramites">Trámites / OIRS</a></li>
         <li><a href="#recepcion-conforme">Funcionarios</a></li>
+        <li><a href="#certificado-compras">Certificado de compras</a></li>
         <li><a href="#contacto" class="nav-cta">Pedir hora</a></li>
       </ul>
     </nav>
@@ -688,6 +689,20 @@
     </div>
   </section>
 
+  <section id="certificado-compras" class="tinted">
+    <div class="container">
+      <div class="section-head">
+        <span class="eyebrow">Área funcionarios · Departamento de Salud Municipal</span>
+        <h2>Certificado de Recepción Conforme</h2>
+        <p>Formulario para certificar la recepción de compras, licitaciones o prestaciones de servicio. Al enviarlo, se genera automáticamente un Excel con el mismo formato del certificado oficial, listo para imprimir y firmar.</p>
+      </div>
+      <div style="text-align:center;">
+        <a class="btn btn-primary" href="certificado-compras.html" target="_blank" rel="noopener">📥 Abrir formulario de certificado</a>
+        <p style="font-size:.85rem; color:var(--gray); margin-top:14px;">Se abre en una pestaña nueva.</p>
+      </div>
+    </div>
+  </section>
+
 </main>
 
 <footer>
@@ -814,6 +829,57 @@
   document.getElementById('text-lg').addEventListener('click', () => { body.classList.remove('text-xl'); body.classList.add('text-lg'); });
   document.getElementById('text-xl').addEventListener('click', () => { body.classList.remove('text-lg'); body.classList.add('text-xl'); });
 
+  // ===== Recepción conforme (circulares) → Google Sheets =====
+  // 1. Sigue las instrucciones del README para crear el Google Apps Script.
+  // 2. Pega aquí la URL de despliegue que te entrega Google (termina en /exec).
+  const RECEPCION_SHEET_URL = "PEGA_AQUI_TU_URL_DE_GOOGLE_APPS_SCRIPT";
+
+  const recepcionForm = document.getElementById('recepcionForm');
+  if (recepcionForm) {
+    recepcionForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      const status = document.getElementById('rc-status');
+      const btn = recepcionForm.querySelector('button[type="submit"]');
+      const documento = document.getElementById('rc-doc-title').textContent.trim();
+
+      if (RECEPCION_SHEET_URL.includes('PEGA_AQUI')) {
+        status.style.color = '#B33A3A';
+        status.textContent = 'Falta conectar el formulario a Google Sheets (revisa el README).';
+        return;
+      }
+
+      const data = {
+        nombre: document.getElementById('rc-nombre').value,
+        rut: document.getElementById('rc-rut').value,
+        cargo: document.getElementById('rc-cargo').value,
+        documento: documento,
+        fecha: new Date().toLocaleString('es-CL')
+      };
+
+      btn.disabled = true;
+      status.style.color = 'var(--gray)';
+      status.textContent = 'Enviando...';
+
+      fetch(RECEPCION_SHEET_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify(data)
+      })
+        .then(() => {
+          status.style.color = 'var(--teal)';
+          status.textContent = '✅ Recepción registrada correctamente. ¡Gracias!';
+          recepcionForm.reset();
+          btn.disabled = false;
+        })
+        .catch(() => {
+          status.style.color = '#B33A3A';
+          status.textContent = 'Ocurrió un error al enviar. Inténtalo nuevamente.';
+          btn.disabled = false;
+        });
+    });
+  }
+</script>
 
 </body>
 </html>
