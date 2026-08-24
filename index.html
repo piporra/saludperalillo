@@ -814,57 +814,6 @@
   document.getElementById('text-lg').addEventListener('click', () => { body.classList.remove('text-xl'); body.classList.add('text-lg'); });
   document.getElementById('text-xl').addEventListener('click', () => { body.classList.remove('text-lg'); body.classList.add('text-xl'); });
 
-  // ===== Recepción conforme → Google Sheets =====
-  // 1. Sigue las instrucciones del README para crear el Google Apps Script.
-  // 2. Pega aquí la URL de despliegue que te entrega Google (termina en /exec).
-  const RECEPCION_SHEET_URL = "PEGA_AQUI_TU_URL_DE_GOOGLE_APPS_SCRIPT";
-
-  const recepcionForm = document.getElementById('recepcionForm');
-  if (recepcionForm) {
-    recepcionForm.addEventListener('submit', function (e) {
-      e.preventDefault();
-      const status = document.getElementById('rc-status');
-      const btn = recepcionForm.querySelector('button[type="submit"]');
-      const documento = document.getElementById('rc-doc-title').textContent.trim();
-
-      if (RECEPCION_SHEET_URL.includes('PEGA_AQUI')) {
-        status.style.color = '#B33A3A';
-        status.textContent = 'Falta conectar el formulario a Google Sheets (revisa el README).';
-        return;
-      }
-
-      const data = {
-        nombre: document.getElementById('rc-nombre').value,
-        rut: document.getElementById('rc-rut').value,
-        cargo: document.getElementById('rc-cargo').value,
-        documento: documento,
-        fecha: new Date().toLocaleString('es-CL')
-      };
-
-      btn.disabled = true;
-      status.style.color = 'var(--gray)';
-      status.textContent = 'Enviando...';
-
-      fetch(RECEPCION_SHEET_URL, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'text/plain' },
-        body: JSON.stringify(data)
-      })
-        .then(() => {
-          status.style.color = 'var(--teal)';
-          status.textContent = '✅ Recepción registrada correctamente. ¡Gracias!';
-          recepcionForm.reset();
-          btn.disabled = false;
-        })
-        .catch(() => {
-          status.style.color = '#B33A3A';
-          status.textContent = 'Ocurrió un error al enviar. Inténtalo nuevamente.';
-          btn.disabled = false;
-        });
-    });
-  }
-</script>
 
 </body>
 </html>
