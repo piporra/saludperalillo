@@ -1,7 +1,7 @@
 # CESFAM Peralillo — Sitio web institucional
 
 Borrador de sitio web para el Centro de Salud Familiar (CESFAM) de Peralillo,
-Región de O'Higgins, Chile. Diseño estructural inspirado en clinicaboza.cl,
+Región de O'Higgins, Chile. Diseño estructural ,
 con paleta clínica (blanco / celeste / azul) y foco en accesibilidad.
 
 ## 🌐 Ver el sitio en vivo
