@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CESFAM Peralillo — Centro de Salud Familiar - Luis Orlando Leyton Astorga</title>
+<title>CESFAM Peralillo — Centro de Salud Familiar</title>
 <link rel="icon" type="image/jpeg" href="assets/logo-cesfam.jpeg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -116,7 +116,7 @@
   .section-head{max-width:640px; margin:0 auto 38px; text-align:center;}
   .section-head .eyebrow{color:var(--gold); font-weight:700; text-transform:uppercase; letter-spacing:.07em; font-size:.8rem;}
 
-  /* ===== Servicios acordeón ===== */
+  /* ===== Servicios acordeón (como Boza) ===== */
   .accordion{max-width:900px; margin:0 auto; border-top:1px solid var(--line);}
   .acc-item{border-bottom:1px solid var(--line);}
   .acc-trigger{width:100%; text-align:left; background:none; border:none; padding:20px 6px; display:flex; align-items:center; justify-content:space-between; cursor:pointer; font-family:var(--font-head); font-weight:600; font-size:1.05rem; color:var(--teal-deep);}
@@ -138,7 +138,7 @@
   .sede-body ul.contact-mini li{margin-bottom:4px;}
   .sede-tag{display:inline-block; background:var(--teal-light); color:var(--teal-deep); font-weight:700; font-size:.72rem; text-transform:uppercase; letter-spacing:.05em; padding:4px 10px; border-radius:999px; margin-bottom:10px;}
 
-  /* ===== CTA banda (como "Agenda tu hora") ===== */
+  /* ===== Banda CTA ===== */
   .cta-band{background:var(--teal-deep); color:#fff; text-align:center; padding:56px 0;}
   .cta-band h2{color:#fff;}
   .cta-band p{color:#C7DFF2; max-width:520px; margin:0 auto 22px;}
@@ -220,8 +220,8 @@
 <div class="top-bar">
   <div class="container">
     <ul>
-      <li>📞 Consultas: <a href="tel:+56722861500">(72) 286 1500</a></li>
-      <li>🚨 Urgencia: <a href="tel:+56722861053">(72) 2861053</a></li>
+      <li>📞 Consultas: <a href="tel:+56722861053">(72) 286 1053</a></li>
+      <li>🚨 Urgencia: <a href="tel:+56722336440">(72) 233 6440</a></li>
       <li>📍 Cardenal Caro s/n, Peralillo</li>
     </ul>
     <div class="text-size-controls" role="group" aria-label="Tamaño de letra">
@@ -240,7 +240,6 @@
       <span class="brand-text">
         <span class="eyebrow">Servicio de Salud O'Higgins</span>
         <span class="name">CESFAM Peralillo</span>
-        <span class="name">Luis Orlando Leyton A.</span>
       </span>
     </a>
     <button class="menu-toggle" id="menuToggle" aria-expanded="false" aria-controls="mainNav">☰ Menú</button>
@@ -262,7 +261,7 @@
         <li><a href="#noticias">Noticias</a></li>
         <li><a href="#tramites">Trámites / OIRS</a></li>
         <li><a href="#certificado-compras">Certificado de compras</a></li>
-        <li><a href="#contacto" class="nav-cta">Pedir hora</a></li>
+        <li><a href="#solicitud-servicio" class="nav-cta">Solicitud de servicio</a></li>
       </ul>
     </nav>
   </div>
@@ -341,8 +340,8 @@
         <h1>Un centro de salud cercano para cada familia de Peralillo</h1>
         <p class="lead">Entregamos atención médica, dental y comunitaria integral a más de 10.000 usuarios, junto a nuestra red de postas rurales, bajo el Modelo de Salud Integral con Enfoque Familiar y Comunitario.</p>
         <div class="hero-ctas">
-          <a class="btn btn-primary" href="#contacto">Pedir hora médica</a>
-          <a class="btn btn-outline" href="#servicios">Ver servicios</a>
+          <a class="btn btn-primary" href="#servicios">Ver servicios</a>
+          <a class="btn btn-outline" href="#contacto">Contáctanos</a>
         </div>
       </div>
       <div class="hero-art" aria-hidden="true">
@@ -527,14 +526,6 @@
     </div>
   </section>
 
-  <div class="cta-band">
-    <div class="container">
-      <h2>Agenda tu hora médica o dental</h2>
-      <p>Llama a admisión o acércate a nuestro centro de salud más cercano. Te confirmamos día, hora y profesional asignado.</p>
-      <a class="btn btn-primary" href="#contacto">Pedir hora ahora</a>
-    </div>
-  </div>
-
   <section id="noticias">
     <div class="container">
       <div class="section-head">
@@ -630,8 +621,7 @@
             <input type="tel" id="telefono" name="telefono" required>
             <label for="motivo">Motivo de tu consulta</label>
             <select id="motivo" name="motivo">
-              <option>Solicitar hora médica</option>
-              <option>Solicitar hora dental</option>
+              <option>Consulta general</option>
               <option>OIRS — Reclamo o sugerencia</option>
               <option>Otro</option>
             </select>
@@ -643,8 +633,8 @@
         <div class="contact-info-card">
           <h3>Información de contacto</h3>
           <ul>
-            <li>📞 <a href="tel:+56722861500">(72) 286 1500</a> — Consultas</li>
-            <li>🚨 <a href="tel:+56722861053">(72) 2861053</a> — Urgencia</li>
+            <li>📞 <a href="tel:+56722861053">(72) 286 1053</a> — Consultas</li>
+            <li>🚨 <a href="tel:+56722336440">(72) 233 6440</a> — Urgencia</li>
             <li>✉️ <a href="mailto:contacto@cesfamperalillo.cl">contacto@cesfamperalillo.cl</a></li>
             <li>📍 Cardenal Caro s/n, Peralillo, O'Higgins</li>
             <li>🕒 Lunes a viernes, 08:00–17:00 hrs</li>
@@ -663,6 +653,54 @@
       </div>
       <div style="text-align:center;">
         <a class="btn btn-primary" href="certificado-compras.html">📥 Abrir formulario de certificado</a>
+      </div>
+    </div>
+  </section>
+
+  <section id="solicitud-servicio">
+    <div class="container">
+      <div class="section-head">
+        <span class="eyebrow">Área funcionarios</span>
+        <h2>Solicitud de servicio</h2>
+        <p>Formulario para que los funcionarios soliciten requerimientos (insumos, mantención, soporte, etc.). Cada envío queda registrado automáticamente en nuestra planilla interna.</p>
+      </div>
+      <div class="contact-grid">
+        <div class="form-box">
+          <form id="solicitudForm">
+            <label for="sol-tipo">Tipo de requerimiento</label>
+            <select id="sol-tipo" required>
+              <option value="" disabled selected>Selecciona una opción</option>
+              <option value="Electricidad">Electricidad</option>
+              <option value="Gasfitería">Gasfitería</option>
+              <option value="Solicitud de Gas">Solicitud de Gas</option>
+              <option value="Informática">Informática</option>
+              <option value="Problemas con impresora">Problemas con impresora</option>
+              <option value="Insumos de impresoras">Insumos de impresoras</option>
+              <option value="Sistema Rayen">Sistema Rayen</option>
+              <option value="Movilización">Movilización</option>
+              <option value="ADM y Feriados">ADM y Feriados</option>
+              <option value="OTRO">Otro</option>
+            </select>
+            <label for="sol-nombre">Indique su nombre</label>
+            <input type="text" id="sol-nombre" required>
+            <label for="sol-ubicacion">Dónde ha ocurrido</label>
+            <input type="text" id="sol-ubicacion" placeholder="Ej: Farmacia, Box 2, Urgencia, Posta Los Cardos..." required>
+            <label for="sol-email">Correo electrónico</label>
+            <input type="email" id="sol-email" required>
+            <label for="sol-detalle">Detalles del requerimiento (puede explicar)</label>
+            <textarea id="sol-detalle"></textarea>
+            <button type="submit" class="btn btn-primary" style="width:100%; border:none; cursor:pointer;">Enviar solicitud</button>
+            <p id="sol-status" style="margin-top:12px; font-size:.9rem;"></p>
+          </form>
+        </div>
+        <div class="contact-info-card">
+          <h3>¿Cómo funciona?</h3>
+          <ul>
+            <li>📝 Completa el formulario con el detalle de tu requerimiento.</li>
+            <li>📊 Tu solicitud se registra automáticamente en la planilla interna del CESFAM.</li>
+            <li>📞 Ante urgencias, comunícate directamente con administración: <a href="tel:+56722861053">(72) 286 1053</a></li>
+          </ul>
+        </div>
       </div>
     </div>
   </section>
@@ -709,7 +747,7 @@
 <div class="sticky-bottom">
   <div class="container">
     <a class="call" href="tel:+56722861053">📞 Llamar</a>
-    <a class="agenda" href="#contacto">🗓️ Pedir hora</a>
+    <a class="agenda" href="#solicitud-servicio">🛠️ Solicitud</a>
     <a class="oirs" href="#tramites">📮 OIRS</a>
   </div>
 </div>
@@ -793,6 +831,55 @@
   document.getElementById('text-lg').addEventListener('click', () => { body.classList.remove('text-xl'); body.classList.add('text-lg'); });
   document.getElementById('text-xl').addEventListener('click', () => { body.classList.remove('text-lg'); body.classList.add('text-xl'); });
 
+  // ===== Solicitud de servicio (funcionarios) → Google Sheets =====
+  // 1. Sigue las instrucciones del README ("Configurar Solicitud de servicio").
+  // 2. Pega aquí la URL de despliegue que te entrega Google (termina en /exec).
+  const SOLICITUD_SHEET_URL = "PEGA_AQUI_TU_URL_DE_GOOGLE_APPS_SCRIPT";
+
+  const solicitudForm = document.getElementById('solicitudForm');
+  if (solicitudForm) {
+    solicitudForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      const status = document.getElementById('sol-status');
+      const btn = solicitudForm.querySelector('button[type="submit"]');
+
+      if (SOLICITUD_SHEET_URL.includes('PEGA_AQUI')) {
+        status.style.color = '#B33A3A';
+        status.textContent = 'Falta conectar el formulario a la planilla de Google Sheets (revisa el README).';
+        return;
+      }
+
+      const data = {
+        tipo: document.getElementById('sol-tipo').value,
+        nombre: document.getElementById('sol-nombre').value,
+        ubicacion: document.getElementById('sol-ubicacion').value,
+        email: document.getElementById('sol-email').value,
+        detalle: document.getElementById('sol-detalle').value
+      };
+
+      btn.disabled = true;
+      status.style.color = 'var(--gray)';
+      status.textContent = 'Enviando...';
+
+      fetch(SOLICITUD_SHEET_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify(data)
+      })
+        .then(() => {
+          status.style.color = 'var(--teal)';
+          status.textContent = '✅ Solicitud enviada correctamente. ¡Gracias!';
+          solicitudForm.reset();
+          btn.disabled = false;
+        })
+        .catch(() => {
+          status.style.color = '#B33A3A';
+          status.textContent = 'Ocurrió un error al enviar. Inténtalo nuevamente.';
+          btn.disabled = false;
+        });
+    });
+  }
 </script>
 
 </body>
