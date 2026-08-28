@@ -87,7 +87,7 @@
       status.textContent = '✅ Acceso concedido, redirigiendo...';
 
       const params = new URLSearchParams(window.location.search);
-      const redirect = params.get('redirect') || 'index.html';
+      const redirect = params.get('redirect') || 'dashboard.html';
       window.location.href = redirect;
     } catch (err) {
       status.style.color = '#B33A3A';
