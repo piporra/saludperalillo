@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portal de funcionarios — CESFAM Peralillo</title>
+<link rel="icon" type="image/jpeg" href="assets/logo-cesfam.jpeg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/supabase-config.js"></script>
+<style>
+  :root{
+    --teal-deep:#0A3D73; --teal:#1B7FC2; --teal-light:#E7F2FB; --sky:#F4FAFE;
+    --gold:#12A6D6; --ink:#1C2B36; --gray:#5A6B78; --line:#DCE7F0; --radius:16px;
+    --font-head:'Poppins', sans-serif; --font-body:'Atkinson Hyperlegible', system-ui, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; font-family:var(--font-body); color:var(--ink); background:var(--teal-light); line-height:1.6; font-size:17px; min-height:100vh;}
+  h1{font-family:var(--font-head); color:var(--teal-deep); margin:0 0 6px;}
+  p{margin:0 0 1em; color:var(--gray);}
+  a{color:var(--teal-deep);}
+  .container{max-width:900px; margin:0 auto; padding:0 24px;}
+
+  header.site-header{background:#fff; border-bottom:1px solid var(--line);}
+  .site-header .container{display:flex; align-items:center; justify-content:space-between; padding:16px 24px; max-width:1180px;}
+  .brand{display:flex; align-items:center; gap:12px; text-decoration:none;}
+  .brand-logo{width:48px; height:48px; border-radius:50%; object-fit:cover; border:1.5px solid var(--line);}
+  .brand-text .eyebrow{display:block; font-size:.7rem; letter-spacing:.07em; text-transform:uppercase; color:var(--teal); font-weight:700;}
+  .brand-text .name{font-family:var(--font-head); font-weight:700; font-size:1.1rem; color:var(--teal-deep);}
+  .header-right{display:flex; align-items:center; gap:16px; font-size:.85rem; color:var(--gray);}
+  .header-right a{color:var(--teal-deep); text-decoration:none; font-weight:700;}
+  .header-right a:hover{text-decoration:underline;}
+
+  main{padding:56px 0 80px;}
+  .page-head{text-align:center; margin-bottom:40px;}
+  .page-head .eyebrow{color:var(--gold); font-weight:700; text-transform:uppercase; letter-spacing:.07em; font-size:.8rem;}
+  .page-head h1{font-size:1.8rem;}
+
+  .options-grid{display:grid; grid-template-columns:1fr 1fr; gap:24px;}
+  .option-card{
+    background:#fff; border:1px solid var(--line); border-radius:var(--radius); padding:32px 26px;
+    text-decoration:none; color:var(--ink); box-shadow:0 12px 30px rgba(10,61,115,.06);
+    transition:transform .15s, box-shadow .15s; display:flex; flex-direction:column; gap:10px;
+  }
+  .option-card:hover{transform:translateY(-3px); box-shadow:0 18px 40px rgba(10,61,115,.12);}
+  .option-card .icon{
+    width:52px; height:52px; border-radius:14px; background:var(--teal-light);
+    display:flex; align-items:center; justify-content:center; color:var(--teal-deep);
+  }
+  .option-card h2{font-family:var(--font-head); color:var(--teal-deep); font-size:1.15rem; margin:4px 0 2px;}
+  .option-card p{font-size:.92rem; margin:0; color:var(--gray);}
+  .option-card .go{font-size:.85rem; font-weight:700; color:var(--gold); margin-top:auto;}
+
+  @media (max-width:640px){
+    .options-grid{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="container">
+    <a href="index.html" class="brand">
+      <img class="brand-logo" src="assets/logo-cesfam.jpeg" alt="Logo CESFAM Peralillo">
+      <span class="brand-text">
+        <span class="eyebrow">Servicio de Salud O'Higgins</span>
+        <span class="name">CESFAM Peralillo</span>
+      </span>
+    </a>
+    <div class="header-right">
+      <span>👤 <span id="auth-user-name"></span></span>
+      <a href="index.html">Sitio público</a>
+      <a href="#" onclick="cerrarSesion(); return false;">Cerrar sesión</a>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="container">
+    <div class="page-head">
+      <span class="eyebrow">Portal de funcionarios</span>
+      <h1>¿Qué necesitas hacer hoy?</h1>
+    </div>
+
+    <div class="options-grid">
+      <a class="option-card" href="certificado-compras.html">
+        <div class="icon" aria-hidden="true">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"/><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.85.99 6.57 2.6"/></svg>
+        </div>
+        <h2>Certificado de Recepción Conforme</h2>
+        <p>Certifica la recepción de compras, licitaciones o prestaciones de servicio y genera el Excel oficial.</p>
+        <span class="go">Abrir formulario →</span>
+      </a>
+
+      <a class="option-card" href="solicitud-servicio.html">
+        <div class="icon" aria-hidden="true">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 15h6"/><path d="M9 11h2"/></svg>
+        </div>
+        <h2>Solicitud de servicio</h2>
+        <p>Reporta requerimientos de insumos, electricidad, informática y más.</p>
+        <span class="go">Abrir formulario →</span>
+      </a>
+    </div>
+  </div>
+</main>
+
+<script src="assets/auth-guard.js"></script>
+
+</body>
+</html>
