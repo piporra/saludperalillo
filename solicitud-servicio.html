@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solicitud de servicio — CESFAM Peralillo</title>
+<link rel="icon" type="image/jpeg" href="assets/logo-cesfam.jpeg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/supabase-config.js"></script>
+<style>
+  :root{
+    --teal-deep:#0A3D73; --teal:#1B7FC2; --teal-light:#E7F2FB; --sky:#F4FAFE;
+    --gold:#12A6D6; --ink:#1C2B36; --gray:#5A6B78; --line:#DCE7F0; --radius:16px;
+    --font-head:'Poppins', sans-serif; --font-body:'Atkinson Hyperlegible', system-ui, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; font-family:var(--font-body); color:var(--ink); background:var(--teal-light); line-height:1.6; font-size:17px;}
+  h1{font-family:var(--font-head); color:var(--teal-deep); margin:0 0 6px;}
+  p{margin:0 0 1em; color:var(--gray);}
+  a{color:var(--teal-deep);}
+  .container{max-width:900px; margin:0 auto; padding:0 24px;}
+
+  header.site-header{background:#fff; border-bottom:1px solid var(--line);}
+  .site-header .container{display:flex; align-items:center; justify-content:space-between; padding:16px 24px; max-width:1180px;}
+  .brand{display:flex; align-items:center; gap:12px; text-decoration:none;}
+  .brand-logo{width:48px; height:48px; border-radius:50%; object-fit:cover; border:1.5px solid var(--line);}
+  .brand-text .eyebrow{display:block; font-size:.7rem; letter-spacing:.07em; text-transform:uppercase; color:var(--teal); font-weight:700;}
+  .brand-text .name{font-family:var(--font-head); font-weight:700; font-size:1.1rem; color:var(--teal-deep);}
+  .back-link{font-weight:700; font-size:.9rem; text-decoration:none; color:var(--teal-deep);}
+  .back-link:hover{text-decoration:underline;}
+
+  main{padding:44px 0 70px;}
+  .page-head{text-align:center; margin-bottom:28px;}
+  .page-head .eyebrow{color:var(--gold); font-weight:700; text-transform:uppercase; letter-spacing:.07em; font-size:.8rem;}
+
+  .gform-wrap{max-width:760px; margin:0 auto; background:#fff; border:1px solid var(--line); border-radius:var(--radius); overflow:hidden; box-shadow:0 20px 50px rgba(10,61,115,.08);}
+  .gform-wrap iframe{width:100%; height:1100px; border:0; display:block;}
+  @media (max-width:700px){
+    .gform-wrap iframe{height:1300px;}
+  }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="container">
+    <a href="index.html" class="brand">
+      <img class="brand-logo" src="assets/logo-cesfam.jpeg" alt="Logo CESFAM Peralillo">
+      <span class="brand-text">
+        <span class="eyebrow">Servicio de Salud O'Higgins</span>
+        <span class="name">CESFAM Peralillo</span>
+      </span>
+    </a>
+    <span style="font-size:.85rem; color:var(--gray); margin-right:14px;">👤 <span id="auth-user-name"></span></span>
+    <a class="back-link" href="index.html">← Volver al sitio</a>
+    <a class="back-link" href="#" onclick="cerrarSesion(); return false;" style="margin-left:14px;">Cerrar sesión</a>
+  </div>
+</header>
+
+<main>
+  <div class="container">
+    <div class="page-head">
+      <span class="eyebrow">Área funcionarios</span>
+      <h1>Solicitud de servicio</h1>
+      <p>Formulario para que los funcionarios soliciten requerimientos (insumos, electricidad, informática, etc.). Las respuestas quedan registradas directamente en nuestra planilla interna de Google Sheets.</p>
+    </div>
+    <div class="gform-wrap">
+      <iframe src="https://docs.google.com/forms/d/1SHAFwkq8BKaP87JI3NQsfM-KwHN5kYInncYeQQ7YKS0/viewform?embedded=true" title="Formulario de solicitud de servicio">Cargando formulario…</iframe>
+    </div>
+    <p style="text-align:center; margin-top:16px; font-size:.9rem;">
+      ¿No carga el formulario? <a href="https://docs.google.com/forms/d/1SHAFwkq8BKaP87JI3NQsfM-KwHN5kYInncYeQQ7YKS0/viewform" target="_blank" rel="noopener">Ábrelo en una pestaña nueva</a>.
+    </p>
+  </div>
+</main>
+
+<script src="assets/auth-guard.js"></script>
+
+</body>
+</html>

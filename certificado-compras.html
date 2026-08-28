@@ -77,6 +77,8 @@
     .form-grid{grid-template-columns:1fr;}
   }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/supabase-config.js"></script>
 </head>
 <body>
 
@@ -89,7 +91,9 @@
         <span class="name">CESFAM Peralillo</span>
       </span>
     </a>
+    <span style="font-size:.85rem; color:var(--gray); margin-right:14px;">👤 <span id="auth-user-name"></span></span>
     <a class="back-link" href="index.html">← Volver al sitio</a>
+    <a class="back-link" href="#" onclick="cerrarSesion(); return false;" style="margin-left:14px;">Cerrar sesión</a>
   </div>
 </header>
 
@@ -220,6 +224,7 @@
   </div>
 </main>
 
+<script src="assets/auth-guard.js"></script>
 <script>
   const certForm = document.getElementById('certForm');
 

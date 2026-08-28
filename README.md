@@ -1,7 +1,7 @@
 # CESFAM Peralillo — Sitio web institucional
 
 Borrador de sitio web para el Centro de Salud Familiar (CESFAM) de Peralillo,
-Región de O'Higgins, Chile. Diseño estructural ,
+Región de O'Higgins, Chile. Diseño estructural inspirado en clinicaboza.cl,
 con paleta clínica (blanco / celeste / azul) y foco en accesibilidad.
 
 ## 🌐 Ver el sitio en vivo
@@ -54,82 +54,44 @@ git push -u origin main
 3. Arrastra `index.html`, el `README.md` y la carpeta `assets` completa.
 4. Confirma el commit.
 
-## ✅ Configurar "Recepción conforme" (Google Sheets)
+## ✅ "Solicitud de servicio" (Google Form embebido)
 
-El sitio incluye una sección para que los funcionarios confirmen que
-leyeron y recibieron un documento (circular, protocolo, etc.). Las
-confirmaciones se guardan automáticamente en una planilla de Google Sheets.
+El sitio incluye una sección para que los funcionarios soliciten
+requerimientos (insumos, electricidad, gasfitería, informática, etc.).
 
-### Paso 1 — Crea la planilla y el script
+**Cómo está resuelto:** en vez de un formulario personalizado conectado
+por script (Apps Script), esta sección embebe directamente tu **Google
+Form oficial** dentro del sitio. El funcionario completa el formulario
+sin salir de la página, y Google guarda la respuesta automáticamente en
+tu planilla existente ("Solicitud de servicio (respuestas)"), exactamente
+como ya funciona hoy.
 
-1. Ve a [sheets.google.com](https://sheets.google.com) y crea una planilla nueva.
-   Ponle un nombre, por ejemplo "Recepción Conforme CESFAM".
-2. En la primera fila, agrega estos encabezados (opcional pero recomendado):
-   `Fecha | Nombre | RUT | Cargo | Documento`
-3. En el menú ve a **Extensiones → Apps Script**.
-4. Borra el código de ejemplo y pega esto:
+> **Por qué se optó por esta opción:** el enfoque de Apps Script requiere
+> autorización de OAuth, y en cuentas institucionales de Google Workspace
+> (como `@muniperalillo.cl`) esa autorización suele estar bloqueada por el
+> administrador del dominio ("Error 400: access_not_configured"). Embeber
+> el Google Form directamente evita ese problema por completo, ya que no
+> depende de ningún script ni permiso especial.
 
-```javascript
-function doPost(e) {
-  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-  var data = JSON.parse(e.postData.contents);
-  sheet.appendRow([
-    new Date(),
-    data.nombre,
-    data.rut,
-    data.cargo,
-    data.documento
-  ]);
-  return ContentService
-    .createTextOutput(JSON.stringify({ result: "success" }))
-    .setMimeType(ContentService.MimeType.JSON);
-}
-```
+### Si en el futuro cambias de formulario
 
-5. Guarda el proyecto (ícono de disquete, ponle un nombre).
-
-### Paso 2 — Publica el script como Web App
-
-1. Haz clic en **Deploy → New deployment**.
-2. En "Select type", elige **Web app**.
-3. En "Execute as": **Me**.
-4. En "Who has access": **Anyone**.
-5. Haz clic en **Deploy**. Google te pedirá autorizar permisos — acepta
-   (es tu propia planilla, es seguro).
-6. Copia la URL que te entrega, termina en `/exec`.
-
-### Paso 3 — Conecta el sitio
-
-1. En GitHub, abre `index.html` y haz clic en el ícono del lápiz (editar).
-2. Busca esta línea (usa Ctrl+F del navegador):
-   ```javascript
-   const RECEPCION_SHEET_URL = "PEGA_AQUI_TU_URL_DE_GOOGLE_APPS_SCRIPT";
+1. Abre tu nuevo Google Form → botón **Enviar** → pestaña del ícono `<>`
+   (insertar/embeber) → copia la URL que aparece en el campo `src="..."`.
+2. En GitHub, abre `index.html` (ícono del lápiz) y busca (Ctrl+F):
    ```
-3. Reemplaza el texto entre comillas por la URL que copiaste en el paso
-   anterior.
-4. Confirma con "Commit changes".
-
-Listo — cada vez que un funcionario complete el formulario, aparecerá una
-fila nueva en tu planilla de Google Sheets con fecha, nombre, RUT, cargo
-y el documento confirmado.
-
-### Para actualizar el documento a confirmar
-
-1. Sube el nuevo PDF a la carpeta `assets/` (puedes llamarlo
-   `documento-recepcion.pdf`, reemplazando el anterior, o darle un nombre
-   distinto).
-2. Si le pusiste un nombre distinto, edita en `index.html` el enlace:
-   `href="assets/documento-recepcion.pdf"` con el nombre correcto.
-3. Edita también el texto `<p id="rc-doc-title">` con el nombre/número del
-   nuevo documento (por ejemplo: "Circular N° 14 — Protocolo de vacunación 2026").
-4. Cada confirmación quedará asociada a ese nombre de documento en la planilla,
-   así que si subes documentos distintos en el tiempo, podrás diferenciarlos
-   en Google Sheets.
+   <iframe src="https://docs.google.com/forms/d/1SHAFwkq8BKaP87JI3NQsfM-KwHN5kYInncYeQQ7YKS0/viewform?embedded=true"
+   ```
+3. Reemplaza esa URL por la de tu nuevo formulario (mantén `?embedded=true`
+   al final).
+4. Busca también el enlace de respaldo un poco más abajo
+   (`target="_blank"`) y actualízalo con la misma URL, pero sin
+   `?embedded=true`.
+5. Confirma con "Commit changes".
 
 ## 🧾 Certificado de Recepción Conforme (compras y licitaciones)
 
-Además del formulario de "recepción conforme" de circulares, el sitio incluye
-un **segundo formulario** (sección "Certificado de compras" en el menú) para
+El sitio incluye además otro formulario, aparte ("Certificado de compras"
+en el menú), para
 que los funcionarios certifiquen la recepción de compras, licitaciones o
 prestaciones de servicio — replicando el formato del certificado oficial de
 la Municipalidad de Peralillo.
@@ -160,6 +122,89 @@ necesitas el archivo con el diseño visual exacto, puedes usar el botón
 "Descargar plantilla en blanco" (que sí es el archivo original) y traspasar
 los datos manualmente, o pedirme que integre un método más avanzado de
 edición de plantilla.
+
+## 🔐 Acceso de funcionarios (usuario y clave)
+
+El "Certificado de compras" y "Solicitud de servicio" ahora requieren
+iniciar sesión. Las cuentas (nombre de usuario + contraseña) se guardan en
+una base de datos real y segura (**Supabase**), con las contraseñas
+encriptadas — nunca en texto plano ni visibles en el código del sitio.
+
+**Piezas nuevas:**
+- `login.html` — pantalla de inicio de sesión para funcionarios.
+- `admin-funcionarios.html` — panel para que tú (administrador) crees
+  cuentas nuevas.
+- `api/crear-funcionario.js` — función de servidor (Vercel) que crea las
+  cuentas de forma segura, sin exponer ninguna clave secreta al navegador.
+- `assets/supabase-config.js` — configuración pública de Supabase.
+- `assets/auth-guard.js` — protege `certificado-compras.html` y
+  `solicitud-servicio.html`, redirigiendo a `login.html` si no hay sesión.
+
+### Paso 1 — Crea tu proyecto de Supabase (gratis)
+
+1. Ve a [supabase.com](https://supabase.com) → "Start your project" →
+   crea una cuenta (puedes usar tu correo de Google).
+2. Crea un nuevo proyecto. Ponle un nombre, por ejemplo
+   "cesfam-peralillo", elige una contraseña de base de datos (guárdala,
+   no la necesitarás para esto pero es buena práctica) y la región más
+   cercana (São Paulo, por ejemplo).
+3. Espera 1-2 minutos mientras Supabase crea el proyecto.
+4. Ve a **Settings → API**. Ahí verás dos datos que necesitas:
+   - **Project URL** (algo como `https://xxxxx.supabase.co`)
+   - **anon public key** (una clave larga, empieza distinto a la
+     "service_role")
+   - **service_role key** (otra clave larga — **esta es secreta**, nunca
+     la pegues en archivos del sitio)
+
+### Paso 2 — Conecta la clave pública al sitio
+
+1. En GitHub, abre `assets/supabase-config.js` (ícono del lápiz).
+2. Reemplaza:
+   ```javascript
+   const SUPABASE_URL = "PEGA_AQUI_TU_SUPABASE_URL";
+   const SUPABASE_ANON_KEY = "PEGA_AQUI_TU_SUPABASE_ANON_KEY";
+   ```
+   con tu **Project URL** y tu **anon public key** del paso anterior.
+3. Confirma con "Commit changes".
+
+### Paso 3 — Configura las variables secretas en Vercel
+
+1. Entra a tu proyecto en [vercel.com](https://vercel.com) →
+   **Settings → Environment Variables**.
+2. Agrega estas tres variables:
+
+   | Nombre | Valor |
+   |---|---|
+   | `SUPABASE_URL` | Tu Project URL de Supabase |
+   | `SUPABASE_SERVICE_ROLE_KEY` | Tu service_role key de Supabase (la secreta) |
+   | `ADMIN_SECRET` | Una clave que tú inventes, solo para ti (ej: una frase larga) |
+
+3. Guarda. Si Vercel te pide re-desplegar (redeploy) para que tomen efecto
+   las variables nuevas, hazlo (botón "Redeploy" en la pestaña
+   "Deployments").
+
+### Paso 4 — Crea las cuentas de los funcionarios
+
+1. Ve a `tusitio.vercel.app/admin-funcionarios.html`.
+2. Ingresa la clave `ADMIN_SECRET` que definiste en el paso 3.
+3. Completa nombre, nombre de usuario y contraseña provisoria para cada
+   funcionario, y haz clic en "Crear cuenta". Repite para cada uno (puedes
+   dejar esta pestaña abierta e ir creando una tras otra).
+4. Comparte con cada funcionario su usuario y contraseña por un medio
+   seguro (no por este mismo sitio).
+
+### Cómo inician sesión los funcionarios
+
+Van a `login.html` (o hacen clic en "🔐 Abrir formulario de certificado" /
+"🔐 Acceder al formulario" desde la página principal, que los redirige
+automáticamente ahí si no tienen sesión), ingresan su usuario y
+contraseña, y quedan con acceso hasta que cierren sesión.
+
+> **Nota de seguridad:** este sistema usa Supabase Auth, el mismo motor
+> de autenticación que usan miles de aplicaciones en producción — las
+> contraseñas se guardan encriptadas (nunca en texto plano) y la clave
+> `service_role` que puede crear usuarios solo vive en el servidor de
+> Vercel, nunca en el navegador ni en GitHub.
 
 ## ⚠️ Pendiente antes de publicar oficialmente
 
