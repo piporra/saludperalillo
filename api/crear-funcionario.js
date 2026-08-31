@@ -38,7 +38,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Método no permitido" });
   }
 
-  const { adminSecret, nombre, rut, password } = req.body || {};
+  const { adminSecret, nombre, rut, password, hojaUrl } = req.body || {};
 
   if (!process.env.ADMIN_SECRET || adminSecret !== process.env.ADMIN_SECRET) {
     return res.status(401).json({ error: "Clave de administrador incorrecta" });
@@ -71,7 +71,7 @@ export default async function handler(req, res) {
         email,
         password,
         email_confirm: true,
-        user_metadata: { nombre, rut: rutLimpio }
+        user_metadata: { nombre, rut: rutLimpio, hoja_dias_url: hojaUrl || "" }
       })
     });
 
