@@ -59,6 +59,20 @@
     </form>
   </div>
 
+  <div class="card" id="resetCard" style="display:none;">
+    <h1>🔑 Restablecer contraseña</h1>
+    <p class="sub">¿Un funcionario olvidó su clave? Asígnale una nueva aquí.</p>
+    <form id="resetForm">
+      <label for="reset-username">Nombre de usuario</label>
+      <input type="text" id="reset-username" required pattern="[a-zA-Z0-9._-]+">
+      <label for="reset-password">Nueva contraseña</label>
+      <input type="text" id="reset-password" required minlength="6">
+      <p class="hint">Compártesela al funcionario por un medio seguro.</p>
+      <button type="submit" id="resetBtn">Restablecer contraseña</button>
+      <p id="reset-status"></p>
+    </form>
+  </div>
+
   <a class="back" href="index.html">← Volver al sitio</a>
 </div>
 
@@ -69,6 +83,7 @@
     e.preventDefault();
     adminSecret = document.getElementById('admin-secret').value;
     document.getElementById('createCard').style.display = 'block';
+    document.getElementById('resetCard').style.display = 'block';
     document.getElementById('adminAuthForm').closest('.card').style.display = 'none';
   });
 
@@ -103,6 +118,45 @@
       status.style.color = 'var(--teal)';
       status.textContent = '✅ Cuenta creada para ' + nombre + ' (usuario: ' + username + ')';
       document.getElementById('createForm').reset();
+      btn.disabled = false;
+    } catch (err) {
+      status.style.color = '#B33A3A';
+      status.textContent = 'Error de conexión. Inténtalo nuevamente.';
+      btn.disabled = false;
+      console.error(err);
+    }
+  });
+
+  document.getElementById('resetForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const status = document.getElementById('reset-status');
+    const btn = document.getElementById('resetBtn');
+
+    const username = document.getElementById('reset-username').value.trim();
+    const newPassword = document.getElementById('reset-password').value;
+
+    btn.disabled = true;
+    status.style.color = 'var(--gray)';
+    status.textContent = 'Restableciendo...';
+
+    try {
+      const res = await fetch('/api/cambiar-clave', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adminSecret, username, newPassword })
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        status.style.color = '#B33A3A';
+        status.textContent = '❌ ' + (data.error || 'No se pudo restablecer la contraseña.');
+        btn.disabled = false;
+        return;
+      }
+
+      status.style.color = 'var(--teal)';
+      status.textContent = '✅ Contraseña restablecida para ' + username;
+      document.getElementById('resetForm').reset();
       btn.disabled = false;
     } catch (err) {
       status.style.color = '#B33A3A';
