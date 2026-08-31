@@ -1,5 +1,6 @@
 // api/crear-funcionario.js
-// Función serverless de Vercel. Crea una cuenta de funcionario en Supabase.
+// Función serverless de Vercel. Crea una cuenta de funcionario en Supabase,
+// usando su RUT (normalizado) como identificador único.
 // Requiere que estas variables de entorno estén configuradas en Vercel
 // (Project → Settings → Environment Variables):
 //   SUPABASE_URL
@@ -8,26 +9,55 @@
 
 const USERNAME_DOMAIN = "cesfamperalillo.internal";
 
+// Deja el RUT solo con dígitos y dígito verificador (sin puntos, espacios ni guion).
+function normalizarRut(rut) {
+  return rut.toString().trim().toUpperCase().replace(/[^0-9K]/g, "");
+}
+
+// Valida el dígito verificador del RUT chileno (algoritmo módulo 11).
+function validarRut(rut) {
+  const limpio = normalizarRut(rut);
+  if (limpio.length < 2) return false;
+  const cuerpo = limpio.slice(0, -1);
+  const dv = limpio.slice(-1);
+  if (!/^\d+$/.test(cuerpo)) return false;
+
+  let suma = 0;
+  let multiplo = 2;
+  for (let i = cuerpo.length - 1; i >= 0; i--) {
+    suma += parseInt(cuerpo[i], 10) * multiplo;
+    multiplo = multiplo < 7 ? multiplo + 1 : 2;
+  }
+  const resto = 11 - (suma % 11);
+  const dvEsperado = resto === 11 ? "0" : resto === 10 ? "K" : String(resto);
+  return dv === dvEsperado;
+}
+
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Método no permitido" });
   }
 
-  const { adminSecret, nombre, username, password } = req.body || {};
+  const { adminSecret, nombre, rut, password } = req.body || {};
 
   if (!process.env.ADMIN_SECRET || adminSecret !== process.env.ADMIN_SECRET) {
     return res.status(401).json({ error: "Clave de administrador incorrecta" });
   }
 
-  if (!nombre || !username || !password) {
-    return res.status(400).json({ error: "Faltan datos (nombre, username o password)" });
+  if (!nombre || !rut || !password) {
+    return res.status(400).json({ error: "Faltan datos (nombre, rut o password)" });
+  }
+
+  if (!validarRut(rut)) {
+    return res.status(400).json({ error: "El RUT ingresado no es válido" });
   }
 
   if (password.length < 6) {
     return res.status(400).json({ error: "La contraseña debe tener al menos 6 caracteres" });
   }
 
-  const email = username.trim().toLowerCase().replace(/\s+/g, ".") + "@" + USERNAME_DOMAIN;
+  const rutLimpio = normalizarRut(rut);
+  const email = rutLimpio.toLowerCase() + "@" + USERNAME_DOMAIN;
 
   try {
     const response = await fetch(`${process.env.SUPABASE_URL}/auth/v1/admin/users`, {
@@ -41,14 +71,17 @@ export default async function handler(req, res) {
         email,
         password,
         email_confirm: true,
-        user_metadata: { nombre, username }
+        user_metadata: { nombre, rut: rutLimpio }
       })
     });
 
     const data = await response.json();
 
     if (!response.ok) {
-      const msg = (data && data.msg) || (data && data.error_description) || "No se pudo crear la cuenta";
+      let msg = (data && data.msg) || (data && data.error_description) || "No se pudo crear la cuenta";
+      if (/already|registered|exists/i.test(msg)) {
+        msg = "Ya existe una cuenta creada con ese RUT";
+      }
       return res.status(response.status).json({ error: msg });
     }
 
@@ -58,3 +91,4 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: "Error interno al crear la cuenta" });
   }
 }
+
