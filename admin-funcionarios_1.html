@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Administración de funcionarios — CESFAM Peralillo</title>
+<link rel="icon" type="image/jpeg" href="assets/logo-cesfam.jpeg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --teal-deep:#0A3D73; --teal:#1B7FC2; --teal-light:#E7F2FB;
+    --gold:#12A6D6; --ink:#1C2B36; --gray:#5A6B78; --line:#DCE7F0; --radius:16px;
+    --font-head:'Poppins', sans-serif; --font-body:'Atkinson Hyperlegible', system-ui, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; background:var(--teal-light); font-family:var(--font-body); color:var(--ink); min-height:100vh;}
+  .container{max-width:520px; margin:0 auto; padding:50px 24px;}
+  .card{background:#fff; border-radius:var(--radius); box-shadow:0 20px 50px rgba(10,61,115,.1); padding:30px; margin-bottom:20px;}
+  h1{font-family:var(--font-head); color:var(--teal-deep); font-size:1.3rem; margin:0 0 6px;}
+  p.sub{color:var(--gray); font-size:.9rem; margin:0 0 20px;}
+  label{display:block; font-weight:700; font-size:.9rem; margin-bottom:6px; color:var(--teal-deep);}
+  input{width:100%; padding:12px 14px; border:1.5px solid var(--line); border-radius:10px; margin-bottom:16px; font-family:var(--font-body); font-size:.95rem;}
+  button{width:100%; background:var(--gold); color:#fff; border:none; padding:14px; border-radius:999px; font-weight:700; font-size:1rem; cursor:pointer; font-family:var(--font-body);}
+  button:hover{background:#0E86AC;}
+  button:disabled{opacity:.6; cursor:not-allowed;}
+  #status{font-size:.88rem; margin-top:12px; text-align:center;}
+  .back{display:block; text-align:center; margin-top:6px; font-size:.85rem; color:var(--teal-deep); text-decoration:none;}
+  .hint{font-size:.82rem; color:var(--gray); margin:-10px 0 16px;}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="card">
+    <h1>🔐 Clave de administrador</h1>
+    <p class="sub">Ingresa la clave maestra para gestionar cuentas de funcionarios.</p>
+    <form id="adminAuthForm">
+      <label for="admin-secret">Clave de administrador</label>
+      <input type="password" id="admin-secret" required>
+      <button type="submit">Desbloquear panel</button>
+    </form>
+  </div>
+
+  <div class="card" id="createCard" style="display:none;">
+    <h1>➕ Crear cuenta de funcionario</h1>
+    <p class="sub">Se genera un acceso con nombre de usuario y contraseña.</p>
+    <form id="createForm">
+      <label for="nombre">Nombre completo</label>
+      <input type="text" id="nombre" required>
+      <label for="username">Nombre de usuario (sin espacios, ej: jperez)</label>
+      <input type="text" id="username" required pattern="[a-zA-Z0-9._-]+">
+      <p class="hint">Solo letras, números, puntos y guiones. Sin espacios ni tildes.</p>
+      <label for="password">Contraseña provisoria</label>
+      <input type="text" id="password" required minlength="6">
+      <p class="hint">Compártela con el funcionario para que la cambie luego si quieres.</p>
+      <button type="submit" id="createBtn">Crear cuenta</button>
+      <p id="status"></p>
+    </form>
+  </div>
+
+  <div class="card" id="resetCard" style="display:none;">
+    <h1>🔑 Restablecer contraseña</h1>
+    <p class="sub">¿Un funcionario olvidó su clave? Asígnale una nueva aquí.</p>
+    <form id="resetForm">
+      <label for="reset-username">Nombre de usuario</label>
+      <input type="text" id="reset-username" required pattern="[a-zA-Z0-9._-]+">
+      <label for="reset-password">Nueva contraseña</label>
+      <input type="text" id="reset-password" required minlength="6">
+      <p class="hint">Compártesela al funcionario por un medio seguro.</p>
+      <button type="submit" id="resetBtn">Restablecer contraseña</button>
+      <p id="reset-status"></p>
+    </form>
+  </div>
+
+  <a class="back" href="index.html">← Volver al sitio</a>
+</div>
+
+<script>
+  let adminSecret = '';
+
+  document.getElementById('adminAuthForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    adminSecret = document.getElementById('admin-secret').value;
+    document.getElementById('createCard').style.display = 'block';
+    document.getElementById('resetCard').style.display = 'block';
+    document.getElementById('adminAuthForm').closest('.card').style.display = 'none';
+  });
+
+  document.getElementById('createForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const status = document.getElementById('status');
+    const btn = document.getElementById('createBtn');
+
+    const nombre = document.getElementById('nombre').value.trim();
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value;
+
+    btn.disabled = true;
+    status.style.color = 'var(--gray)';
+    status.textContent = 'Creando cuenta...';
+
+    try {
+      const res = await fetch('/api/crear-funcionario', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adminSecret, nombre, username, password })
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        status.style.color = '#B33A3A';
+        status.textContent = '❌ ' + (data.error || 'No se pudo crear la cuenta.');
+        btn.disabled = false;
+        return;
+      }
+
+      status.style.color = 'var(--teal)';
+      status.textContent = '✅ Cuenta creada para ' + nombre + ' (usuario: ' + username + ')';
+      document.getElementById('createForm').reset();
+      btn.disabled = false;
+    } catch (err) {
+      status.style.color = '#B33A3A';
+      status.textContent = 'Error de conexión. Inténtalo nuevamente.';
+      btn.disabled = false;
+      console.error(err);
+    }
+  });
+
+  document.getElementById('resetForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const status = document.getElementById('reset-status');
+    const btn = document.getElementById('resetBtn');
+
+    const username = document.getElementById('reset-username').value.trim();
+    const newPassword = document.getElementById('reset-password').value;
+
+    btn.disabled = true;
+    status.style.color = 'var(--gray)';
+    status.textContent = 'Restableciendo...';
+
+    try {
+      const res = await fetch('/api/cambiar-clave', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adminSecret, username, newPassword })
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        status.style.color = '#B33A3A';
+        status.textContent = '❌ ' + (data.error || 'No se pudo restablecer la contraseña.');
+        btn.disabled = false;
+        return;
+      }
+
+      status.style.color = 'var(--teal)';
+      status.textContent = '✅ Contraseña restablecida para ' + username;
+      document.getElementById('resetForm').reset();
+      btn.disabled = false;
+    } catch (err) {
+      status.style.color = '#B33A3A';
+      status.textContent = 'Error de conexión. Inténtalo nuevamente.';
+      btn.disabled = false;
+      console.error(err);
+    }
+  });
+</script>
+
+</body>
+</html>
