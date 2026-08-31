@@ -110,23 +110,7 @@
   // 2. Archivo → Compartir → Publicar en la Web → elige esa pestaña →
   //    formato "Valores separados por comas (.csv)" → Publicar.
   // 3. Pega aquí el link que te entrega Google (termina en output=csv).
-  const REUNIONES_CSV_URL = "cript src="assets/auth-guard.js"></script>
-<script>
-  // ===== Calendario de reuniones (leído en vivo desde Google Sheets) =====
-  // 1. Abre tu planilla "REUNIONES 2026" → pestaña "calendario 2026".
-  // 2. Archivo → Compartir → Publicar en la Web → elige esa pestaña →
-  //    formato "Valores separados por comas (.csv)" → Publicar.
-  // 3. Pega aquí el link que te entrega Google (termina en output=csv).
-  const REUNIONES_CSV_URL = https://docs.google.com/spreadsheets/d/e/2PACX-1vRI-aYULT4Iiz89zvrTdtDP7duTSEEwm_rDH4iAT1ew0IjrkepWB_qRRQlOKO_XzonuvcdnC4b9fW3q/pub?output=csv;
-
-  function parseCSV(text) {
-    return text.trim().split(/\r?\n/).map(line => {
-      const cells = [];
-      let cur = '', inQuotes = false;
-      for (let i = 0; i < line.length; i++) {
-        const ch = line[i];
-        if (ch === '"') { inQuotes = !inQuotes; }
-        else if (ch === ',' && !inQuotes) { cells.push(cur); cur = ''; }";
+  const REUNIONES_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRI-aYULT4Iiz89zvrTdtDP7duTSEEwm_rDH4iAT1ew0IjrkepWB_qRRQlOKO_XzonuvcdnC4b9fW3q/pub?output=csv";
 
   function parseCSV(text) {
     return text.trim().split(/\r?\n/).map(line => {
