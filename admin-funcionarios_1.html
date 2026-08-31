@@ -44,16 +44,19 @@
 
   <div class="card" id="createCard" style="display:none;">
     <h1>➕ Crear cuenta de funcionario</h1>
-    <p class="sub">Se genera un acceso con nombre de usuario y contraseña.</p>
+    <p class="sub">Se genera un acceso con RUT y contraseña. El RUT es único, así que no se puede repetir.</p>
     <form id="createForm">
       <label for="nombre">Nombre completo</label>
       <input type="text" id="nombre" required>
-      <label for="username">Nombre de usuario (sin espacios, ej: jperez)</label>
-      <input type="text" id="username" required pattern="[a-zA-Z0-9._-]+">
-      <p class="hint">Solo letras, números, puntos y guiones. Sin espacios ni tildes.</p>
+      <label for="rut">RUT del funcionario</label>
+      <input type="text" id="rut" required placeholder="12.345.678-9">
+      <p class="hint" id="rut-hint">Con o sin puntos y guion, ej: 12345678-9 o 12.345.678-9.</p>
       <label for="password">Contraseña provisoria</label>
       <input type="text" id="password" required minlength="6">
       <p class="hint">Compártela con el funcionario para que la cambie luego si quieres.</p>
+      <label for="hojaUrl">Link de su hoja de días administrativos (opcional)</label>
+      <input type="text" id="hojaUrl" placeholder="https://docs.google.com/.../pub?output=csv">
+      <p class="hint">Puedes dejarlo en blanco y agregarlo después desde la tarjeta de abajo.</p>
       <button type="submit" id="createBtn">Crear cuenta</button>
       <p id="status"></p>
     </form>
@@ -63,8 +66,8 @@
     <h1>🔑 Restablecer contraseña</h1>
     <p class="sub">¿Un funcionario olvidó su clave? Asígnale una nueva aquí.</p>
     <form id="resetForm">
-      <label for="reset-username">Nombre de usuario</label>
-      <input type="text" id="reset-username" required pattern="[a-zA-Z0-9._-]+">
+      <label for="reset-rut">RUT del funcionario</label>
+      <input type="text" id="reset-rut" required placeholder="12.345.678-9">
       <label for="reset-password">Nueva contraseña</label>
       <input type="text" id="reset-password" required minlength="6">
       <p class="hint">Compártesela al funcionario por un medio seguro.</p>
@@ -73,8 +76,23 @@
     </form>
   </div>
 
+  <div class="card" id="hojaCard" style="display:none;">
+    <h1>🔗 Vincular hoja de días administrativos</h1>
+    <p class="sub">Pega o actualiza el link de la hoja individual de un funcionario (ver instrucciones en el README).</p>
+    <form id="hojaForm">
+      <label for="hoja-rut">RUT del funcionario</label>
+      <input type="text" id="hoja-rut" required placeholder="12.345.678-9">
+      <label for="hoja-url">Link de su hoja (CSV publicado)</label>
+      <input type="text" id="hoja-url" required placeholder="https://docs.google.com/.../pub?output=csv">
+      <button type="submit" id="hojaBtn">Guardar link</button>
+      <p id="hoja-status"></p>
+    </form>
+  </div>
+
   <a class="back" href="index.html">← Volver al sitio</a>
 </div>
+
+<script src="assets/supabase-config.js"></script>
 
 <script>
   let adminSecret = '';
@@ -84,7 +102,15 @@
     adminSecret = document.getElementById('admin-secret').value;
     document.getElementById('createCard').style.display = 'block';
     document.getElementById('resetCard').style.display = 'block';
+    document.getElementById('hojaCard').style.display = 'block';
     document.getElementById('adminAuthForm').closest('.card').style.display = 'none';
+  });
+
+  document.getElementById('rut').addEventListener('blur', (e) => {
+    if (e.target.value.trim()) e.target.value = formatearRut(e.target.value);
+  });
+  document.getElementById('reset-rut').addEventListener('blur', (e) => {
+    if (e.target.value.trim()) e.target.value = formatearRut(e.target.value);
   });
 
   document.getElementById('createForm').addEventListener('submit', async (e) => {
@@ -93,8 +119,15 @@
     const btn = document.getElementById('createBtn');
 
     const nombre = document.getElementById('nombre').value.trim();
-    const username = document.getElementById('username').value.trim();
+    const rut = document.getElementById('rut').value.trim();
     const password = document.getElementById('password').value;
+    const hojaUrl = document.getElementById('hojaUrl').value.trim();
+
+    if (!validarRut(rut)) {
+      status.style.color = '#B33A3A';
+      status.textContent = '❌ El RUT ingresado no es válido. Revisa el dígito verificador.';
+      return;
+    }
 
     btn.disabled = true;
     status.style.color = 'var(--gray)';
@@ -104,7 +137,7 @@
       const res = await fetch('/api/crear-funcionario', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ adminSecret, nombre, username, password })
+        body: JSON.stringify({ adminSecret, nombre, rut, password, hojaUrl })
       });
       const data = await res.json();
 
@@ -116,7 +149,7 @@
       }
 
       status.style.color = 'var(--teal)';
-      status.textContent = '✅ Cuenta creada para ' + nombre + ' (usuario: ' + username + ')';
+      status.textContent = '✅ Cuenta creada para ' + nombre + ' (RUT: ' + formatearRut(rut) + ')';
       document.getElementById('createForm').reset();
       btn.disabled = false;
     } catch (err) {
@@ -132,7 +165,7 @@
     const status = document.getElementById('reset-status');
     const btn = document.getElementById('resetBtn');
 
-    const username = document.getElementById('reset-username').value.trim();
+    const rut = document.getElementById('reset-rut').value.trim();
     const newPassword = document.getElementById('reset-password').value;
 
     btn.disabled = true;
@@ -143,7 +176,7 @@
       const res = await fetch('/api/cambiar-clave', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ adminSecret, username, newPassword })
+        body: JSON.stringify({ adminSecret, rut, newPassword })
       });
       const data = await res.json();
 
@@ -155,8 +188,47 @@
       }
 
       status.style.color = 'var(--teal)';
-      status.textContent = '✅ Contraseña restablecida para ' + username;
+      status.textContent = '✅ Contraseña restablecida para el RUT ' + formatearRut(rut);
       document.getElementById('resetForm').reset();
+      btn.disabled = false;
+    } catch (err) {
+      status.style.color = '#B33A3A';
+      status.textContent = 'Error de conexión. Inténtalo nuevamente.';
+      btn.disabled = false;
+      console.error(err);
+    }
+  });
+
+  document.getElementById('hojaForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const status = document.getElementById('hoja-status');
+    const btn = document.getElementById('hojaBtn');
+
+    const rut = document.getElementById('hoja-rut').value.trim();
+    const hojaUrl = document.getElementById('hoja-url').value.trim();
+
+    btn.disabled = true;
+    status.style.color = 'var(--gray)';
+    status.textContent = 'Guardando...';
+
+    try {
+      const res = await fetch('/api/actualizar-hoja', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adminSecret, rut, hojaUrl })
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        status.style.color = '#B33A3A';
+        status.textContent = '❌ ' + (data.error || 'No se pudo guardar el link.');
+        btn.disabled = false;
+        return;
+      }
+
+      status.style.color = 'var(--teal)';
+      status.textContent = '✅ Hoja vinculada para el RUT ' + formatearRut(rut);
+      document.getElementById('hojaForm').reset();
       btn.disabled = false;
     } catch (err) {
       status.style.color = '#B33A3A';
