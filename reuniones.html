@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calendario de reuniones — CESFAM Peralillo</title>
+<link rel="icon" type="image/jpeg" href="assets/logo-cesfam.jpeg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/supabase-config.js"></script>
+<style>
+  :root{
+    --teal-deep:#0A3D73; --teal:#1B7FC2; --teal-light:#E7F2FB; --sky:#F4FAFE;
+    --gold:#12A6D6; --ink:#1C2B36; --gray:#5A6B78; --line:#DCE7F0; --radius:16px;
+    --font-head:'Poppins', sans-serif; --font-body:'Atkinson Hyperlegible', system-ui, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; font-family:var(--font-body); color:var(--ink); background:var(--teal-light); line-height:1.6; font-size:16px;}
+  h1{font-family:var(--font-head); color:var(--teal-deep); margin:0 0 6px;}
+  p{margin:0 0 1em; color:var(--gray);}
+  a{color:var(--teal-deep);}
+  .container{max-width:1180px; margin:0 auto; padding:0 24px;}
+
+  header.site-header{background:#fff; border-bottom:1px solid var(--line);}
+  .site-header .container{display:flex; align-items:center; justify-content:space-between; padding:16px 24px; flex-wrap:wrap; gap:10px;}
+  .brand{display:flex; align-items:center; gap:12px; text-decoration:none;}
+  .brand-logo{width:48px; height:48px; border-radius:50%; object-fit:cover; border:1.5px solid var(--line);}
+  .brand-text .eyebrow{display:block; font-size:.7rem; letter-spacing:.07em; text-transform:uppercase; color:var(--teal); font-weight:700;}
+  .brand-text .name{font-family:var(--font-head); font-weight:700; font-size:1.1rem; color:var(--teal-deep);}
+  .header-right{display:flex; align-items:center; gap:16px; font-size:.85rem; color:var(--gray);}
+  .header-right a{color:var(--teal-deep); text-decoration:none; font-weight:700;}
+  .header-right a:hover{text-decoration:underline;}
+
+  main{padding:40px 0 70px;}
+  .page-head{text-align:center; margin-bottom:28px;}
+  .page-head .eyebrow{color:var(--gold); font-weight:700; text-transform:uppercase; letter-spacing:.07em; font-size:.8rem;}
+  .page-head h1{font-size:1.7rem;}
+
+  .toolbar{max-width:420px; margin:0 auto 24px;}
+  .toolbar input{
+    width:100%; padding:12px 16px; border:1.5px solid var(--line); border-radius:999px;
+    font-family:var(--font-body); font-size:.95rem; background:#fff;
+  }
+
+  .cal-wrap{background:#fff; border:1px solid var(--line); border-radius:var(--radius); overflow-x:auto; box-shadow:0 12px 30px rgba(10,61,115,.06); margin-bottom:16px;}
+  table.cal-table{border-collapse:collapse; width:100%; min-width:1100px; font-size:.85rem;}
+  table.cal-table th, table.cal-table td{padding:10px 12px; text-align:center; border-bottom:1px solid var(--line); white-space:nowrap;}
+  table.cal-table th{background:var(--teal-deep); color:#fff; font-family:var(--font-head); font-weight:600; position:sticky; top:0;}
+  table.cal-table td:first-child, table.cal-table th:first-child{
+    text-align:left; position:sticky; left:0; background:var(--teal-light); font-weight:700; color:var(--teal-deep);
+    white-space:normal; min-width:220px;
+  }
+  table.cal-table th:first-child{background:var(--teal-deep); z-index:2;}
+  table.cal-table td:nth-child(2){color:var(--gray); font-size:.8rem; white-space:normal; min-width:110px;}
+  table.cal-table tr:nth-child(even) td{background:#FAFCFE;}
+  table.cal-table tr:nth-child(even) td:first-child{background:var(--teal-light);}
+  table.cal-table tr:hover td{background:#EAF4FB;}
+  table.cal-table tr:hover td:first-child{background:#DCEBF7;}
+
+  #calStatus{text-align:center; color:var(--gray); padding:30px; font-size:.95rem;}
+  #calStatus.error{color:#B33A3A;}
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="container">
+    <a href="index.html" class="brand">
+      <img class="brand-logo" src="assets/logo-cesfam.jpeg" alt="Logo CESFAM Peralillo">
+      <span class="brand-text">
+        <span class="eyebrow">Servicio de Salud O'Higgins</span>
+        <span class="name">CESFAM Peralillo</span>
+      </span>
+    </a>
+    <div class="header-right">
+      <span>👤 <span id="auth-user-name"></span></span>
+      <a href="dashboard.html">← Volver al portal</a>
+      <a href="#" onclick="cerrarSesion(); return false;">Cerrar sesión</a>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="container">
+    <div class="page-head">
+      <span class="eyebrow">Portal de funcionarios</span>
+      <h1>Calendario de reuniones 2026</h1>
+      <p>Fechas de reuniones de todos los comités y equipos del CESFAM, actualizadas en vivo.</p>
+    </div>
+
+    <div class="toolbar">
+      <input type="text" id="calSearch" placeholder="🔎 Buscar comité o equipo...">
+    </div>
+
+    <div class="cal-wrap">
+      <table class="cal-table" id="calTable" style="display:none;">
+        <thead><tr id="calHeadRow"></tr></thead>
+        <tbody id="calBody"></tbody>
+      </table>
+      <p id="calStatus">Cargando calendario...</p>
+    </div>
+  </div>
+</main>
+
+<script src="assets/auth-guard.js"></script>
+<script>
+  // ===== Calendario de reuniones (leído en vivo desde Google Sheets) =====
+  // 1. Abre tu planilla "REUNIONES 2026" → pestaña "calendario 2026".
+  // 2. Archivo → Compartir → Publicar en la Web → elige esa pestaña →
+  //    formato "Valores separados por comas (.csv)" → Publicar.
+  // 3. Pega aquí el link que te entrega Google (termina en output=csv).
+  const REUNIONES_CSV_URL = "PEGA_AQUI_TU_URL_CSV_PUBLICADA";
+
+  function parseCSV(text) {
+    return text.trim().split(/\r?\n/).map(line => {
+      const cells = [];
+      let cur = '', inQuotes = false;
+      for (let i = 0; i < line.length; i++) {
+        const ch = line[i];
+        if (ch === '"') { inQuotes = !inQuotes; }
+        else if (ch === ',' && !inQuotes) { cells.push(cur); cur = ''; }
+        else { cur += ch; }
+      }
+      cells.push(cur);
+      return cells.map(c => c.trim().replace(/^"|"$/g, ''));
+    });
+  }
+
+  let todasLasFilas = [];
+
+  function renderTabla(filtro) {
+    const body = document.getElementById('calBody');
+    body.innerHTML = '';
+    const filtroLower = (filtro || '').trim().toLowerCase();
+
+    const filasFiltradas = todasLasFilas.filter(fila =>
+      !filtroLower || (fila[0] || '').toLowerCase().includes(filtroLower)
+    );
+
+    if (filasFiltradas.length === 0) {
+      body.innerHTML = '<tr><td colspan="14" style="text-align:center; color:var(--gray); padding:20px;">No se encontraron comités con ese nombre.</td></tr>';
+      return;
+    }
+
+    filasFiltradas.forEach(fila => {
+      const tr = document.createElement('tr');
+      for (let i = 0; i < 14; i++) {
+        const td = document.createElement('td');
+        td.textContent = fila[i] || '—';
+        tr.appendChild(td);
+      }
+      body.appendChild(tr);
+    });
+  }
+
+  async function cargarCalendario() {
+    const status = document.getElementById('calStatus');
+    const table = document.getElementById('calTable');
+    const headRow = document.getElementById('calHeadRow');
+
+    if (REUNIONES_CSV_URL.includes('PEGA_AQUI')) {
+      status.classList.add('error');
+      status.textContent = 'El calendario aún no está conectado. Contacta a administración.';
+      return;
+    }
+
+    try {
+      const res = await fetch(REUNIONES_CSV_URL + (REUNIONES_CSV_URL.includes('?') ? '&' : '?') + 't=' + Date.now());
+      const text = await res.text();
+      const rows = parseCSV(text);
+
+      const header = rows[0].slice(0, 14);
+      todasLasFilas = rows.slice(1).filter(r => (r[0] || '').trim() !== '');
+
+      headRow.innerHTML = '';
+      header.forEach(h => {
+        const th = document.createElement('th');
+        th.textContent = h || '';
+        headRow.appendChild(th);
+      });
+
+      renderTabla('');
+      status.style.display = 'none';
+      table.style.display = 'table';
+    } catch (err) {
+      console.error('No se pudo cargar el calendario:', err);
+      status.classList.add('error');
+      status.textContent = 'No se pudo cargar el calendario en este momento. Inténtalo más tarde.';
+    }
+  }
+
+  document.getElementById('calSearch').addEventListener('input', (e) => renderTabla(e.target.value));
+
+  window.addEventListener('DOMContentLoaded', cargarCalendario);
+</script>
+
+</body>
+</html>
