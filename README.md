@@ -396,6 +396,36 @@ en dos pasos"** → ingresas su RUT → se elimina su activación anterior. La
 próxima vez que inicie sesión, se le pedirá activar Google Authenticator
 de nuevo desde cero (con un código QR nuevo).
 
+## 🎂 Cumpleaños de hoy + Calendario
+
+Arriba en el portal aparecen dos tarjetas lado a lado: a la izquierda,
+quién cumple años ese día (si corresponde); a la derecha, un calendario
+del mes actual con el día de hoy resaltado (este no necesita
+configuración, se dibuja solo).
+
+### Cómo conectar los cumpleaños
+
+1. Crea una planilla (Excel o Google Sheets) con dos columnas:
+   ```
+   Nombre | Fecha de cumpleaños
+   ```
+   La fecha puede ser `15/03`, `15/03/1990` o `15-03-1990` — cualquiera
+   de esos formatos funciona igual (el sitio solo lee el día y el mes,
+   ignora el año).
+2. Si la hiciste en Excel, súbela a Google Drive y ábrela con Google
+   Sheets (clic derecho → Abrir con → Google Sheets).
+3. Publícala como CSV: **Archivo → Compartir → Publicar en la Web** →
+   elige la hoja → formato **"Valores separados por comas (.csv)"** →
+   Publicar → copia el link (termina en `output=csv`).
+4. En GitHub, abre `dashboard.html` → busca (Ctrl+F):
+   ```javascript
+   const CUMPLEANOS_CSV_URL = "PEGA_AQUI_TU_URL_CSV_PUBLICADA";
+   ```
+5. Reemplaza el texto entre comillas por ese link → "Commit changes".
+
+Listo — cada mañana, si alguien cumple años ese día, aparece
+automáticamente arriba del portal para todos los funcionarios.
+
 ## ⚠️ Pendiente antes de publicar oficialmente
 
 Este es un **borrador de diseño**. Antes de lanzarlo como sitio oficial del
