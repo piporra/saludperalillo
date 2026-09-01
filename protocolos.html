@@ -127,16 +127,71 @@
 
 <script src="assets/auth-guard.js"></script>
 <script>
-  // ===== Lista de protocolos por categoría (PDF alojados en este mismo repositorio) =====
-  // La lista de protocolos vive en assets/protocolos-lista.json — para
-  // agregar uno nuevo: sube el PDF a assets/protocolos/<categoría>/ y
-  // agrega una línea a ese archivo JSON (ver instrucciones en el README).
-  const PROTOCOLOS_JSON_URL = "assets/protocolos-lista.json";
+  // ===== Lista de protocolos (leída EN VIVO desde la estructura de carpetas de GitHub) =====
+  // No hay que mantener ninguna lista a mano: el sitio recorre automáticamente
+  // las carpetas y subcarpetas dentro de assets/protocolos/ en tu repositorio.
+  // Para agregar un protocolo nuevo: solo sube el PDF a la carpeta que
+  // corresponda (o crea una subcarpeta nueva) — aparece solo, sin tocar código.
+  const GITHUB_OWNER = "piporra";
+  const GITHUB_REPO = "saludperalillo";
+  const GITHUB_BRANCH = "main";
+  const ROOT_PATH = "assets/protocolos";
 
-  let todosLosProtocolos = []; // { categoria, nombre, archivo }
+  // Nombres bonitos para las carpetas de categoría (coincide con el nombre
+  // de carpeta en minúsculas-con-guiones). Si creas una categoría nueva que
+  // no está aquí, se muestra igual, solo que con el nombre de carpeta tal cual.
+  const NOMBRES_CATEGORIA = {
+    "ambito-acceso-oportunidad-y-continuidad": "Ámbito Acceso Oportunidad y Continuidad",
+    "ambito-competencias-recurso-humano": "Ámbito Competencias Recurso Humano",
+    "ambito-dignidad-paciente": "Ámbito Dignidad Paciente",
+    "ambito-gestion-clinica": "Ámbito Gestión Clínica",
+    "ambito-gestion-de-la-calidad": "Ámbito Gestión de la Calidad",
+    "ambito-registros": "Ámbito Registros",
+    "ambito-seguridad-de-las-instalaciones": "Ámbito Seguridad de las Instalaciones",
+    "ambito-seguridad-del-equipamiento": "Ámbito Seguridad del Equipamiento",
+    "apoyo": "Apoyo",
+    "indicadores-por-unidades": "Indicadores por Unidades",
+    "plan-institucional-de-emergencia": "Plan Institucional de Emergencia",
+    "protocolo-trato-usuario-institucional": "Protocolo Trato Usuario Institucional"
+  };
+
+  let todosLosProtocolos = []; // { categoria, subcarpeta, nombre, archivo }
 
   function iconoProtocolo() {
     return '<div class="icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 13h6M9 17h6M9 9h1"/></svg></div>';
+  }
+
+  async function listarCarpetaGitHub(path) {
+    const url = 'https://api.github.com/repos/' + GITHUB_OWNER + '/' + GITHUB_REPO +
+      '/contents/' + path.split('/').map(encodeURIComponent).join('/') + '?ref=' + GITHUB_BRANCH;
+    const res = await fetch(url);
+    if (!res.ok) {
+      if (res.status === 403) throw new Error('LIMITE_API');
+      throw new Error('No se pudo listar ' + path);
+    }
+    return res.json();
+  }
+
+  // Recorre una carpeta de forma recursiva. "etiquetaSubcarpeta" va
+  // acumulando el nombre de las subcarpetas por las que va bajando
+  // (ej: "RH 1.2 CAT B-C / ENFERMERAS TITULARES").
+  async function recorrerCarpeta(path, etiquetaSubcarpeta) {
+    const items = await listarCarpetaGitHub(path);
+    let resultado = [];
+    for (const item of items) {
+      if (item.type === 'file' && /\.pdf$/i.test(item.name)) {
+        resultado.push({
+          subcarpeta: etiquetaSubcarpeta,
+          nombre: item.name.replace(/\.pdf$/i, ''),
+          archivo: item.path
+        });
+      } else if (item.type === 'dir') {
+        const nuevaEtiqueta = etiquetaSubcarpeta ? etiquetaSubcarpeta + ' / ' + item.name : item.name;
+        const sub = await recorrerCarpeta(item.path, nuevaEtiqueta);
+        resultado = resultado.concat(sub);
+      }
+    }
+    return resultado;
   }
 
   function renderLista(filtro) {
@@ -165,7 +220,7 @@
     function crearItemPDF(p) {
       const a = document.createElement('a');
       a.className = 'proto-item';
-      a.href = p.archivo;
+      a.href = encodeURI(p.archivo);
       a.target = '_blank';
       a.rel = 'noopener';
       a.innerHTML = iconoProtocolo() + '<div class="info"><h3>' + p.nombre + '</h3></div><span class="go">Ver / Descargar →</span>';
@@ -224,7 +279,6 @@
           e.stopPropagation();
           const abierta = subWrap.classList.toggle('open');
           subBody.style.maxHeight = abierta ? subBody.scrollHeight + 'px' : null;
-          // recalcula el alto del contenedor padre para que no se corte
           if (wrap.classList.contains('open')) body.style.maxHeight = body.scrollHeight + 'px';
         });
 
@@ -251,12 +305,38 @@
     const status = document.getElementById('protoStatus');
     const list = document.getElementById('protoList');
 
+    // Guarda en caché por 10 minutos para no golpear la API de GitHub
+    // cada vez que alguien entra a la página.
+    const CACHE_KEY = 'protocolos-cache-v1';
+    const CACHE_MS = 10 * 60 * 1000;
     try {
-      const res = await fetch(PROTOCOLOS_JSON_URL + '?t=' + Date.now());
-      if (!res.ok) throw new Error('No se encontró assets/protocolos-lista.json');
-      const data = await res.json();
+      const cache = JSON.parse(sessionStorage.getItem(CACHE_KEY) || 'null');
+      if (cache && (Date.now() - cache.t) < CACHE_MS) {
+        todosLosProtocolos = cache.data;
+        renderLista('');
+        status.style.display = 'none';
+        list.style.display = 'flex';
+        return;
+      }
+    } catch (e) { /* ignora errores de caché */ }
 
-      todosLosProtocolos = data.filter(p => p.categoria && p.nombre && p.archivo);
+    try {
+      const categoriasDirs = await listarCarpetaGitHub(ROOT_PATH);
+      let todos = [];
+
+      for (const catDir of categoriasDirs) {
+        if (catDir.type !== 'dir') continue;
+        const nombreBonito = NOMBRES_CATEGORIA[catDir.name] || catDir.name;
+        const archivos = await recorrerCarpeta(catDir.path, '');
+        archivos.forEach(a => a.categoria = nombreBonito);
+        todos = todos.concat(archivos);
+      }
+
+      todosLosProtocolos = todos;
+
+      try {
+        sessionStorage.setItem(CACHE_KEY, JSON.stringify({ t: Date.now(), data: todos }));
+      } catch (e) { /* si sessionStorage falla, no pasa nada grave */ }
 
       if (todosLosProtocolos.length === 0) {
         status.textContent = 'Aún no hay protocolos cargados.';
@@ -269,7 +349,11 @@
     } catch (err) {
       console.error('No se pudo cargar la lista de protocolos:', err);
       status.classList.add('error');
-      status.textContent = 'No se pudo cargar la lista en este momento. Revisa assets/protocolos-lista.json.';
+      if (err.message === 'LIMITE_API') {
+        status.textContent = 'Se alcanzó el límite temporal de consultas. Inténtalo de nuevo en unos minutos.';
+      } else {
+        status.textContent = 'No se pudo cargar la lista en este momento.';
+      }
     }
   }
 
