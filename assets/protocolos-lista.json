@@ -1,25 +1,75 @@
+
 [
-  { "categoria": "Ámbito Acceso Oportunidad y Continuidad", "nombre": "Nombre del protocolo", "archivo": "assets/protocolos/ambito-acceso-oportunidad-y-continuidad/nombre-del-archivo.pdf" },
-
-  { "categoria": "Ámbito Competencias Recurso Humano", "nombre": "Nombre del protocolo", "archivo": "assets/protocolos/ambito-competencias-recurso-humano/nombre-del-archivo.pdf" },
-
-  { "categoria": "Ámbito Dignidad Paciente", "nombre": "Nombre del protocolo", "archivo": "assets/protocolos/ambito-dignidad-paciente/nombre-del-archivo.pdf" },
-
-  { "categoria": "Ámbito Gestión Clínica", "nombre": "Nombre del protocolo", "archivo": "assets/protocolos/ambito-gestion-clinica/nombre-del-archivo.pdf" },
-
-  { "categoria": "Ámbito Gestión de la Calidad", "nombre": "Nombre del protocolo", "archivo": "assets/protocolos/ambito-gestion-de-la-calidad/nombre-del-archivo.pdf" },
-
-  { "categoria": "Ámbito Registros", "nombre": "Nombre del protocolo", "archivo": "assets/protocolos/ambito-registros/nombre-del-archivo.pdf" },
-
-  { "categoria": "Ámbito Seguridad de las Instalaciones", "nombre": "Nombre del protocolo", "archivo": "assets/protocolos/ambito-seguridad-de-las-instalaciones/nombre-del-archivo.pdf" },
-
-  { "categoria": "Ámbito Seguridad del Equipamiento", "nombre": "Nombre del protocolo", "archivo": "assets/protocolos/ambito-seguridad-del-equipamiento/nombre-del-archivo.pdf" },
-
-  { "categoria": "Apoyo", "nombre": "Nombre del protocolo", "archivo": "assets/protocolos/apoyo/nombre-del-archivo.pdf" },
-
-  { "categoria": "Indicadores por Unidades", "nombre": "Nombre del protocolo", "archivo": "assets/protocolos/indicadores-por-unidades/nombre-del-archivo.pdf" },
-
-  { "categoria": "Plan Institucional de Emergencia", "nombre": "Nombre del protocolo", "archivo": "assets/protocolos/plan-institucional-de-emergencia/nombre-del-archivo.pdf" },
-
-  { "categoria": "Protocolo Trato Usuario Institucional", "nombre": "Nombre del protocolo", "archivo": "assets/protocolos/protocolo-trato-usuario-institucional/nombre-del-archivo.pdf" }
+  {
+    "categoria": "Ámbito Acceso Oportunidad y Continuidad",
+    "subcarpeta": "",
+    "nombre": "Nombre del protocolo",
+    "archivo": "assets/protocolos/ambito-acceso-oportunidad-y-continuidad/nombre-del-archivo.pdf"
+  },
+  {
+    "categoria": "Ámbito Competencias Recurso Humano",
+    "subcarpeta": "",
+    "nombre": "Nombre del protocolo",
+    "archivo": "assets/protocolos/ambito-competencias-recurso-humano/nombre-del-archivo.pdf"
+  },
+  {
+    "categoria": "Ámbito Dignidad Paciente",
+    "subcarpeta": "",
+    "nombre": "Nombre del protocolo",
+    "archivo": "assets/protocolos/ambito-dignidad-paciente/nombre-del-archivo.pdf"
+  },
+  {
+    "categoria": "Ámbito Gestión Clínica",
+    "subcarpeta": "Nombre de la subcarpeta",
+    "nombre": "Nombre del protocolo",
+    "archivo": "assets/protocolos/ambito-gestion-clinica/nombre-de-la-subcarpeta/nombre-del-archivo.pdf"
+  },
+  {
+    "categoria": "Ámbito Gestión de la Calidad",
+    "subcarpeta": "",
+    "nombre": "Nombre del protocolo",
+    "archivo": "assets/protocolos/ambito-gestion-de-la-calidad/nombre-del-archivo.pdf"
+  },
+  {
+    "categoria": "Ámbito Registros",
+    "subcarpeta": "",
+    "nombre": "Nombre del protocolo",
+    "archivo": "assets/protocolos/ambito-registros/nombre-del-archivo.pdf"
+  },
+  {
+    "categoria": "Ámbito Seguridad de las Instalaciones",
+    "subcarpeta": "",
+    "nombre": "Nombre del protocolo",
+    "archivo": "assets/protocolos/ambito-seguridad-de-las-instalaciones/nombre-del-archivo.pdf"
+  },
+  {
+    "categoria": "Ámbito Seguridad del Equipamiento",
+    "subcarpeta": "",
+    "nombre": "Nombre del protocolo",
+    "archivo": "assets/protocolos/ambito-seguridad-del-equipamiento/nombre-del-archivo.pdf"
+  },
+  {
+    "categoria": "Apoyo",
+    "subcarpeta": "",
+    "nombre": "Nombre del protocolo",
+    "archivo": "assets/protocolos/apoyo/nombre-del-archivo.pdf"
+  },
+  {
+    "categoria": "Indicadores por Unidades",
+    "subcarpeta": "",
+    "nombre": "Nombre del protocolo",
+    "archivo": "assets/protocolos/indicadores-por-unidades/nombre-del-archivo.pdf"
+  },
+  {
+    "categoria": "Plan Institucional de Emergencia",
+    "subcarpeta": "",
+    "nombre": "Nombre del protocolo",
+    "archivo": "assets/protocolos/plan-institucional-de-emergencia/nombre-del-archivo.pdf"
+  },
+  {
+    "categoria": "Protocolo Trato Usuario Institucional",
+    "subcarpeta": "",
+    "nombre": "Nombre del protocolo",
+    "archivo": "assets/protocolos/protocolo-trato-usuario-institucional/nombre-del-archivo.pdf"
+  }
 ]
