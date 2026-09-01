@@ -161,37 +161,18 @@
     return '<div class="icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 13h6M9 17h6M9 9h1"/></svg></div>';
   }
 
-  async function listarCarpetaGitHub(path) {
+  // Trae TODA la estructura de archivos del repositorio en una sola consulta
+  // (el "árbol" completo), en vez de ir carpeta por carpeta — así no importa
+  // cuántas subcarpetas tengas, siempre es 1 sola llamada a GitHub.
+  async function obtenerArbolCompleto() {
     const url = 'https://api.github.com/repos/' + GITHUB_OWNER + '/' + GITHUB_REPO +
-      '/contents/' + path.split('/').map(encodeURIComponent).join('/') + '?ref=' + GITHUB_BRANCH;
+      '/git/trees/' + GITHUB_BRANCH + '?recursive=1';
     const res = await fetch(url);
     if (!res.ok) {
       if (res.status === 403) throw new Error('LIMITE_API');
-      throw new Error('No se pudo listar ' + path);
+      throw new Error('No se pudo leer el repositorio');
     }
     return res.json();
-  }
-
-  // Recorre una carpeta de forma recursiva. "etiquetaSubcarpeta" va
-  // acumulando el nombre de las subcarpetas por las que va bajando
-  // (ej: "RH 1.2 CAT B-C / ENFERMERAS TITULARES").
-  async function recorrerCarpeta(path, etiquetaSubcarpeta) {
-    const items = await listarCarpetaGitHub(path);
-    let resultado = [];
-    for (const item of items) {
-      if (item.type === 'file' && /\.pdf$/i.test(item.name)) {
-        resultado.push({
-          subcarpeta: etiquetaSubcarpeta,
-          nombre: item.name.replace(/\.pdf$/i, ''),
-          archivo: item.path
-        });
-      } else if (item.type === 'dir') {
-        const nuevaEtiqueta = etiquetaSubcarpeta ? etiquetaSubcarpeta + ' / ' + item.name : item.name;
-        const sub = await recorrerCarpeta(item.path, nuevaEtiqueta);
-        resultado = resultado.concat(sub);
-      }
-    }
-    return resultado;
   }
 
   function renderLista(filtro) {
@@ -321,16 +302,25 @@
     } catch (e) { /* ignora errores de caché */ }
 
     try {
-      const categoriasDirs = await listarCarpetaGitHub(ROOT_PATH);
-      let todos = [];
+      const arbol = await obtenerArbolCompleto();
+      const items = arbol.tree || [];
+      const prefijo = ROOT_PATH + '/';
 
-      for (const catDir of categoriasDirs) {
-        if (catDir.type !== 'dir') continue;
-        const nombreBonito = NOMBRES_CATEGORIA[catDir.name] || catDir.name;
-        const archivos = await recorrerCarpeta(catDir.path, '');
-        archivos.forEach(a => a.categoria = nombreBonito);
-        todos = todos.concat(archivos);
-      }
+      const todos = items
+        .filter(item => item.type === 'blob' && item.path.startsWith(prefijo) && /\.pdf$/i.test(item.path))
+        .map(item => {
+          const relativo = item.path.slice(prefijo.length); // ej: "ambito-.../RH 1.2 CAT B-C/ENFERMERAS TITULARES/CATALINA SAAVEDRA.pdf"
+          const partes = relativo.split('/');
+          const categoriaSlug = partes[0];
+          const nombreArchivo = partes[partes.length - 1];
+          const subcarpeta = partes.slice(1, -1).join(' / ');
+          return {
+            categoria: NOMBRES_CATEGORIA[categoriaSlug] || categoriaSlug,
+            subcarpeta: subcarpeta,
+            nombre: nombreArchivo.replace(/\.pdf$/i, ''),
+            archivo: item.path
+          };
+        });
 
       todosLosProtocolos = todos;
 
