@@ -118,8 +118,14 @@
     }
 
     factorId = data.id;
-    document.getElementById('qrContainer').innerHTML =
-      '<img src="' + data.totp.qr_code + '" alt="Código QR" style="width:180px;height:180px;">';
+    const qrImg = document.createElement('img');
+    qrImg.src = data.totp.qr_code;
+    qrImg.alt = 'Código QR';
+    qrImg.style.width = '180px';
+    qrImg.style.height = '180px';
+    const qrContainer = document.getElementById('qrContainer');
+    qrContainer.innerHTML = '';
+    qrContainer.appendChild(qrImg);
     document.getElementById('secretBox').textContent = data.totp.secret;
 
     document.getElementById('stepCargando').style.display = 'none';
