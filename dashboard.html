@@ -21,7 +21,7 @@
   p{margin:0 0 1em; color:var(--gray);}
   a{color:var(--teal-deep);}
   .container{max-width:900px; margin:0 auto; padding:0 24px;}
- 
+
   header.site-header{background:#fff; border-bottom:1px solid var(--line);}
   .site-header .container{display:flex; align-items:center; justify-content:space-between; padding:16px 24px; max-width:1180px;}
   .brand{display:flex; align-items:center; gap:12px; text-decoration:none;}
@@ -31,14 +31,14 @@
   .header-right{display:flex; align-items:center; gap:16px; font-size:.85rem; color:var(--gray);}
   .header-right a{color:var(--teal-deep); text-decoration:none; font-weight:700;}
   .header-right a:hover{text-decoration:underline;}
- 
+
   main{padding:56px 0 80px;}
   .page-head{text-align:center; margin-bottom:40px;}
   .page-head .eyebrow{color:var(--gold); font-weight:700; text-transform:uppercase; letter-spacing:.07em; font-size:.8rem;}
   .page-head h1{font-size:1.8rem;}
- 
+
   .options-grid{display:grid; grid-template-columns:1fr 1fr 1fr; gap:24px;}
- 
+
   /* ===== Días administrativos ===== */
   .perm-card{
     background:#fff; border:1px solid var(--line); border-radius:var(--radius); padding:26px 28px;
@@ -65,7 +65,7 @@
   .option-card h2{font-family:var(--font-head); color:var(--teal-deep); font-size:1.15rem; margin:4px 0 2px;}
   .option-card p{font-size:.92rem; margin:0; color:var(--gray);}
   .option-card .go{font-size:.85rem; font-weight:700; color:var(--gold); margin-top:auto;}
- 
+
   @media (max-width:900px){
     .options-grid{grid-template-columns:1fr 1fr;}
   }
@@ -75,7 +75,7 @@
 </style>
 </head>
 <body>
- 
+
 <header class="site-header">
   <div class="container">
     <a href="index.html" class="brand">
@@ -92,14 +92,14 @@
     </div>
   </div>
 </header>
- 
+
 <main>
   <div class="container">
     <div class="page-head">
       <span class="eyebrow">Portal de funcionarios</span>
       <h1>¿Qué necesitas hacer hoy?</h1>
     </div>
- 
+
     <div class="perm-card" id="permCard" style="display:none;">
       <h2>🗓️ Tus días administrativos</h2>
       <p class="perm-sub">Permisos administrativos disponibles este año.</p>
@@ -110,7 +110,7 @@
       </div>
       <p class="perm-state" id="permState"></p>
     </div>
- 
+
     <div class="options-grid">
       <a class="option-card" href="certificado-compras.html">
         <div class="icon" aria-hidden="true">
@@ -120,7 +120,7 @@
         <p>Certifica la recepción de compras, licitaciones o prestaciones de servicio y genera el Excel oficial.</p>
         <span class="go">Abrir formulario →</span>
       </a>
- 
+
       <a class="option-card" href="solicitud-servicio.html">
         <div class="icon" aria-hidden="true">
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 15h6"/><path d="M9 11h2"/></svg>
@@ -129,7 +129,7 @@
         <p>Reporta requerimientos de insumos, electricidad, informática y más.</p>
         <span class="go">Abrir formulario →</span>
       </a>
- 
+
       <a class="option-card" href="reuniones.html">
         <div class="icon" aria-hidden="true">
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
@@ -138,7 +138,7 @@
         <p>Revisa las fechas de reuniones de todos los comités y equipos del CESFAM durante el año.</p>
         <span class="go">Ver calendario →</span>
       </a>
- 
+
       <a class="option-card" href="protocolos.html">
         <div class="icon" aria-hidden="true">
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 13h6M9 17h6M9 9h1"/></svg>
@@ -147,10 +147,28 @@
         <p>Revisa y descarga los protocolos vigentes que debe tener cada funcionario.</p>
         <span class="go">Ver protocolos →</span>
       </a>
+
+      <a class="option-card" href="cometido.html">
+        <div class="icon" aria-hidden="true">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3v2M15 3v2M4 8h16M6 5h12a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z"/><path d="M9 13l2 2 4-4"/></svg>
+        </div>
+        <h2>Cometido</h2>
+        <p>Genera un cometido para actividades fuera del CESFAM, con los datos y el detalle del encargo.</p>
+        <span class="go">Generar PDF →</span>
+      </a>
+
+      <a class="option-card" href="solicitud-curso.html">
+        <div class="icon" aria-hidden="true">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5-10-5z"/><path d="M6 12v5c0 1.1 2.7 2 6 2s6-.9 6-2v-5"/></svg>
+        </div>
+        <h2>Solicitud para asistir a curso</h2>
+        <p>Pide autorización para asistir a un curso, taller o diplomado.</p>
+        <span class="go">Generar PDF →</span>
+      </a>
     </div>
   </div>
 </main>
- 
+
 <script src="assets/auth-guard.js"></script>
 <script>
   // ===== Días administrativos (hoja individual por funcionario) =====
@@ -162,7 +180,7 @@
   // etiqueta "SALDO ACTUAL DE DÍAS ADMINISTRATIVOS" — el sitio busca esa
   // fila y lee el número desde ahí, sin importar en qué línea esté.
   const DIAS_TOTALES = 6;
- 
+
   function parseCSV(text) {
     return text.trim().split(/\r?\n/).map(line => {
       const cells = [];
@@ -177,7 +195,7 @@
       return cells.map(c => c.trim().replace(/^"|"$/g, ''));
     });
   }
- 
+
   // Interpreta valores como "2", "1 ½", "½", "1.5" o "1,5" y los convierte
   // siempre a número decimal (1 ½ → 1.5).
   function parseDias(valor) {
@@ -191,7 +209,7 @@
     const base = parseFloat(str.replace(',', '.')) || 0;
     return base + extra;
   }
- 
+
   // Hace el camino inverso: 1.5 → "1 ½", 0.5 → "½", 2 → "2" (para mostrarlo
   // en el mismo formato que usa la plantilla, no como decimal).
   function formatDias(num) {
@@ -200,20 +218,20 @@
     if (tieneMedio) return (entero > 0 ? entero + ' ' : '') + '½';
     return String(entero);
   }
- 
+
   async function cargarDiasAdministrativos() {
     const card = document.getElementById('permCard');
     const fill = document.getElementById('permBarFill');
     const numEl = document.getElementById('permDisponibles');
     const stateEl = document.getElementById('permState');
- 
+
     try {
       const supabase = getSupabaseClient();
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
- 
+
       const hojaUrl = session.user.user_metadata && session.user.user_metadata.hoja_dias_url;
- 
+
       if (!hojaUrl) {
         card.style.display = 'block';
         numEl.textContent = '–';
@@ -221,31 +239,31 @@
         stateEl.textContent = 'Aún no se ha vinculado tu hoja de días administrativos. Consulta con administración.';
         return;
       }
- 
+
       const res = await fetch(hojaUrl + (hojaUrl.includes('?') ? '&' : '?') + 't=' + Date.now());
       const text = await res.text();
       const rows = parseCSV(text);
- 
+
       // Busca la fila cuya primera columna diga "SALDO ACTUAL..." y toma
       // el valor de la columna D (misma fila que en la plantilla oficial).
       // Admite días completos y medios días (ej: "1 ½", "½", "2").
       const filaSaldo = rows.find(r => (r[0] || '').toUpperCase().includes('SALDO ACTUAL'));
       const disponibles = filaSaldo ? parseDias(filaSaldo[3]) : null;
- 
+
       if (disponibles === null) {
         card.style.display = 'block';
         stateEl.textContent = 'No se encontró la celda de saldo en tu hoja. Revisa que uses la plantilla oficial.';
         return;
       }
- 
+
       const porcentaje = Math.max(0, Math.min(100, (disponibles / DIAS_TOTALES) * 100));
       const usados = DIAS_TOTALES - disponibles;
- 
+
       card.style.display = 'block';
       numEl.textContent = formatDias(disponibles);
       fill.style.width = porcentaje + '%';
       stateEl.textContent = formatDias(usados) + ' de ' + DIAS_TOTALES + ' ya utilizados este año.';
- 
+
       if (disponibles <= 0) {
         fill.style.background = '#B33A3A';
         stateEl.textContent = 'Ya utilizaste todos tus días administrativos este año.';
@@ -256,10 +274,9 @@
       stateEl.textContent = 'No se pudo cargar tu hoja en este momento.';
     }
   }
- 
+
   window.addEventListener('DOMContentLoaded', cargarDiasAdministrativos);
 </script>
- 
+
 </body>
 </html>
- 

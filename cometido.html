@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cometido — CESFAM Peralillo</title>
+<link rel="icon" type="image/jpeg" href="assets/logo-cesfam.jpeg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/supabase-config.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  :root{
+    --teal-deep:#0A3D73; --teal:#1B7FC2; --teal-light:#E7F2FB; --sky:#F4FAFE;
+    --gold:#12A6D6; --ink:#1C2B36; --gray:#5A6B78; --line:#DCE7F0; --radius:16px;
+    --font-head:'Poppins', sans-serif; --font-body:'Atkinson Hyperlegible', system-ui, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; font-family:var(--font-body); color:var(--ink); background:var(--teal-light); line-height:1.6; font-size:16px;}
+  h1{font-family:var(--font-head); color:var(--teal-deep); margin:0 0 6px;}
+  p{margin:0 0 1em; color:var(--gray);}
+  a{color:var(--teal-deep);}
+  .container{max-width:760px; margin:0 auto; padding:0 24px;}
+
+  header.site-header{background:#fff; border-bottom:1px solid var(--line);}
+  .site-header .container{max-width:1180px; display:flex; align-items:center; justify-content:space-between; padding:16px 24px; flex-wrap:wrap; gap:10px;}
+  .brand{display:flex; align-items:center; gap:12px; text-decoration:none;}
+  .brand-logo{width:48px; height:48px; border-radius:50%; object-fit:cover; border:1.5px solid var(--line);}
+  .brand-text .eyebrow{display:block; font-size:.7rem; letter-spacing:.07em; text-transform:uppercase; color:var(--teal); font-weight:700;}
+  .brand-text .name{font-family:var(--font-head); font-weight:700; font-size:1.1rem; color:var(--teal-deep);}
+  .header-right{display:flex; align-items:center; gap:16px; font-size:.85rem; color:var(--gray);}
+  .header-right a{color:var(--teal-deep); text-decoration:none; font-weight:700;}
+  .header-right a:hover{text-decoration:underline;}
+
+  main{padding:40px 0 70px;}
+  .page-head{text-align:center; margin-bottom:28px;}
+  .page-head .eyebrow{color:var(--gold); font-weight:700; text-transform:uppercase; letter-spacing:.07em; font-size:.8rem;}
+  .page-head h1{font-size:1.6rem;}
+
+  form{background:#fff; border:1px solid var(--line); border-radius:var(--radius); padding:30px; box-shadow:0 20px 50px rgba(10,61,115,.08);}
+  fieldset{border:1.5px solid var(--line); border-radius:10px; padding:16px 18px; margin:0 0 18px;}
+  legend{font-weight:700; color:var(--teal-deep); padding:0 8px; font-size:.95rem; font-family:var(--font-head);}
+  label{display:block; font-weight:700; font-size:.9rem; margin-bottom:6px; color:var(--teal-deep);}
+  input, textarea{width:100%; padding:11px 13px; border:1.5px solid var(--line); border-radius:10px; margin-bottom:16px; font-family:var(--font-body); font-size:.95rem;}
+  textarea{min-height:90px; resize:vertical;}
+  .form-grid{display:grid; grid-template-columns:1fr 1fr; gap:0 20px;}
+  .form-grid-3{display:grid; grid-template-columns:1fr 1fr 1fr; gap:0 16px;}
+  .checks{display:flex; flex-direction:column; gap:10px; margin-bottom:6px;}
+  .checks label{display:flex; align-items:center; gap:10px; font-weight:400; color:var(--ink); margin-bottom:0;}
+  .checks input[type="checkbox"]{width:auto; margin:0;}
+
+  .btn{display:inline-block; text-decoration:none; font-weight:700; padding:14px 26px; border-radius:999px; font-family:var(--font-body); font-size:1rem; border:none; cursor:pointer;}
+  .btn-primary{background:var(--gold); color:#fff; width:100%; font-size:1.05rem; padding:16px;}
+  .btn-primary:hover{background:#0E86AC;}
+  .btn-primary:disabled{opacity:.6; cursor:not-allowed;}
+  #status{margin-top:12px; font-size:.9rem; text-align:center;}
+
+  @media (max-width:600px){
+    .form-grid, .form-grid-3{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="container">
+    <a href="index.html" class="brand">
+      <img class="brand-logo" src="assets/logo-cesfam.jpeg" alt="Logo CESFAM Peralillo">
+      <span class="brand-text">
+        <span class="eyebrow">Servicio de Salud O'Higgins</span>
+        <span class="name">CESFAM Peralillo</span>
+      </span>
+    </a>
+    <div class="header-right">
+      <span>👤 <span id="auth-user-name"></span></span>
+      <a href="dashboard.html">← Volver al portal</a>
+      <a href="#" onclick="cerrarSesion(); return false;">Cerrar sesión</a>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="container">
+    <div class="page-head">
+      <span class="eyebrow">Área funcionarios</span>
+      <h1>Cometido</h1>
+      <p>Completa los datos del cometido. Al generar el PDF, las secciones de informe, autorización y firmas quedan en blanco para completarse a mano.</p>
+    </div>
+
+    <form id="cometidoForm">
+      <fieldset>
+        <legend>Datos del funcionario</legend>
+        <div class="form-grid">
+          <div><label for="c-nombre">Nombre completo</label><input type="text" id="c-nombre" required></div>
+          <div><label for="c-rut">RUT</label><input type="text" id="c-rut" placeholder="12.345.678-9" required></div>
+        </div>
+        <label for="c-cargo">Cargo</label>
+        <input type="text" id="c-cargo" required>
+      </fieldset>
+
+      <fieldset>
+        <legend>Detalle del cometido</legend>
+        <div class="form-grid-3">
+          <div><label for="c-dia">Día</label><input type="date" id="c-dia" required></div>
+          <div><label for="c-desde">Desde (hrs.)</label><input type="time" id="c-desde" required></div>
+          <div><label for="c-hasta">Hasta (hrs.)</label><input type="time" id="c-hasta" required></div>
+        </div>
+        <label for="c-detalle">Cometido (descripción)</label>
+        <textarea id="c-detalle" required></textarea>
+      </fieldset>
+
+      <fieldset>
+        <legend>Requiere</legend>
+        <div class="checks">
+          <label><input type="checkbox" id="c-req-horas"> Pago de horas extras</label>
+          <label><input type="checkbox" id="c-req-viatico"> Pago de viático</label>
+          <label><input type="checkbox" id="c-req-colacion"> Pago de colación</label>
+          <label><input type="checkbox" id="c-req-pasajes"> Pago de pasajes</label>
+          <label><input type="checkbox" id="c-req-vehiculo"> Uso de vehículo</label>
+          <label><input type="checkbox" id="c-req-patente"> Patente</label>
+        </div>
+        <label for="c-patente-num" style="font-weight:400; font-size:.85rem;">N° de patente (si corresponde)</label>
+        <input type="text" id="c-patente-num">
+      </fieldset>
+
+      <button type="submit" class="btn btn-primary" id="genBtn">📥 Generar y descargar PDF</button>
+      <p id="status"></p>
+    </form>
+  </div>
+</main>
+
+<script src="assets/auth-guard.js"></script>
+<script>
+  const { jsPDF } = window.jspdf;
+
+  document.getElementById('cometidoForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    const status = document.getElementById('status');
+    const btn = document.getElementById('genBtn');
+
+    const val = id => document.getElementById(id).value.trim();
+    const chk = id => document.getElementById(id).checked;
+    const fmtFecha = iso => {
+      if (!iso) return '_____/_____/______';
+      const [y, m, d] = iso.split('-');
+      return d + '/' + m + '/' + y;
+    };
+    const fmtHora = t => t || '______';
+
+    const d = {
+      nombre: val('c-nombre'), rut: val('c-rut'), cargo: val('c-cargo'),
+      dia: fmtFecha(val('c-dia')), desde: fmtHora(val('c-desde')), hasta: fmtHora(val('c-hasta')),
+      detalle: val('c-detalle'),
+      horas: chk('c-req-horas'), viatico: chk('c-req-viatico'), colacion: chk('c-req-colacion'),
+      pasajes: chk('c-req-pasajes'), vehiculo: chk('c-req-vehiculo'), patente: chk('c-req-patente'),
+      patenteNum: val('c-patente-num')
+    };
+
+    btn.disabled = true;
+    status.style.color = 'var(--gray)';
+    status.textContent = 'Generando PDF...';
+
+    try {
+      const doc = new jsPDF({ unit: 'mm', format: 'letter' });
+      const pageW = doc.internal.pageSize.getWidth();
+      const marginL = 18, marginR = 18;
+      const usableW = pageW - marginL - marginR;
+      let y = 18;
+
+      doc.setFont('times', 'bold');
+      doc.setFontSize(11);
+      doc.text('ILUSTRE MUNICIPALIDAD DE PERALILLO', marginL, y);
+      y += 6;
+      doc.text('DEPARTAMENTO DE SALUD MUNICIPAL', marginL, y);
+      y += 12;
+
+      doc.setFontSize(16);
+      doc.text('C O M E T I D O', pageW / 2, y, { align: 'center' });
+      y += 12;
+
+      doc.setFont('times', 'normal');
+      doc.setFontSize(11);
+
+      function campo(label, valor, x, yPos, labelW) {
+        doc.setFont('times', 'bold');
+        doc.text(label, x, yPos);
+        doc.setFont('times', 'normal');
+        doc.text(valor || '', x + labelW, yPos);
+      }
+
+      campo('FECHA:', new Date().toLocaleDateString('es-CL'), marginL, y, 18);
+      y += 8;
+      campo('NOMBRE:', d.nombre, marginL, y, 22);
+      y += 8;
+      campo('RUT:', d.rut, marginL, y, 22);
+      doc.setFont('times', 'bold');
+      doc.text('CARGO:', marginL + 90, y);
+      doc.setFont('times', 'normal');
+      doc.text(d.cargo || '', marginL + 90 + 20, y);
+      y += 10;
+
+      const parrafo = 'El Director designa al funcionario(a) para el día ' + d.dia + ' a contar de las ' + d.desde + ' Hrs., hasta las ' + d.hasta + ' hrs., para que cumpla con el siguiente cometido:';
+      const parrafoLines = doc.splitTextToSize(parrafo, usableW);
+      doc.text(parrafoLines, marginL, y);
+      y += parrafoLines.length * 5.5 + 4;
+
+      doc.setFont('times', 'bold');
+      doc.text('COMETIDO:', marginL, y);
+      y += 6;
+      doc.setFont('times', 'normal');
+      const detalleLines = doc.splitTextToSize(d.detalle, usableW);
+      doc.text(detalleLines, marginL, y);
+      y += detalleLines.length * 5.5 + 8;
+
+      doc.setFont('times', 'bold');
+      doc.text('REQUIERE:', marginL, y);
+      y += 7;
+      doc.setFont('times', 'normal');
+
+      function marca(activo) { return activo ? '[X]' : '[   ]'; }
+
+      const requiere = [
+        [marca(d.horas) + '  PAGO DE HORAS EXTRAS', marca(d.viatico) + '  PAGO DE VIÁTICO'],
+        [marca(d.colacion) + '  PAGO DE COLACIÓN', marca(d.pasajes) + '  PAGO DE PASAJES'],
+        [marca(d.vehiculo) + '  USO DE VEHÍCULO', marca(d.patente) + '  PATENTE' + (d.patenteNum ? ' (' + d.patenteNum + ')' : '')]
+      ];
+      requiere.forEach(fila => {
+        doc.text(fila[0], marginL + 4, y);
+        doc.text(fila[1], marginL + 95, y);
+        y += 7;
+      });
+      y += 6;
+
+      // ===== Secciones para completar a mano =====
+      doc.setFont('times', 'bold');
+      doc.text('INFORME DEL JEFE DIRECTO', marginL, y);
+      y += 6;
+      doc.setLineWidth(0.2);
+      for (let i = 0; i < 3; i++) {
+        doc.line(marginL, y, pageW - marginR, y);
+        y += 7;
+      }
+      y += 4;
+      doc.line(marginL + 60, y, pageW - marginR, y);
+      doc.setFont('times', 'normal');
+      doc.setFontSize(9);
+      doc.text('FIRMA JEFE DIRECTO', (marginL + 60 + pageW - marginR) / 2, y + 4, { align: 'center' });
+      doc.setFontSize(11);
+      y += 14;
+
+      doc.setFont('times', 'bold');
+      doc.text('INFORME JEFE PERSONAL — HORAS EXTRAORDINARIAS', marginL, y);
+      y += 7;
+      doc.setFont('times', 'normal');
+      doc.setFontSize(10);
+      doc.text('N° de horas: _______   Con 25% recargo: _______   Con 50% recargo: _______', marginL, y);
+      y += 6;
+      doc.text('Compensación tiempo: _______   Desde: ____/____/____   Hasta: ____/____/____   Pago: _______', marginL, y);
+      doc.setFontSize(11);
+      y += 10;
+      doc.line(marginL + 60, y, pageW - marginR, y);
+      doc.setFontSize(9);
+      doc.text('FIRMA JEFE PERSONAL', (marginL + 60 + pageW - marginR) / 2, y + 4, { align: 'center' });
+      doc.setFontSize(11);
+      y += 16;
+
+      doc.setFont('times', 'normal');
+      doc.text('(    )  AUTORIZA          (    )  RECHAZA', marginL, y);
+      y += 10;
+      doc.line(marginL + 60, y, pageW - marginR, y);
+      doc.setFontSize(9);
+      doc.text('FIRMA DIRECTOR CESFAM', (marginL + 60 + pageW - marginR) / 2, y + 4, { align: 'center' });
+      doc.setFontSize(11);
+      y += 14;
+
+      doc.line(marginL + 60, y, pageW - marginR, y);
+      doc.setFontSize(9);
+      doc.text('FIRMA FUNCIONARIO', (marginL + 60 + pageW - marginR) / 2, y + 4, { align: 'center' });
+
+      const nombreArchivo = 'Cometido_' + (d.nombre || 'funcionario').replace(/[^\w]+/g, '_') + '.pdf';
+      doc.save(nombreArchivo);
+
+      status.style.color = 'var(--teal)';
+      status.textContent = '✅ PDF generado y descargado. Imprímelo para las firmas correspondientes.';
+      btn.disabled = false;
+    } catch (err) {
+      status.style.color = '#B33A3A';
+      status.textContent = 'Ocurrió un error al generar el PDF. Inténtalo nuevamente.';
+      console.error(err);
+      btn.disabled = false;
+    }
+  });
+</script>
+
+</body>
+</html>

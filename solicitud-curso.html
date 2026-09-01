@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solicitud para asistir a curso — CESFAM Peralillo</title>
+<link rel="icon" type="image/jpeg" href="assets/logo-cesfam.jpeg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&family=Atkinson+Hyperlegible:ital,wght@0,700;1,400&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/supabase-config.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  :root{
+    --teal-deep:#0A3D73; --teal:#1B7FC2; --teal-light:#E7F2FB; --sky:#F4FAFE;
+    --gold:#12A6D6; --ink:#1C2B36; --gray:#5A6B78; --line:#DCE7F0; --radius:16px;
+    --font-head:'Poppins', sans-serif; --font-body:'Atkinson Hyperlegible', system-ui, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; font-family:var(--font-body); color:var(--ink); background:var(--teal-light); line-height:1.6; font-size:16px;}
+  h1{font-family:var(--font-head); color:var(--teal-deep); margin:0 0 6px;}
+  p{margin:0 0 1em; color:var(--gray);}
+  a{color:var(--teal-deep);}
+  .container{max-width:760px; margin:0 auto; padding:0 24px;}
+
+  header.site-header{background:#fff; border-bottom:1px solid var(--line);}
+  .site-header .container{max-width:1180px; display:flex; align-items:center; justify-content:space-between; padding:16px 24px; flex-wrap:wrap; gap:10px;}
+  .brand{display:flex; align-items:center; gap:12px; text-decoration:none;}
+  .brand-logo{width:48px; height:48px; border-radius:50%; object-fit:cover; border:1.5px solid var(--line);}
+  .brand-text .eyebrow{display:block; font-size:.7rem; letter-spacing:.07em; text-transform:uppercase; color:var(--teal); font-weight:700;}
+  .brand-text .name{font-family:var(--font-head); font-weight:700; font-size:1.1rem; color:var(--teal-deep);}
+  .header-right{display:flex; align-items:center; gap:16px; font-size:.85rem; color:var(--gray);}
+  .header-right a{color:var(--teal-deep); text-decoration:none; font-weight:700;}
+  .header-right a:hover{text-decoration:underline;}
+
+  main{padding:40px 0 70px;}
+  .page-head{text-align:center; margin-bottom:28px;}
+  .page-head .eyebrow{color:var(--gold); font-weight:700; text-transform:uppercase; letter-spacing:.07em; font-size:.8rem;}
+  .page-head h1{font-size:1.6rem;}
+
+  form{background:#fff; border:1px solid var(--line); border-radius:var(--radius); padding:30px; box-shadow:0 20px 50px rgba(10,61,115,.08);}
+  fieldset{border:1.5px solid var(--line); border-radius:10px; padding:16px 18px; margin:0 0 18px;}
+  legend{font-weight:700; color:var(--teal-deep); padding:0 8px; font-size:.95rem; font-family:var(--font-head);}
+  label{display:block; font-weight:700; font-size:.9rem; margin-bottom:6px; color:var(--teal-deep);}
+  input, textarea{width:100%; padding:11px 13px; border:1.5px solid var(--line); border-radius:10px; margin-bottom:16px; font-family:var(--font-body); font-size:.95rem;}
+  textarea{min-height:70px; resize:vertical;}
+  .form-grid{display:grid; grid-template-columns:1fr 1fr; gap:0 20px;}
+  .radio-group{display:flex; gap:18px; flex-wrap:wrap; margin-bottom:16px;}
+  .radio-group label{display:flex; align-items:center; gap:6px; font-weight:400; margin-bottom:0; color:var(--ink);}
+  .radio-group input{width:auto; margin:0;}
+
+  .btn-primary{background:var(--gold); color:#fff; width:100%; font-size:1.05rem; padding:16px; border:none; border-radius:999px; font-weight:700; cursor:pointer; font-family:var(--font-body);}
+  .btn-primary:hover{background:#0E86AC;}
+  .btn-primary:disabled{opacity:.6; cursor:not-allowed;}
+  #status{margin-top:12px; font-size:.9rem; text-align:center;}
+
+  @media (max-width:600px){ .form-grid{grid-template-columns:1fr;} }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="container">
+    <a href="index.html" class="brand">
+      <img class="brand-logo" src="assets/logo-cesfam.jpeg" alt="Logo CESFAM Peralillo">
+      <span class="brand-text">
+        <span class="eyebrow">Servicio de Salud O'Higgins</span>
+        <span class="name">CESFAM Peralillo</span>
+      </span>
+    </a>
+    <div class="header-right">
+      <span>👤 <span id="auth-user-name"></span></span>
+      <a href="dashboard.html">← Volver al portal</a>
+      <a href="#" onclick="cerrarSesion(); return false;">Cerrar sesión</a>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="container">
+    <div class="page-head">
+      <span class="eyebrow">Área funcionarios</span>
+      <h1>Solicitud para asistir a curso</h1>
+      <p>Completa los datos del curso al que quieres asistir. Al generar el PDF, las firmas de autorización quedan en blanco para completarse a mano.</p>
+    </div>
+
+    <form id="cursoForm">
+      <fieldset>
+        <legend>Datos del funcionario</legend>
+        <div class="form-grid">
+          <div><label for="s-nombre">Nombre completo</label><input type="text" id="s-nombre" required></div>
+          <div><label for="s-rut">RUT</label><input type="text" id="s-rut" placeholder="12.345.678-9" required></div>
+        </div>
+        <label for="s-cargo">Cargo</label>
+        <input type="text" id="s-cargo" required>
+      </fieldset>
+
+      <fieldset>
+        <legend>Datos del curso</legend>
+        <label for="s-curso">Nombre del curso, taller o diplomado</label>
+        <input type="text" id="s-curso" required>
+        <label for="s-lugar">Lugar donde se realizará</label>
+        <input type="text" id="s-lugar" required>
+        <label for="s-dias">El (los) día(s)</label>
+        <input type="text" id="s-dias" placeholder="Ej: 15 y 16 de septiembre de 2026" required>
+        <label for="s-derecho">Con derecho a (colación y pasajes)</label>
+        <input type="text" id="s-derecho" placeholder="Ej: Colación y pasajes">
+      </fieldset>
+
+      <fieldset>
+        <legend>Enviado por</legend>
+        <div class="radio-group" role="radiogroup" aria-label="Enviado por">
+          <label><input type="radio" name="s-enviado" value="El servicio" required> El servicio</label>
+          <label><input type="radio" name="s-enviado" value="En forma particular"> En forma particular</label>
+        </div>
+      </fieldset>
+
+      <button type="submit" class="btn-primary" id="genBtn">📥 Generar y descargar PDF</button>
+      <p id="status"></p>
+    </form>
+  </div>
+</main>
+
+<script src="assets/auth-guard.js"></script>
+<script>
+  const { jsPDF } = window.jspdf;
+
+  document.getElementById('cursoForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    const status = document.getElementById('status');
+    const btn = document.getElementById('genBtn');
+
+    const val = id => document.getElementById(id).value.trim();
+    const enviado = document.querySelector('input[name="s-enviado"]:checked');
+
+    const d = {
+      nombre: val('s-nombre'), rut: val('s-rut'), cargo: val('s-cargo'),
+      curso: val('s-curso'), lugar: val('s-lugar'), dias: val('s-dias'),
+      derecho: val('s-derecho'), enviadoPor: enviado ? enviado.value : ''
+    };
+
+    btn.disabled = true;
+    status.style.color = 'var(--gray)';
+    status.textContent = 'Generando PDF...';
+
+    try {
+      const doc = new jsPDF({ unit: 'mm', format: 'letter' });
+      const pageW = doc.internal.pageSize.getWidth();
+      const marginL = 20, marginR = 20;
+      const usableW = pageW - marginL - marginR;
+      let y = 20;
+
+      doc.setFont('times', 'bold');
+      doc.setFontSize(11);
+      doc.text('DEPARTAMENTO DE SALUD MUNICIPAL', pageW / 2, y, { align: 'center' });
+      y += 10;
+      doc.setFontSize(14);
+      doc.text('SOLICITUD PARA ASISTIR A CURSO', pageW / 2, y, { align: 'center' });
+      y += 14;
+
+      doc.setFont('times', 'normal');
+      doc.setFontSize(11);
+
+      const intro = 'NOMBRE: ' + d.nombre + '   RUT: ' + d.rut + '   CARGO: ' + d.cargo +
+        ', funcionario(a) del Departamento de Salud Municipal de Peralillo, solicita a Srta. ' +
+        'Angela Araya Valdés, Jefa del Departamento de Salud de Peralillo, se sirva autorizar para asistir:';
+      const introLines = doc.splitTextToSize(intro, usableW);
+      doc.text(introLines, marginL, y);
+      y += introLines.length * 5.8 + 10;
+
+      function campoLargo(label, valor) {
+        doc.setFont('times', 'bold');
+        doc.text(label, marginL, y);
+        y += 6;
+        doc.setFont('times', 'normal');
+        const lines = doc.splitTextToSize(valor || '_______________________________________________', usableW);
+        doc.text(lines, marginL, y);
+        y += lines.length * 5.8 + 8;
+      }
+
+      campoLargo('A (nombre del curso, taller o diplomado):', d.curso);
+      campoLargo('A realizarse en (lugar físico):', d.lugar);
+      campoLargo('El (los) días:', d.dias);
+      campoLargo('Con derecho a (colación y pasajes):', d.derecho);
+      campoLargo('Enviado por:', d.enviadoPor);
+
+      y += 16;
+      const colW = usableW / 2;
+      doc.setLineWidth(0.2);
+      doc.line(marginL, y, marginL + colW - 10, y);
+      doc.line(marginL + colW + 10, y, marginL + usableW, y);
+      doc.setFontSize(9);
+      doc.text('V°B° Jefe Directo', marginL + (colW - 10) / 2, y + 5, { align: 'center' });
+      doc.text('V°B° Director CESFAM', marginL + colW + 10 + (colW - 10) / 2, y + 5, { align: 'center' });
+
+      y += 26;
+      doc.line(marginL + (usableW - 70) / 2, y, marginL + (usableW - 70) / 2 + 70, y);
+      doc.text('V°B° Jefa Depto.', pageW / 2, y + 5, { align: 'center' });
+
+      const nombreArchivo = 'Solicitud_Curso_' + (d.nombre || 'funcionario').replace(/[^\w]+/g, '_') + '.pdf';
+      doc.save(nombreArchivo);
+
+      status.style.color = 'var(--teal)';
+      status.textContent = '✅ PDF generado y descargado. Imprímelo para las firmas correspondientes.';
+      btn.disabled = false;
+    } catch (err) {
+      status.style.color = '#B33A3A';
+      status.textContent = 'Ocurrió un error al generar el PDF. Inténtalo nuevamente.';
+      console.error(err);
+      btn.disabled = false;
+    }
+  });
+</script>
+
+</body>
+</html>
