@@ -89,6 +89,17 @@
     </form>
   </div>
 
+  <div class="card" id="mfaCard" style="display:none;">
+    <h1>🔐 Restablecer verificación en dos pasos</h1>
+    <p class="sub">¿Un funcionario perdió su celular o no puede leer el código de Google Authenticator? Restablécelo aquí — la próxima vez que inicie sesión, se le pedirá activarlo de nuevo desde cero.</p>
+    <form id="mfaForm">
+      <label for="mfa-rut">RUT del funcionario</label>
+      <input type="text" id="mfa-rut" required placeholder="12.345.678-9">
+      <button type="submit" id="mfaBtn">Restablecer verificación</button>
+      <p id="mfa-status"></p>
+    </form>
+  </div>
+
   <a class="back" href="index.html">← Volver al sitio</a>
 </div>
 
@@ -103,6 +114,7 @@
     document.getElementById('createCard').style.display = 'block';
     document.getElementById('resetCard').style.display = 'block';
     document.getElementById('hojaCard').style.display = 'block';
+    document.getElementById('mfaCard').style.display = 'block';
     document.getElementById('adminAuthForm').closest('.card').style.display = 'none';
   });
 
@@ -229,6 +241,44 @@
       status.style.color = 'var(--teal)';
       status.textContent = '✅ Hoja vinculada para el RUT ' + formatearRut(rut);
       document.getElementById('hojaForm').reset();
+      btn.disabled = false;
+    } catch (err) {
+      status.style.color = '#B33A3A';
+      status.textContent = 'Error de conexión. Inténtalo nuevamente.';
+      btn.disabled = false;
+      console.error(err);
+    }
+  });
+
+  document.getElementById('mfaForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const status = document.getElementById('mfa-status');
+    const btn = document.getElementById('mfaBtn');
+
+    const rut = document.getElementById('mfa-rut').value.trim();
+
+    btn.disabled = true;
+    status.style.color = 'var(--gray)';
+    status.textContent = 'Restableciendo...';
+
+    try {
+      const res = await fetch('/api/resetear-mfa', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adminSecret, rut })
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        status.style.color = '#B33A3A';
+        status.textContent = '❌ ' + (data.error || 'No se pudo restablecer la verificación.');
+        btn.disabled = false;
+        return;
+      }
+
+      status.style.color = 'var(--teal)';
+      status.textContent = '✅ Verificación restablecida. Deberá activarla de nuevo en su próximo ingreso.';
+      document.getElementById('mfaForm').reset();
       btn.disabled = false;
     } catch (err) {
       status.style.color = '#B33A3A';

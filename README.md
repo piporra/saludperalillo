@@ -123,10 +123,10 @@ necesitas el archivo con el diseño visual exacto, puedes usar el botón
 los datos manualmente, o pedirme que integre un método más avanzado de
 edición de plantilla.
 
-## 🔐 Acceso de funcionarios (usuario y clave)
+## 🔐 Acceso de funcionarios (RUT y clave)
 
 El "Certificado de compras" y "Solicitud de servicio" ahora requieren
-iniciar sesión. Las cuentas (nombre de usuario + contraseña) se guardan en
+iniciar sesión. Las cuentas (RUT + contraseña) se guardan en
 una base de datos real y segura (**Supabase**), con las contraseñas
 encriptadas — nunca en texto plano ni visibles en el código del sitio.
 
@@ -187,17 +187,17 @@ encriptadas — nunca en texto plano ni visibles en el código del sitio.
 
 1. Ve a `tusitio.vercel.app/admin-funcionarios.html`.
 2. Ingresa la clave `ADMIN_SECRET` que definiste en el paso 3.
-3. Completa nombre, nombre de usuario y contraseña provisoria para cada
+3. Completa nombre, RUT y contraseña provisoria para cada
    funcionario, y haz clic en "Crear cuenta". Repite para cada uno (puedes
    dejar esta pestaña abierta e ir creando una tras otra).
-4. Comparte con cada funcionario su usuario y contraseña por un medio
+4. Comparte con cada funcionario su RUT (como usuario) y contraseña por un medio
    seguro (no por este mismo sitio).
 
 ### Cómo inician sesión los funcionarios
 
 Van a `login.html` (o hacen clic en "🔐 Abrir formulario de certificado" /
 "🔐 Acceder al formulario" desde la página principal, que los redirige
-automáticamente ahí si no tienen sesión), ingresan su usuario y
+automáticamente ahí si no tienen sesión), ingresan su RUT y
 contraseña, y quedan con acceso hasta que cierren sesión.
 
 > **Nota de seguridad:** este sistema usa Supabase Auth, el mismo motor
@@ -205,6 +205,196 @@ contraseña, y quedan con acceso hasta que cierren sesión.
 > contraseñas se guardan encriptadas (nunca en texto plano) y la clave
 > `service_role` que puede crear usuarios solo vive en el servidor de
 > Vercel, nunca en el navegador ni en GitHub.
+
+## 🗓️ Días administrativos (hoja individual por funcionario)
+
+El portal de funcionarios (`dashboard.html`) muestra a cada funcionario
+cuántos de sus 6 días administrativos anuales le quedan disponibles.
+Como cada funcionario tiene **su propia hoja** dentro de una carpeta de
+Drive (en vez de una planilla única con todos), el sitio lee la hoja
+específica de la persona que inició sesión — vinculada a su cuenta.
+
+### Paso 1 — Crea la carpeta y las hojas individuales
+
+1. En Google Drive, crea (o usa) una carpeta, por ejemplo
+   "Días administrativos 2026".
+2. Descarga la plantilla `permiso_administrativo_plantilla.xlsx` (te la
+   dejé junto a este README) — mantiene el mismo formato y textos que su
+   documento Word actual: datos del funcionario, la solicitud, los
+   espacios de firma (funcionario, jefe directo, jefe de personal,
+   director) y las observaciones.
+3. Súbela a la carpeta de Drive y **ábrela con Google Sheets** (clic
+   derecho → Abrir con → Google Sheets). Duplícala una vez por cada
+   funcionario y complétala con sus datos (nombre, RUT, cargo, nivel).
+4. Arriba, bajo el título, hay una celda destacada:
+   **"SALDO ACTUAL DE DÍAS ADMINISTRATIVOS"** — ahí escribes cuántos días
+   le quedan disponibles a esa persona (0 a 6). **Esta es la única celda
+   que el sitio necesita leer**; el resto del formulario (firmas, fechas,
+   observaciones) lo sigues llenando igual que siempre para cada solicitud
+   puntual.
+5. Cada vez que un funcionario use o recupere un día administrativo,
+   actualizas ese número — el sitio reflejará el cambio la próxima vez
+   que esa persona entre a su portal.
+
+### Paso 2 — Publica cada hoja como CSV
+
+Por cada hoja individual:
+
+1. Con la hoja abierta, ve a **Archivo → Compartir → Publicar en la Web**.
+2. Elige la hoja (si tiene una sola pestaña, ya viene seleccionada) y el
+   formato **"Valores separados por comas (.csv)"**.
+3. Haz clic en **Publicar** y confirma.
+4. Copia el link que te entrega (termina en `output=csv`). Ese link es
+   único para esa persona.
+
+> **Nota de privacidad:** cada link publicado solo muestra los datos de
+> esa hoja puntual (un número), no el resto de tus documentos ni otras
+> hojas de la carpeta — es un riesgo menor, pero técnicamente cualquiera
+> con ese link específico podría verlo.
+
+### Paso 3 — Vincula cada link a la cuenta del funcionario
+
+Tienes dos formas de hacerlo desde `admin-funcionarios.html`:
+
+- **Al crear la cuenta:** en el formulario "➕ Crear cuenta de funcionario"
+  hay un campo opcional "Link de su hoja de días administrativos" — pégalo
+  ahí directamente.
+- **Para una cuenta que ya existe:** usa la tarjeta "🔗 Vincular hoja de
+  días administrativos" — pones el RUT del funcionario y el link de su
+  hoja, y se guarda (puedes usarla también para actualizar el link si
+  cambia).
+
+Listo — la próxima vez que ese funcionario entre a su portal, verá una
+barra con sus días disponibles, leídos en vivo desde su propia hoja.
+
+## 🗓️ Calendario de reuniones
+
+El portal incluye una tercera sección, "Calendario de reuniones"
+(`reuniones.html`), que muestra en una tabla —con buscador por comité—
+las fechas de reuniones de todos los equipos y comités del año, leídas
+en vivo desde tu planilla de Google Sheets ("REUNIONES 2026" → pestaña
+"calendario 2026").
+
+### Cómo conectarlo
+
+1. Abre tu planilla "REUNIONES 2026" en Google Sheets.
+2. Ve a **Archivo → Compartir → Publicar en la Web**.
+3. En el primer desplegable, elige la pestaña **"calendario 2026"**
+   (no "Todo el documento").
+4. En el segundo desplegable, elige **"Valores separados por comas (.csv)"**.
+5. Publica y copia el link (termina en `output=csv`).
+6. En GitHub, abre `reuniones.html` → busca (Ctrl+F):
+   ```javascript
+   const REUNIONES_CSV_URL = "PEGA_AQUI_TU_URL_CSV_PUBLICADA";
+   ```
+7. Reemplaza el texto entre comillas por ese link → "Commit changes".
+
+Listo — cada vez que edites la planilla (agregar una fecha, cambiar un
+comité), el calendario del sitio se actualiza solo, sin tocar código.
+
+> **Nota:** por ahora se conecta solo la pestaña "calendario 2026" (el
+> calendario general). La pestaña "integrantes 2026" y "calendario
+> capacitaciones" no están conectadas — si más adelante quieres que cada
+> funcionario vea solo las reuniones de sus propios comités (usando la
+> hoja de integrantes), o agregar el calendario de capacitaciones, avísame.
+
+## 📄 Protocolos (PDF alojados directo en GitHub, organizados por categoría)
+
+El portal incluye una cuarta sección, "Protocolos" (`protocolos.html`),
+que agrupa los protocolos igual que tus carpetas de Drive (Ámbito
+Gestión Clínica, Ámbito Dignidad Paciente, etc.) — cada categoría es un
+desplegable, con buscador. Los PDF se suben directo al repositorio de
+GitHub (no dependen de Drive ni de Google Sheets).
+
+### Estructura de carpetas
+
+Ya te dejé creada la carpeta `assets/protocolos/` con una subcarpeta por
+cada una de tus 12 categorías:
+
+```
+assets/protocolos/
+├── ambito-acceso-oportunidad-y-continuidad/
+├── ambito-competencias-recurso-humano/
+├── ambito-dignidad-paciente/
+├── ambito-gestion-clinica/
+├── ambito-gestion-de-la-calidad/
+├── ambito-registros/
+├── ambito-seguridad-de-las-instalaciones/
+├── ambito-seguridad-del-equipamiento/
+├── apoyo/
+├── indicadores-por-unidades/
+├── plan-institucional-de-emergencia/
+└── protocolo-trato-usuario-institucional/
+```
+
+### Cómo agregar tus protocolos reales
+
+1. **Sube cada PDF** a su carpeta correspondiente en GitHub: entra a
+   `assets/protocolos/<carpeta-de-la-categoría>/` → "Add file" →
+   "Upload files" → arrastra los PDF de esa categoría → "Commit changes".
+   Repite para cada categoría.
+
+2. **Edita la lista** `assets/protocolos-lista.json` (ícono del lápiz) —
+   ahí defines qué PDF aparece, con qué nombre, en qué categoría y en qué
+   subcarpeta (si tiene). Por cada PDF que subiste, agrega un bloque como
+   este (respetando las comas entre bloques):
+   ```json
+   { "categoria": "Ámbito Gestión Clínica", "subcarpeta": "Vacunación", "nombre": "Protocolo de Vacunación", "archivo": "assets/protocolos/ambito-gestion-clinica/vacunacion/protocolo-vacunacion.pdf" }
+   ```
+   Si el PDF está directo en la carpeta de la categoría, **sin**
+   subcarpeta, deja `"subcarpeta": ""` (vacío):
+   ```json
+   { "categoria": "Apoyo", "subcarpeta": "", "nombre": "Protocolo General", "archivo": "assets/protocolos/apoyo/protocolo-general.pdf" }
+   ```
+   El campo `"archivo"` debe ser **exactamente** la ruta y el nombre del
+   PDF que subiste (respeta mayúsculas/minúsculas, espacios y tildes).
+   En el sitio, cada categoría se abre primero, y adentro cada subcarpeta
+   es un segundo desplegable (categoría → subcarpeta → PDF), igual que en
+   Drive.
+3. Borra las líneas de ejemplo ("Nombre del protocolo") de las
+   categorías donde no vayas a subir nada todavía, o complétalas.
+4. Confirma con "Commit changes".
+
+Listo — para agregar un protocolo nuevo en el futuro: subes el PDF a la
+carpeta de su categoría, y agregas una línea a
+`assets/protocolos-lista.json`. Si quieres una categoría nueva que no
+está en la lista, crea la carpeta correspondiente y usa el nombre que
+quieras en `"categoria"` — el sitio la agrupa automáticamente.
+
+## 🔐📱 Verificación en dos pasos (Google Authenticator)
+
+Es **obligatoria** para todos los funcionarios: la primera vez que alguien
+inicia sesión con su RUT y contraseña, el sitio lo manda a activar Google
+Authenticator (con un código QR) antes de dejarlo entrar. Después de eso,
+cada inicio de sesión pide el código de 6 dígitos además de la contraseña.
+
+### Paso 1 — Actívalo en el panel de Supabase (una sola vez)
+
+1. Entra a tu proyecto en [supabase.com](https://supabase.com) →
+   **Authentication → Providers** (o "Auth Settings", según la versión).
+2. Busca la sección de **Multi-Factor Authentication (MFA)** y activa la
+   opción de **TOTP** (verificación por app de autenticación).
+3. Asegúrate de que "Enrollment" y "Verification" no estén deshabilitados.
+
+Sin este paso, el código de las páginas (`login.html`, `mfa-setup.html`)
+va a fallar al intentar generar el código QR.
+
+### Cómo funciona para el funcionario
+
+1. Inicia sesión con su RUT y contraseña, como siempre.
+2. Si es la primera vez, lo manda a `mfa-setup.html`: escanea un código QR
+   con la app **Google Authenticator** (o cualquier app compatible, como
+   Microsoft Authenticator o Authy) e ingresa el código de 6 dígitos que
+   le muestra para confirmar.
+3. De ahí en adelante, cada vez que inicie sesión, después de la
+   contraseña se le pedirá el código de 6 dígitos de la app.
+
+### Si alguien pierde el celular o no puede acceder
+
+Desde `admin-funcionarios.html` → tarjeta **"🔐 Restablecer verificación
+en dos pasos"** → ingresas su RUT → se elimina su activación anterior. La
+próxima vez que inicie sesión, se le pedirá activar Google Authenticator
+de nuevo desde cero (con un código QR nuevo).
 
 ## ⚠️ Pendiente antes de publicar oficialmente
 
