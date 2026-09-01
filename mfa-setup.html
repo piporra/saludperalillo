@@ -95,15 +95,11 @@
       return;
     }
 
-    // Si quedó un factor sin verificar de un intento anterior, lo reutiliza
-    const pendiente = (factorsData && factorsData.totp || []).find(f => f.status === 'unverified');
-    let enrollData;
-    if (pendiente) {
-      factorId = pendiente.id;
-      document.getElementById('stepCargando').style.display = 'none';
-      document.getElementById('stepQR').classList.add('active');
-      document.getElementById('qrContainer').innerHTML = '<p style="text-align:center; color:var(--gray); font-size:.85rem;">Ya tienes un código QR generado antes. Si no lo guardaste, pide a un administrador que reinicie tu verificación.</p>';
-      return;
+    // Limpia cualquier código QR de intentos anteriores que no se haya
+    // llegado a confirmar (si no, Supabase no deja generar uno nuevo).
+    const pendientes = (factorsData && factorsData.totp || []).filter(f => f.status === 'unverified');
+    for (const p of pendientes) {
+      await supabase.auth.mfa.unenroll({ factorId: p.id });
     }
 
     const { data, error } = await supabase.auth.mfa.enroll({
