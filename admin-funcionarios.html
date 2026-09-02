@@ -66,8 +66,15 @@
         <label class="check-line"><input type="checkbox" id="esDirector"> Director</label>
         <label class="check-line"><input type="checkbox" id="esJefePersonal"> Jefe de Personal</label>
       </div>
-      <label for="jefeRut">RUT de su jefe directo (para aprobar permisos)</label>
-      <input type="text" id="jefeRut" placeholder="12.345.678-9">
+      <label for="jefeRut">Jefe directo (para aprobar permisos)</label>
+      <select id="jefeRut">
+        <option value="">Selecciona un jefe directo...</option>
+      </select>
+      <label for="subrogante">Subrogante (opcional)</label>
+      <select id="subrogante">
+        <option value="">Selecciona un subrogante...</option>
+      </select>
+      <p class="hint">Ambas listas se llenan con los funcionarios marcados como "Jefe directo". Si aún no has marcado a nadie, guarda primero a esa persona con esa casilla activada, y vuelve después a completar este campo.</p>
       <p class="hint">Necesario para que sus solicitudes de permiso administrativo lleguen a la persona correcta. Si él mismo es el director, puedes dejarlo en blanco.</p>
       <button type="submit" id="createBtn">Crear cuenta</button>
       <p id="status"></p>
@@ -113,8 +120,14 @@
         <label class="check-line"><input type="checkbox" id="rol-esDirector"> Director</label>
         <label class="check-line"><input type="checkbox" id="rol-esJefePersonal"> Jefe de Personal</label>
       </div>
-      <label for="rol-jefeRut">RUT de su jefe directo</label>
-      <input type="text" id="rol-jefeRut" placeholder="12.345.678-9">
+      <label for="rol-jefeRut">Jefe directo</label>
+      <select id="rol-jefeRut">
+        <option value="">Selecciona un jefe directo...</option>
+      </select>
+      <label for="rol-subrogante">Subrogante (opcional)</label>
+      <select id="rol-subrogante">
+        <option value="">Selecciona un subrogante...</option>
+      </select>
       <p class="hint">Si es el director, puedes dejarlo en blanco.</p>
       <button type="submit" id="rolBtn">Guardar</button>
       <p id="rol-status"></p>
@@ -149,7 +162,36 @@
     document.getElementById('rolCard').style.display = 'block';
     document.getElementById('mfaCard').style.display = 'block';
     document.getElementById('adminAuthForm').closest('.card').style.display = 'none';
+    cargarJefesDirectos();
   });
+
+  async function cargarJefesDirectos() {
+    try {
+      const res = await fetch('/api/listar-jefes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adminSecret })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+
+      const opciones = data.jefes.map(j =>
+        '<option value="' + j.rut + '">' + j.nombre + ' (' + formatearRut(j.rut) + ')</option>'
+      ).join('');
+
+      ['jefeRut', 'subrogante', 'rol-jefeRut', 'rol-subrogante'].forEach(id => {
+        const select = document.getElementById(id);
+        const placeholder = select.options[0].outerHTML;
+        select.innerHTML = placeholder + opciones;
+      });
+
+      if (data.jefes.length === 0) {
+        console.warn('Aún no hay ningún funcionario marcado como "Jefe directo".');
+      }
+    } catch (err) {
+      console.error('No se pudo cargar la lista de jefes directos:', err);
+    }
+  }
 
   document.getElementById('rut').addEventListener('blur', (e) => {
     if (e.target.value.trim()) e.target.value = formatearRut(e.target.value);
@@ -171,6 +213,7 @@
     const esDirector = document.getElementById('esDirector').checked;
     const esJefePersonal = document.getElementById('esJefePersonal').checked;
     const jefeRut = document.getElementById('jefeRut').value.trim();
+    const subrogante = document.getElementById('subrogante').value.trim();
 
     if (!validarRut(rut)) {
       status.style.color = '#B33A3A';
@@ -186,7 +229,7 @@
       const res = await fetch('/api/crear-funcionario', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ adminSecret, nombre, rut, password, hojaUrl, esJefeDirecto, esDirector, esJefePersonal, jefeRut })
+        body: JSON.stringify({ adminSecret, nombre, rut, password, hojaUrl, esJefeDirecto, esDirector, esJefePersonal, jefeRut, subrogante })
       });
       const data = await res.json();
 
@@ -335,6 +378,7 @@
     const esDirector = document.getElementById('rol-esDirector').checked;
     const esJefePersonal = document.getElementById('rol-esJefePersonal').checked;
     const jefeRut = document.getElementById('rol-jefeRut').value.trim();
+    const subrogante = document.getElementById('rol-subrogante').value.trim();
 
     btn.disabled = true;
     status.style.color = 'var(--gray)';
@@ -344,7 +388,7 @@
       const res = await fetch('/api/actualizar-rol', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ adminSecret, rut, esJefeDirecto, esDirector, esJefePersonal, jefeRut })
+        body: JSON.stringify({ adminSecret, rut, esJefeDirecto, esDirector, esJefePersonal, jefeRut, subrogante })
       });
       const data = await res.json();
 
