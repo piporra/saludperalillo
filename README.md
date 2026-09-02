@@ -480,10 +480,15 @@ tener una, varias, o ninguna:
 - ☐ Jefe de Personal
 
 - **Al crear una cuenta nueva:** ya aparecen las 3 casillas en el
-  formulario de `admin-funcionarios.html` — marcas las que correspondan
-  y escribes el RUT de su jefe directo.
+  formulario de `admin-funcionarios.html` — marcas las que correspondan.
+  El **Jefe directo** y el **Subrogante** (opcional) ya no se escriben a
+  mano: son dos listas desplegables que se llenan automáticamente con los
+  funcionarios que tengan marcada la casilla "Jefe directo". Si aún no
+  has creado/marcado a ningún jefe directo, esas listas van a aparecer
+  vacías — crea primero esas cuentas con esa casilla activada.
 - **Para cuentas que ya existen:** usa la tarjeta
-  **"🧭 Actualizar funciones y jefe directo"** en el mismo panel.
+  **"🧭 Actualizar funciones y jefe directo"** en el mismo panel (mismas
+  listas desplegables).
 
 > Al Director y al Jefe de Personal no les hace falta asignarles un
 > "jefe directo" (puedes dejar ese campo en blanco en sus cuentas) — las
