@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aprobaciones pendientes — CESFAM Peralillo</title>
+<link rel="icon" type="image/jpeg" href="assets/logo-cesfam.jpeg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&family=Atkinson+Hyperlegible:ital,wght@0,700;1,400&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/supabase-config.js"></script>
+<style>
+  :root{
+    --teal-deep:#0A3D73; --teal:#1B7FC2; --teal-light:#E7F2FB; --sky:#F4FAFE;
+    --gold:#12A6D6; --ink:#1C2B36; --gray:#5A6B78; --line:#DCE7F0; --radius:16px;
+    --font-head:'Poppins', sans-serif; --font-body:'Atkinson Hyperlegible', system-ui, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; font-family:var(--font-body); color:var(--ink); background:var(--teal-light); line-height:1.6; font-size:16px;}
+  h1{font-family:var(--font-head); color:var(--teal-deep); margin:0 0 6px;}
+  p{margin:0 0 1em; color:var(--gray);}
+  a{color:var(--teal-deep);}
+  .container{max-width:820px; margin:0 auto; padding:0 24px;}
+
+  header.site-header{background:#fff; border-bottom:1px solid var(--line);}
+  .site-header .container{max-width:1180px; display:flex; align-items:center; justify-content:space-between; padding:16px 24px; flex-wrap:wrap; gap:10px;}
+  .brand{display:flex; align-items:center; gap:12px; text-decoration:none;}
+  .brand-logo{width:48px; height:48px; border-radius:50%; object-fit:cover; border:1.5px solid var(--line);}
+  .brand-text .eyebrow{display:block; font-size:.7rem; letter-spacing:.07em; text-transform:uppercase; color:var(--teal); font-weight:700;}
+  .brand-text .name{font-family:var(--font-head); font-weight:700; font-size:1.1rem; color:var(--teal-deep);}
+  .header-right{display:flex; align-items:center; gap:16px; font-size:.85rem; color:var(--gray);}
+  .header-right a{color:var(--teal-deep); text-decoration:none; font-weight:700;}
+  .header-right a:hover{text-decoration:underline;}
+
+  main{padding:40px 0 70px;}
+  .page-head{text-align:center; margin-bottom:28px;}
+  .page-head .eyebrow{color:var(--gold); font-weight:700; text-transform:uppercase; letter-spacing:.07em; font-size:.8rem;}
+  .page-head h1{font-size:1.6rem;}
+
+  .sol-card{background:#fff; border:1px solid var(--line); border-radius:var(--radius); padding:22px; margin-bottom:16px; box-shadow:0 12px 30px rgba(10,61,115,.06);}
+  .sol-card h3{font-family:var(--font-head); color:var(--teal-deep); font-size:1.05rem; margin:0 0 4px;}
+  .sol-card .meta{font-size:.85rem; color:var(--gray); margin-bottom:10px;}
+  .sol-card .motivo{font-size:.92rem; margin-bottom:14px;}
+  .sol-card textarea{width:100%; padding:10px 12px; border:1.5px solid var(--line); border-radius:10px; font-family:var(--font-body); font-size:.9rem; min-height:60px; margin-bottom:12px; resize:vertical;}
+  .btn-row{display:flex; gap:12px;}
+  .btn-aprobar, .btn-rechazar{flex:1; border:none; padding:12px; border-radius:999px; font-weight:700; cursor:pointer; font-family:var(--font-body); font-size:.92rem;}
+  .btn-aprobar{background:#1E6B3C; color:#fff;}
+  .btn-aprobar:hover{background:#17552F;}
+  .btn-rechazar{background:#fff; color:#A32D2D; border:1.5px solid #A32D2D;}
+  .btn-rechazar:hover{background:#FBE3E3;}
+  button:disabled{opacity:.6; cursor:not-allowed;}
+  .vacio{color:var(--gray); font-size:.95rem; text-align:center; padding:40px 20px; background:#fff; border-radius:var(--radius); border:1px solid var(--line);}
+  .sol-status{font-size:.85rem; margin-top:8px; text-align:center;}
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="container">
+    <a href="index.html" class="brand">
+      <img class="brand-logo" src="assets/logo-cesfam.jpeg" alt="Logo CESFAM Peralillo">
+      <span class="brand-text">
+        <span class="eyebrow">Servicio de Salud O'Higgins</span>
+        <span class="name">CESFAM Peralillo</span>
+      </span>
+    </a>
+    <div class="header-right">
+      <span>👤 <span id="auth-user-name"></span></span>
+      <a href="dashboard.html">← Volver al portal</a>
+      <a href="#" onclick="cerrarSesion(); return false;">Cerrar sesión</a>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="container">
+    <div class="page-head">
+      <span class="eyebrow">Aprobaciones</span>
+      <h1 id="pageTitle">Solicitudes pendientes</h1>
+      <p id="pageSub">Revisa y responde las solicitudes de tu equipo.</p>
+    </div>
+
+    <div id="listaAprobaciones">
+      <p class="vacio">Cargando...</p>
+    </div>
+  </div>
+</main>
+
+<script src="assets/auth-guard.js"></script>
+<script>
+  let modoActual = 'jefe';
+
+  function fmtFecha(iso) {
+    return new Date(iso + 'T00:00:00').toLocaleDateString('es-CL');
+  }
+
+  function crearTarjeta(sol) {
+    const div = document.createElement('div');
+    div.className = 'sol-card';
+    div.innerHTML =
+      '<h3>' + sol.nombre_solicitante + '</h3>' +
+      '<div class="meta">RUT ' + sol.rut_solicitante + ' · ' + fmtFecha(sol.fecha_permiso) + ' · ' + sol.tipo + (sol.turno ? ' (' + sol.turno + ')' : '') + '</div>' +
+      (sol.motivo ? '<div class="motivo">"' + sol.motivo + '"</div>' : '') +
+      ((modoActual === 'director' || modoActual === 'personal') && sol.comentario_jefe ? '<div class="motivo" style="color:var(--teal-deep);"><strong>Comentario del jefe directo:</strong> ' + sol.comentario_jefe + '</div>' : '') +
+      (modoActual === 'personal' && sol.comentario_director ? '<div class="motivo" style="color:var(--teal-deep);"><strong>Comentario del director:</strong> ' + sol.comentario_director + '</div>' : '') +
+      '<textarea placeholder="Comentario (opcional)" class="comentario"></textarea>' +
+      '<div class="btn-row">' +
+        '<button class="btn-aprobar">' + (modoActual === 'personal' ? '✅ Registrar recepción' : '✅ Aprobar') + '</button>' +
+        '<button class="btn-rechazar">❌ Rechazar</button>' +
+      '</div>' +
+      '<p class="sol-status"></p>';
+
+    const comentarioEl = div.querySelector('.comentario');
+    const statusEl = div.querySelector('.sol-status');
+    const btnAprobar = div.querySelector('.btn-aprobar');
+    const btnRechazar = div.querySelector('.btn-rechazar');
+
+    async function revisar(decision) {
+      btnAprobar.disabled = true;
+      btnRechazar.disabled = true;
+      statusEl.style.color = 'var(--gray)';
+      statusEl.textContent = 'Guardando...';
+
+      try {
+        const supabase = getSupabaseClient();
+        const { data: { session } } = await supabase.auth.getSession();
+        const res = await fetch('/api/revisar-solicitud', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + session.access_token
+          },
+          body: JSON.stringify({ solicitudId: sol.id, decision, comentario: comentarioEl.value.trim() })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+
+        statusEl.style.color = 'var(--teal)';
+        statusEl.textContent = '✅ Registrado correctamente.';
+        setTimeout(() => div.remove(), 800);
+      } catch (err) {
+        statusEl.style.color = '#B33A3A';
+        statusEl.textContent = '❌ ' + (err.message || 'No se pudo guardar.');
+        btnAprobar.disabled = false;
+        btnRechazar.disabled = false;
+      }
+    }
+
+    btnAprobar.addEventListener('click', () => revisar('aprobado'));
+    btnRechazar.addEventListener('click', () => revisar('rechazado'));
+
+    return div;
+  }
+
+  async function cargarAprobaciones() {
+    const lista = document.getElementById('listaAprobaciones');
+    try {
+      const supabase = getSupabaseClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      const meta = session.user.user_metadata || {};
+
+      // Prioridad: jefe_personal → director → jefe (una persona podría
+      // tener varios roles a la vez, pero cada uno ve su propia bandeja).
+      if (meta.rol === 'jefe_personal') modoActual = 'personal';
+      else if (meta.rol === 'director') modoActual = 'director';
+      else modoActual = 'jefe';
+
+      document.getElementById('pageTitle').textContent =
+        modoActual === 'personal' ? 'Solicitudes para registrar' :
+        modoActual === 'director' ? 'Solicitudes para tu aprobación final' :
+        'Solicitudes de tu equipo';
+      document.getElementById('pageSub').textContent =
+        modoActual === 'personal' ? 'Estas solicitudes ya fueron aprobadas por el jefe directo y el director. Regístralas como paso final.' :
+        modoActual === 'director' ? 'Estas solicitudes ya fueron aprobadas por el jefe directo correspondiente.' :
+        'Revisa las solicitudes de permiso administrativo de las personas que dependen de ti.';
+
+      const res = await fetch('/api/listar-solicitudes?modo=' + modoActual, {
+        headers: { 'Authorization': 'Bearer ' + session.access_token }
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+
+      lista.innerHTML = '';
+      if (!data.solicitudes || data.solicitudes.length === 0) {
+        lista.innerHTML = '<p class="vacio">No tienes solicitudes pendientes por revisar. 🎉</p>';
+        return;
+      }
+
+      data.solicitudes.forEach(sol => lista.appendChild(crearTarjeta(sol)));
+    } catch (err) {
+      console.error(err);
+      lista.innerHTML = '<p class="vacio">No se pudieron cargar las solicitudes.</p>';
+    }
+  }
+
+  window.addEventListener('DOMContentLoaded', cargarAprobaciones);
+</script>
+
+</body>
+</html>

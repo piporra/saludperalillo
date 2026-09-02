@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solicitar permiso administrativo — CESFAM Peralillo</title>
+<link rel="icon" type="image/jpeg" href="assets/logo-cesfam.jpeg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&family=Atkinson+Hyperlegible:ital,wght@0,700;1,400&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/supabase-config.js"></script>
+<style>
+  :root{
+    --teal-deep:#0A3D73; --teal:#1B7FC2; --teal-light:#E7F2FB; --sky:#F4FAFE;
+    --gold:#12A6D6; --ink:#1C2B36; --gray:#5A6B78; --line:#DCE7F0; --radius:16px;
+    --font-head:'Poppins', sans-serif; --font-body:'Atkinson Hyperlegible', system-ui, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; font-family:var(--font-body); color:var(--ink); background:var(--teal-light); line-height:1.6; font-size:16px;}
+  h1{font-family:var(--font-head); color:var(--teal-deep); margin:0 0 6px;}
+  p{margin:0 0 1em; color:var(--gray);}
+  a{color:var(--teal-deep);}
+  .container{max-width:820px; margin:0 auto; padding:0 24px;}
+
+  header.site-header{background:#fff; border-bottom:1px solid var(--line);}
+  .site-header .container{max-width:1180px; display:flex; align-items:center; justify-content:space-between; padding:16px 24px; flex-wrap:wrap; gap:10px;}
+  .brand{display:flex; align-items:center; gap:12px; text-decoration:none;}
+  .brand-logo{width:48px; height:48px; border-radius:50%; object-fit:cover; border:1.5px solid var(--line);}
+  .brand-text .eyebrow{display:block; font-size:.7rem; letter-spacing:.07em; text-transform:uppercase; color:var(--teal); font-weight:700;}
+  .brand-text .name{font-family:var(--font-head); font-weight:700; font-size:1.1rem; color:var(--teal-deep);}
+  .header-right{display:flex; align-items:center; gap:16px; font-size:.85rem; color:var(--gray);}
+  .header-right a{color:var(--teal-deep); text-decoration:none; font-weight:700;}
+  .header-right a:hover{text-decoration:underline;}
+
+  main{padding:40px 0 70px;}
+  .page-head{text-align:center; margin-bottom:28px;}
+  .page-head .eyebrow{color:var(--gold); font-weight:700; text-transform:uppercase; letter-spacing:.07em; font-size:.8rem;}
+  .page-head h1{font-size:1.6rem;}
+
+  form{background:#fff; border:1px solid var(--line); border-radius:var(--radius); padding:30px; box-shadow:0 20px 50px rgba(10,61,115,.08); margin-bottom:32px;}
+  label{display:block; font-weight:700; font-size:.9rem; margin-bottom:6px; color:var(--teal-deep);}
+  input, textarea, select{width:100%; padding:11px 13px; border:1.5px solid var(--line); border-radius:10px; margin-bottom:16px; font-family:var(--font-body); font-size:.95rem;}
+  textarea{min-height:70px; resize:vertical;}
+  .form-grid{display:grid; grid-template-columns:1fr 1fr; gap:0 20px;}
+  .radio-group{display:flex; gap:18px; flex-wrap:wrap; margin-bottom:16px;}
+  .radio-group label{display:flex; align-items:center; gap:6px; font-weight:400; margin-bottom:0; color:var(--ink);}
+  .radio-group input{width:auto; margin:0;}
+  .btn-primary{background:var(--gold); color:#fff; width:100%; font-size:1.05rem; padding:16px; border:none; border-radius:999px; font-weight:700; cursor:pointer; font-family:var(--font-body);}
+  .btn-primary:hover{background:#0E86AC;}
+  .btn-primary:disabled{opacity:.6; cursor:not-allowed;}
+  #status{margin-top:12px; font-size:.9rem; text-align:center;}
+
+  h2.sub-title{font-family:var(--font-head); color:var(--teal-deep); font-size:1.1rem; margin:0 0 14px;}
+  .lista-solicitudes{display:flex; flex-direction:column; gap:12px;}
+  .sol-item{background:#fff; border:1px solid var(--line); border-radius:12px; padding:16px 18px; display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;}
+  .sol-info h3{font-family:var(--font-head); font-size:.95rem; color:var(--teal-deep); margin:0 0 3px;}
+  .sol-info p{margin:0; font-size:.85rem; color:var(--gray);}
+  .badge{font-size:.78rem; font-weight:700; padding:5px 12px; border-radius:999px; white-space:nowrap;}
+  .badge-pendiente{background:#FFF2CC; color:#7A5B0E;}
+  .badge-aprobado{background:#DFF2E4; color:#1E6B3C;}
+  .badge-rechazado{background:#FBE3E3; color:#A32D2D;}
+  .vacio{color:var(--gray); font-size:.9rem; text-align:center; padding:20px;}
+
+  @media (max-width:600px){ .form-grid{grid-template-columns:1fr;} }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="container">
+    <a href="index.html" class="brand">
+      <img class="brand-logo" src="assets/logo-cesfam.jpeg" alt="Logo CESFAM Peralillo">
+      <span class="brand-text">
+        <span class="eyebrow">Servicio de Salud O'Higgins</span>
+        <span class="name">CESFAM Peralillo</span>
+      </span>
+    </a>
+    <div class="header-right">
+      <span>👤 <span id="auth-user-name"></span></span>
+      <a href="dashboard.html">← Volver al portal</a>
+      <a href="#" onclick="cerrarSesion(); return false;">Cerrar sesión</a>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="container">
+    <div class="page-head">
+      <span class="eyebrow">Área funcionarios</span>
+      <h1>Solicitar permiso administrativo</h1>
+      <p>Tu solicitud se envía primero a tu jefe directo y luego al director para su aprobación final.</p>
+    </div>
+
+    <form id="permisoForm">
+      <div class="form-grid">
+        <div>
+          <label for="p-fecha">Fecha del permiso</label>
+          <input type="date" id="p-fecha" required>
+        </div>
+        <div>
+          <label for="p-tipo">Tipo</label>
+          <select id="p-tipo">
+            <option value="Día completo">Día completo</option>
+            <option value="Medio día">Medio día</option>
+          </select>
+        </div>
+      </div>
+      <div id="turnoWrap" style="display:none;">
+        <label>Turno</label>
+        <div class="radio-group">
+          <label><input type="radio" name="p-turno" value="Mañana" checked> Mañana</label>
+          <label><input type="radio" name="p-turno" value="Tarde"> Tarde</label>
+        </div>
+      </div>
+      <label for="p-motivo">Motivo (opcional)</label>
+      <textarea id="p-motivo"></textarea>
+      <button type="submit" class="btn-primary" id="enviarBtn">Enviar solicitud</button>
+      <p id="status"></p>
+    </form>
+
+    <h2 class="sub-title">Mis solicitudes</h2>
+    <div class="lista-solicitudes" id="listaSolicitudes">
+      <p class="vacio">Cargando...</p>
+    </div>
+  </div>
+</main>
+
+<script src="assets/auth-guard.js"></script>
+<script>
+  document.getElementById('p-tipo').addEventListener('change', (e) => {
+    document.getElementById('turnoWrap').style.display = e.target.value === 'Medio día' ? 'block' : 'none';
+  });
+
+  function badgeEstado(sol) {
+    if (sol.estado === 'aprobado') return '<span class="badge badge-aprobado">✅ Aprobado</span>';
+    if (sol.estado === 'rechazado') {
+      const quien = sol.estado_jefe === 'rechazado' ? 'jefe directo'
+        : sol.estado_director === 'rechazado' ? 'director'
+        : 'jefa de personal';
+      return '<span class="badge badge-rechazado">❌ Rechazado por ' + quien + '</span>';
+    }
+    if (sol.estado === 'pendiente_personal') return '<span class="badge badge-pendiente">⏳ Registrando con Jefa de Personal</span>';
+    if (sol.estado === 'pendiente_director') return '<span class="badge badge-pendiente">⏳ Esperando al director</span>';
+    return '<span class="badge badge-pendiente">⏳ Esperando a jefe directo</span>';
+  }
+
+  async function cargarMisSolicitudes() {
+    const lista = document.getElementById('listaSolicitudes');
+    try {
+      const supabase = getSupabaseClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch('/api/listar-solicitudes?modo=propias', {
+        headers: { 'Authorization': 'Bearer ' + session.access_token }
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+
+      if (!data.solicitudes || data.solicitudes.length === 0) {
+        lista.innerHTML = '<p class="vacio">Aún no has hecho ninguna solicitud.</p>';
+        return;
+      }
+
+      lista.innerHTML = data.solicitudes.map(sol => {
+        const fecha = new Date(sol.fecha_permiso + 'T00:00:00').toLocaleDateString('es-CL');
+        return '<div class="sol-item"><div class="sol-info">' +
+          '<h3>' + fecha + ' — ' + sol.tipo + (sol.turno ? ' (' + sol.turno + ')' : '') + '</h3>' +
+          '<p>' + (sol.motivo || 'Sin motivo especificado') + '</p></div>' +
+          badgeEstado(sol) + '</div>';
+      }).join('');
+    } catch (err) {
+      console.error(err);
+      lista.innerHTML = '<p class="vacio">No se pudieron cargar tus solicitudes.</p>';
+    }
+  }
+
+  document.getElementById('permisoForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const status = document.getElementById('status');
+    const btn = document.getElementById('enviarBtn');
+
+    const fecha = document.getElementById('p-fecha').value;
+    const tipo = document.getElementById('p-tipo').value;
+    const turnoInput = document.querySelector('input[name="p-turno"]:checked');
+    const turno = tipo === 'Medio día' && turnoInput ? turnoInput.value : null;
+    const motivo = document.getElementById('p-motivo').value.trim();
+
+    btn.disabled = true;
+    status.style.color = 'var(--gray)';
+    status.textContent = 'Enviando...';
+
+    try {
+      const supabase = getSupabaseClient();
+      const { data: { session } } = await supabase.auth.getSession();
+
+      const res = await fetch('/api/crear-solicitud-permiso', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + session.access_token
+        },
+        body: JSON.stringify({ fechaPermiso: fecha, tipo, turno, motivo })
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        status.style.color = '#B33A3A';
+        status.textContent = '❌ ' + (data.error || 'No se pudo enviar la solicitud.');
+        btn.disabled = false;
+        return;
+      }
+
+      status.style.color = 'var(--teal)';
+      status.textContent = '✅ Solicitud enviada a tu jefe directo.';
+      document.getElementById('permisoForm').reset();
+      document.getElementById('turnoWrap').style.display = 'none';
+      btn.disabled = false;
+      cargarMisSolicitudes();
+    } catch (err) {
+      status.style.color = '#B33A3A';
+      status.textContent = 'Ocurrió un error. Inténtalo nuevamente.';
+      btn.disabled = false;
+      console.error(err);
+    }
+  });
+
+  window.addEventListener('DOMContentLoaded', cargarMisSolicitudes);
+</script>
+
+</body>
+</html>
