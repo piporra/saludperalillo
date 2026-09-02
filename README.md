@@ -469,23 +469,27 @@ del funcionario que la solicitó.
 - `admin-funcionarios.html`
 - `api/crear-funcionario.js`
 
-### Paso 3 — Define el rol y el jefe directo de cada funcionario
+### Paso 3 — Define las funciones y el jefe directo de cada funcionario
 
 Cada cuenta necesita saber **quién es su jefe directo** (para enrutar sus
-solicitudes) y **qué rol tiene**: Funcionario, Jefe directo, Director, o
-**Jefa de Personal**.
+solicitudes) y **qué funciones adicionales tiene**. A diferencia de un
+"rol" único, esto son **3 casillas independientes** — una persona puede
+tener una, varias, o ninguna:
+- ☐ Jefe directo
+- ☐ Director
+- ☐ Jefe de Personal
 
-- **Al crear una cuenta nueva:** ya aparece en el formulario de
-  `admin-funcionarios.html` — eliges el rol y escribes el RUT de su jefe
-  directo.
+- **Al crear una cuenta nueva:** ya aparecen las 3 casillas en el
+  formulario de `admin-funcionarios.html` — marcas las que correspondan
+  y escribes el RUT de su jefe directo.
 - **Para cuentas que ya existen:** usa la tarjeta
-  **"🧭 Actualizar rol y jefe directo"** en el mismo panel.
+  **"🧭 Actualizar funciones y jefe directo"** en el mismo panel.
 
-> Al director y a la Jefa de Personal no les hace falta asignarles un
+> Al Director y al Jefe de Personal no les hace falta asignarles un
 > "jefe directo" (puedes dejar ese campo en blanco en sus cuentas) — las
 > solicitudes les llegan automáticamente en su etapa correspondiente, sin
 > necesidad de configurar nada más para ellos. Solo debe existir **una**
-> cuenta con rol Director y **una** con rol Jefa de Personal.
+> cuenta marcada como Director y **una** marcada como Jefe de Personal.
 
 ### Cómo se ve para cada persona
 
