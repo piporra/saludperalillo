@@ -163,6 +163,7 @@
   });
 
   const DIAS_TOTALES = 6;
+  let diasUsadosActuales = 0;
 
   function diasDe(sol) {
     if (sol.fecha_fin && sol.fecha_fin !== sol.fecha_permiso) {
@@ -188,6 +189,7 @@
     const usados = solicitudes
       .filter(s => s.estado === 'aprobado')
       .reduce((sum, s) => sum + diasDe(s), 0);
+    diasUsadosActuales = usados;
     const porcentaje = Math.min(100, (usados / DIAS_TOTALES) * 100);
 
     numEl.textContent = fmtDias(usados);
@@ -259,6 +261,14 @@
     if (fechaFin && fechaFin < fecha) {
       status.style.color = '#B33A3A';
       status.textContent = '❌ La fecha "Hasta" no puede ser anterior a la fecha de inicio.';
+      return;
+    }
+
+    const diasSolicitados = diasDe({ fecha_permiso: fecha, fecha_fin: fechaFin, tipo });
+    const disponibles = DIAS_TOTALES - diasUsadosActuales;
+    if (diasSolicitados > disponibles) {
+      status.style.color = '#B33A3A';
+      status.textContent = '❌ Estás solicitando ' + fmtDias(diasSolicitados) + ' día(s), pero solo te quedan ' + fmtDias(Math.max(disponibles, 0)) + ' de tus 6 días administrativos disponibles este año.';
       return;
     }
 
