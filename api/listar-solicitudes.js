@@ -42,12 +42,12 @@ export default async function handler(req, res) {
   } else if (modo === "jefe") {
     filtro = `rut_jefe=eq.${encodeURIComponent(meta.rut || "")}&estado=eq.pendiente_jefe`;
   } else if (modo === "director") {
-    if (meta.rol !== "director") {
+    if (!meta.es_director) {
       return res.status(403).json({ error: "No tienes permiso para ver esta lista" });
     }
     filtro = `estado=eq.pendiente_director`;
   } else if (modo === "personal") {
-    if (meta.rol !== "jefe_personal") {
+    if (!meta.es_jefe_personal) {
       return res.status(403).json({ error: "No tienes permiso para ver esta lista" });
     }
     filtro = `estado=eq.pendiente_personal`;

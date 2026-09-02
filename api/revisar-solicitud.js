@@ -72,8 +72,8 @@ export default async function handler(req, res) {
         estado: decision === "aprobado" ? "pendiente_director" : "rechazado"
       };
     } else if (solicitud.estado === "pendiente_director") {
-      // Debe ser director
-      if (meta.rol !== "director") {
+      // Debe tener la función de Director
+      if (!meta.es_director) {
         return res.status(403).json({ error: "No tienes permiso para revisar esta solicitud" });
       }
       cambios = {
@@ -83,8 +83,8 @@ export default async function handler(req, res) {
         estado: decision === "aprobado" ? "pendiente_personal" : "rechazado"
       };
     } else if (solicitud.estado === "pendiente_personal") {
-      // Debe ser la Jefa de Personal
-      if (meta.rol !== "jefe_personal") {
+      // Debe tener la función de Jefe de Personal
+      if (!meta.es_jefe_personal) {
         return res.status(403).json({ error: "No tienes permiso para revisar esta solicitud" });
       }
       cambios = {

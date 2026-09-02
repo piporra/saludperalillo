@@ -38,7 +38,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Método no permitido" });
   }
 
-  const { adminSecret, nombre, rut, password, hojaUrl, rol, jefeRut } = req.body || {};
+  const { adminSecret, nombre, rut, password, hojaUrl, esJefeDirecto, esDirector, esJefePersonal, jefeRut } = req.body || {};
 
   if (!process.env.ADMIN_SECRET || adminSecret !== process.env.ADMIN_SECRET) {
     return res.status(401).json({ error: "Clave de administrador incorrecta" });
@@ -56,7 +56,6 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: "La contraseña debe tener al menos 6 caracteres" });
   }
 
-  const rolFinal = ["funcionario", "jefe", "director", "jefe_personal"].includes(rol) ? rol : "funcionario";
   const rutLimpio = normalizarRut(rut);
   const jefeRutLimpio = jefeRut ? normalizarRut(jefeRut) : "";
   const email = rutLimpio.toLowerCase() + "@" + USERNAME_DOMAIN;
@@ -77,7 +76,9 @@ export default async function handler(req, res) {
           nombre,
           rut: rutLimpio,
           hoja_dias_url: hojaUrl || "",
-          rol: rolFinal,
+          es_jefe_directo: !!esJefeDirecto,
+          es_director: !!esDirector,
+          es_jefe_personal: !!esJefePersonal,
           jefe_directo_rut: jefeRutLimpio
         }
       })

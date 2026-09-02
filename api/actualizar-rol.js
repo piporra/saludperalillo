@@ -1,7 +1,8 @@
 // api/actualizar-rol.js
-// Función serverless de Vercel. Actualiza el rol (funcionario/jefe/director)
-// y el RUT del jefe directo de una cuenta ya existente, buscándola por RUT.
-// Requiere las mismas variables de entorno que las demás funciones.
+// Función serverless de Vercel. Actualiza las funciones adicionales
+// (Jefe directo / Director / Jefe de Personal — puede tener varias a la
+// vez) y el RUT del jefe directo de una cuenta ya existente, buscándola
+// por RUT. Requiere las mismas variables de entorno que las demás funciones.
 
 const USERNAME_DOMAIN = "cesfamperalillo.internal";
 
@@ -14,18 +15,14 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Método no permitido" });
   }
 
-  const { adminSecret, rut, rol, jefeRut } = req.body || {};
+  const { adminSecret, rut, esJefeDirecto, esDirector, esJefePersonal, jefeRut } = req.body || {};
 
   if (!process.env.ADMIN_SECRET || adminSecret !== process.env.ADMIN_SECRET) {
     return res.status(401).json({ error: "Clave de administrador incorrecta" });
   }
 
-  if (!rut || !rol) {
-    return res.status(400).json({ error: "Faltan datos (rut o rol)" });
-  }
-
-  if (!["funcionario", "jefe", "director", "jefe_personal"].includes(rol)) {
-    return res.status(400).json({ error: "Rol inválido" });
+  if (!rut) {
+    return res.status(400).json({ error: "Falta el RUT" });
   }
 
   const email = normalizarRut(rut).toLowerCase() + "@" + USERNAME_DOMAIN;
@@ -53,7 +50,13 @@ export default async function handler(req, res) {
     }
 
     const metadataActual = user.user_metadata || {};
-    const nuevaMetadata = { ...metadataActual, rol, jefe_directo_rut: jefeRutLimpio };
+    const nuevaMetadata = {
+      ...metadataActual,
+      es_jefe_directo: !!esJefeDirecto,
+      es_director: !!esDirector,
+      es_jefe_personal: !!esJefePersonal,
+      jefe_directo_rut: jefeRutLimpio
+    };
 
     const updateRes = await fetch(
       `${process.env.SUPABASE_URL}/auth/v1/admin/users/${user.id}`,
@@ -79,3 +82,4 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: "Error interno al actualizar" });
   }
 }
+
