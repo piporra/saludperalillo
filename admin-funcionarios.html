@@ -20,6 +20,9 @@
   h1{font-family:var(--font-head); color:var(--teal-deep); font-size:1.3rem; margin:0 0 6px;}
   p.sub{color:var(--gray); font-size:.9rem; margin:0 0 20px;}
   label{display:block; font-weight:700; font-size:.9rem; margin-bottom:6px; color:var(--teal-deep);}
+  .checks{margin-bottom:16px;}
+  .check-line{display:flex; align-items:center; gap:8px; font-weight:400; color:var(--ink); margin-bottom:8px;}
+  .check-line input{width:auto; margin:0;}
   input{width:100%; padding:12px 14px; border:1.5px solid var(--line); border-radius:10px; margin-bottom:16px; font-family:var(--font-body); font-size:.95rem;}
   button{width:100%; background:var(--gold); color:#fff; border:none; padding:14px; border-radius:999px; font-weight:700; font-size:1rem; cursor:pointer; font-family:var(--font-body);}
   button:hover{background:#0E86AC;}
@@ -57,13 +60,12 @@
       <label for="hojaUrl">Link de su hoja de días administrativos (opcional)</label>
       <input type="text" id="hojaUrl" placeholder="https://docs.google.com/.../pub?output=csv">
       <p class="hint">Puedes dejarlo en blanco y agregarlo después desde la tarjeta de abajo.</p>
-      <label for="rol">Rol</label>
-      <select id="rol">
-        <option value="funcionario">Funcionario</option>
-        <option value="jefe">Jefe directo</option>
-        <option value="director">Director</option>
-        <option value="jefe_personal">Jefa de Personal</option>
-      </select>
+      <label>Funciones adicionales (puede tener más de una, o ninguna)</label>
+      <div class="checks">
+        <label class="check-line"><input type="checkbox" id="esJefeDirecto"> Jefe directo</label>
+        <label class="check-line"><input type="checkbox" id="esDirector"> Director</label>
+        <label class="check-line"><input type="checkbox" id="esJefePersonal"> Jefe de Personal</label>
+      </div>
       <label for="jefeRut">RUT de su jefe directo (para aprobar permisos)</label>
       <input type="text" id="jefeRut" placeholder="12.345.678-9">
       <p class="hint">Necesario para que sus solicitudes de permiso administrativo lleguen a la persona correcta. Si él mismo es el director, puedes dejarlo en blanco.</p>
@@ -100,18 +102,17 @@
   </div>
 
   <div class="card" id="rolCard" style="display:none;">
-    <h1>🧭 Actualizar rol y jefe directo</h1>
-    <p class="sub">Para cuentas ya creadas: define si es funcionario, jefe directo o director, y quién es su jefe directo (para el flujo de aprobación de permisos).</p>
+    <h1>🧭 Actualizar funciones y jefe directo</h1>
+    <p class="sub">Para cuentas ya creadas: marca qué funciones adicionales tiene (puede tener varias) y quién es su jefe directo (para el flujo de aprobación de permisos).</p>
     <form id="rolForm">
       <label for="rol-rut">RUT del funcionario</label>
       <input type="text" id="rol-rut" required placeholder="12.345.678-9">
-      <label for="rol-select">Rol</label>
-      <select id="rol-select">
-        <option value="funcionario">Funcionario</option>
-        <option value="jefe">Jefe directo</option>
-        <option value="director">Director</option>
-        <option value="jefe_personal">Jefa de Personal</option>
-      </select>
+      <label>Funciones adicionales (puede tener más de una, o ninguna)</label>
+      <div class="checks">
+        <label class="check-line"><input type="checkbox" id="rol-esJefeDirecto"> Jefe directo</label>
+        <label class="check-line"><input type="checkbox" id="rol-esDirector"> Director</label>
+        <label class="check-line"><input type="checkbox" id="rol-esJefePersonal"> Jefe de Personal</label>
+      </div>
       <label for="rol-jefeRut">RUT de su jefe directo</label>
       <input type="text" id="rol-jefeRut" placeholder="12.345.678-9">
       <p class="hint">Si es el director, puedes dejarlo en blanco.</p>
@@ -166,7 +167,9 @@
     const rut = document.getElementById('rut').value.trim();
     const password = document.getElementById('password').value;
     const hojaUrl = document.getElementById('hojaUrl').value.trim();
-    const rol = document.getElementById('rol').value;
+    const esJefeDirecto = document.getElementById('esJefeDirecto').checked;
+    const esDirector = document.getElementById('esDirector').checked;
+    const esJefePersonal = document.getElementById('esJefePersonal').checked;
     const jefeRut = document.getElementById('jefeRut').value.trim();
 
     if (!validarRut(rut)) {
@@ -183,7 +186,7 @@
       const res = await fetch('/api/crear-funcionario', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ adminSecret, nombre, rut, password, hojaUrl, rol, jefeRut })
+        body: JSON.stringify({ adminSecret, nombre, rut, password, hojaUrl, esJefeDirecto, esDirector, esJefePersonal, jefeRut })
       });
       const data = await res.json();
 
@@ -328,7 +331,9 @@
     const btn = document.getElementById('rolBtn');
 
     const rut = document.getElementById('rol-rut').value.trim();
-    const rol = document.getElementById('rol-select').value;
+    const esJefeDirecto = document.getElementById('rol-esJefeDirecto').checked;
+    const esDirector = document.getElementById('rol-esDirector').checked;
+    const esJefePersonal = document.getElementById('rol-esJefePersonal').checked;
     const jefeRut = document.getElementById('rol-jefeRut').value.trim();
 
     btn.disabled = true;
@@ -339,7 +344,7 @@
       const res = await fetch('/api/actualizar-rol', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ adminSecret, rut, rol, jefeRut })
+        body: JSON.stringify({ adminSecret, rut, esJefeDirecto, esDirector, esJefePersonal, jefeRut })
       });
       const data = await res.json();
 

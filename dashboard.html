@@ -447,8 +447,8 @@
       const supabase = getSupabaseClient();
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
-      const rol = session.user.user_metadata && session.user.user_metadata.rol;
-      if (rol === 'jefe' || rol === 'director' || rol === 'jefe_personal') {
+      const meta = session.user.user_metadata || {};
+      if (meta.es_jefe_directo || meta.es_director || meta.es_jefe_personal) {
         document.getElementById('cardAprobaciones').style.display = 'flex';
       }
     } catch (err) {

@@ -159,10 +159,10 @@
       const { data: { session } } = await supabase.auth.getSession();
       const meta = session.user.user_metadata || {};
 
-      // Prioridad: jefe_personal → director → jefe (una persona podría
-      // tener varios roles a la vez, pero cada uno ve su propia bandeja).
-      if (meta.rol === 'jefe_personal') modoActual = 'personal';
-      else if (meta.rol === 'director') modoActual = 'director';
+      // Prioridad: jefe_personal → director → jefe (una persona puede
+      // tener varias funciones a la vez, pero cada una ve su propia bandeja).
+      if (meta.es_jefe_personal) modoActual = 'personal';
+      else if (meta.es_director) modoActual = 'director';
       else modoActual = 'jefe';
 
       document.getElementById('pageTitle').textContent =
