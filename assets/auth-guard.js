@@ -23,21 +23,24 @@
   }
 
   // La sesión existe, pero además exigimos que haya completado la
-  // verificación en dos pasos (Google Authenticator) en esta sesión.
-  const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
-  const currentPage = encodeURIComponent(window.location.pathname.split("/").pop());
+  // verificación en dos pasos (Google Authenticator) en esta sesión —
+  // excepto si el interruptor de pruebas (MFA_REQUERIDO) está apagado.
+  if (MFA_REQUERIDO) {
+    const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+    const currentPage = encodeURIComponent(window.location.pathname.split("/").pop());
 
-  if (aal.nextLevel === "aal2" && aal.currentLevel !== "aal2") {
-    // Tiene el factor activado, pero no lo verificó en esta sesión (ej: entró
-    // directo por link sin pasar por login.html) → lo manda a completar el paso.
-    window.location.href = "login.html?redirect=" + currentPage;
-    return;
-  }
+    if (aal.nextLevel === "aal2" && aal.currentLevel !== "aal2") {
+      // Tiene el factor activado, pero no lo verificó en esta sesión (ej: entró
+      // directo por link sin pasar por login.html) → lo manda a completar el paso.
+      window.location.href = "login.html?redirect=" + currentPage;
+      return;
+    }
 
-  if (aal.nextLevel === "aal1" && aal.currentLevel === "aal1") {
-    // Tiene sesión pero nunca activó Google Authenticator (obligatorio) → a activarlo.
-    window.location.href = "mfa-setup.html?redirect=" + currentPage;
-    return;
+    if (aal.nextLevel === "aal1" && aal.currentLevel === "aal1") {
+      // Tiene sesión pero nunca activó Google Authenticator (obligatorio) → a activarlo.
+      window.location.href = "mfa-setup.html?redirect=" + currentPage;
+      return;
+    }
   }
 
   // Sesión válida: muestra el nombre del funcionario si hay un elemento para ello
