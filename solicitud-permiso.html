@@ -50,6 +50,18 @@
   .btn-primary:disabled{opacity:.6; cursor:not-allowed;}
   #status{margin-top:12px; font-size:.9rem; text-align:center;}
 
+  .resumen-card{
+    background:#fff; border:1px solid var(--line); border-radius:var(--radius); padding:22px 24px;
+    margin-bottom:24px; box-shadow:0 12px 30px rgba(10,61,115,.06);
+  }
+  .resumen-card h2{font-family:var(--font-head); color:var(--teal-deep); font-size:1.05rem; margin:0 0 4px; display:flex; align-items:center; gap:8px;}
+  .resumen-card .resumen-sub{font-size:.88rem; color:var(--gray); margin:0 0 14px;}
+  .resumen-bar-track{background:var(--teal-light); border-radius:999px; height:12px; overflow:hidden; margin-bottom:8px;}
+  .resumen-bar-fill{background:linear-gradient(90deg, #12A6D6, #1B7FC2); height:100%; border-radius:999px; transition:width .5s ease;}
+  .resumen-count{display:flex; align-items:baseline; gap:6px; font-family:var(--font-head); color:var(--teal-deep);}
+  .resumen-count .num{font-size:1.6rem; font-weight:700;}
+  .resumen-count .of6{font-size:.9rem; color:var(--gray); font-weight:500;}
+
   h2.sub-title{font-family:var(--font-head); color:var(--teal-deep); font-size:1.1rem; margin:0 0 14px;}
   .lista-solicitudes{display:flex; flex-direction:column; gap:12px;}
   .sol-item{background:#fff; border:1px solid var(--line); border-radius:12px; padding:16px 18px; display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;}
@@ -118,6 +130,16 @@
       <p id="status"></p>
     </form>
 
+    <div class="resumen-card" id="resumenCard" style="display:none;">
+      <h2>🗓️ Tus días administrativos</h2>
+      <p class="resumen-sub">Días usados este año, según tus solicitudes ya aprobadas.</p>
+      <div class="resumen-bar-track"><div class="resumen-bar-fill" id="resumenBarFill" style="width:0%;"></div></div>
+      <div class="resumen-count">
+        <span class="num" id="resumenUsados">–</span>
+        <span class="of6">de 6 usados</span>
+      </div>
+    </div>
+
     <h2 class="sub-title">Mis solicitudes</h2>
     <div class="lista-solicitudes" id="listaSolicitudes">
       <p class="vacio">Cargando...</p>
@@ -130,6 +152,35 @@
   document.getElementById('p-tipo').addEventListener('change', (e) => {
     document.getElementById('turnoWrap').style.display = e.target.value === 'Medio día' ? 'block' : 'none';
   });
+
+  const DIAS_TOTALES = 6;
+
+  function diasDe(sol) {
+    return sol.tipo === 'Medio día' ? 0.5 : 1;
+  }
+
+  function fmtDias(n) {
+    const entero = Math.floor(n);
+    const tieneMedio = (n - entero) >= 0.5 - 1e-9 && (n - entero) < 1;
+    if (tieneMedio) return (entero > 0 ? entero + ' ' : '') + '½';
+    return String(entero);
+  }
+
+  function actualizarResumen(solicitudes) {
+    const card = document.getElementById('resumenCard');
+    const fill = document.getElementById('resumenBarFill');
+    const numEl = document.getElementById('resumenUsados');
+
+    const usados = solicitudes
+      .filter(s => s.estado === 'aprobado')
+      .reduce((sum, s) => sum + diasDe(s), 0);
+    const porcentaje = Math.min(100, (usados / DIAS_TOTALES) * 100);
+
+    numEl.textContent = fmtDias(usados);
+    fill.style.width = porcentaje + '%';
+    if (usados >= DIAS_TOTALES) fill.style.background = '#B33A3A';
+    card.style.display = 'block';
+  }
 
   function badgeEstado(sol) {
     if (sol.estado === 'aprobado') return '<span class="badge badge-aprobado">✅ Aprobado</span>';
@@ -154,6 +205,8 @@
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
+
+      actualizarResumen(data.solicitudes || []);
 
       if (!data.solicitudes || data.solicitudes.length === 0) {
         lista.innerHTML = '<p class="vacio">Aún no has hecho ninguna solicitud.</p>';
