@@ -51,6 +51,11 @@
   button:disabled{opacity:.6; cursor:not-allowed;}
   .vacio{color:var(--gray); font-size:.95rem; text-align:center; padding:40px 20px; background:#fff; border-radius:var(--radius); border:1px solid var(--line);}
   .sol-status{font-size:.85rem; margin-top:8px; text-align:center;}
+
+  .bandeja{margin-bottom:36px;}
+  .bandeja h2{font-family:var(--font-head); color:var(--teal-deep); font-size:1.15rem; margin:0 0 4px; display:flex; align-items:center; gap:8px;}
+  .bandeja .bandeja-sub{font-size:.88rem; color:var(--gray); margin:0 0 16px;}
+  .bandeja-vacia{color:var(--gray); font-size:.88rem; text-align:center; padding:24px; background:#fff; border-radius:var(--radius); border:1px solid var(--line);}
 </style>
 </head>
 <body>
@@ -76,36 +81,32 @@
   <div class="container">
     <div class="page-head">
       <span class="eyebrow">Aprobaciones</span>
-      <h1 id="pageTitle">Solicitudes pendientes</h1>
-      <p id="pageSub">Revisa y responde las solicitudes de tu equipo.</p>
+      <h1>Aprobaciones pendientes</h1>
+      <p>Revisa y responde las solicitudes que te corresponden. Si tienes más de una función (ej: jefe directo y también director), verás cada bandeja por separado.</p>
     </div>
 
-    <div id="listaAprobaciones">
-      <p class="vacio">Cargando...</p>
-    </div>
+    <div id="bandejas"></div>
   </div>
 </main>
 
 <script src="assets/auth-guard.js"></script>
 <script>
-  let modoActual = 'jefe';
-
   function fmtFecha(iso) {
     return new Date(iso + 'T00:00:00').toLocaleDateString('es-CL');
   }
 
-  function crearTarjeta(sol) {
+  function crearTarjeta(sol, modo) {
     const div = document.createElement('div');
     div.className = 'sol-card';
     div.innerHTML =
       '<h3>' + sol.nombre_solicitante + '</h3>' +
       '<div class="meta">RUT ' + sol.rut_solicitante + ' · ' + fmtFecha(sol.fecha_permiso) + ' · ' + sol.tipo + (sol.turno ? ' (' + sol.turno + ')' : '') + '</div>' +
       (sol.motivo ? '<div class="motivo">"' + sol.motivo + '"</div>' : '') +
-      ((modoActual === 'director' || modoActual === 'personal') && sol.comentario_jefe ? '<div class="motivo" style="color:var(--teal-deep);"><strong>Comentario del jefe directo:</strong> ' + sol.comentario_jefe + '</div>' : '') +
-      (modoActual === 'personal' && sol.comentario_director ? '<div class="motivo" style="color:var(--teal-deep);"><strong>Comentario del director:</strong> ' + sol.comentario_director + '</div>' : '') +
+      ((modo === 'director' || modo === 'personal') && sol.comentario_jefe ? '<div class="motivo" style="color:var(--teal-deep);"><strong>Comentario del jefe directo:</strong> ' + sol.comentario_jefe + '</div>' : '') +
+      (modo === 'personal' && sol.comentario_director ? '<div class="motivo" style="color:var(--teal-deep);"><strong>Comentario del director:</strong> ' + sol.comentario_director + '</div>' : '') +
       '<textarea placeholder="Comentario (opcional)" class="comentario"></textarea>' +
       '<div class="btn-row">' +
-        '<button class="btn-aprobar">' + (modoActual === 'personal' ? '✅ Registrar recepción' : '✅ Aprobar') + '</button>' +
+        '<button class="btn-aprobar">' + (modo === 'personal' ? '✅ Registrar recepción' : '✅ Aprobar') + '</button>' +
         '<button class="btn-rechazar">❌ Rechazar</button>' +
       '</div>' +
       '<p class="sol-status"></p>';
@@ -152,44 +153,64 @@
     return div;
   }
 
-  async function cargarAprobaciones() {
-    const lista = document.getElementById('listaAprobaciones');
+  async function cargarBandeja(modo, titulo, subtitulo, token) {
+    const wrap = document.createElement('div');
+    wrap.className = 'bandeja';
+    wrap.innerHTML = '<h2>' + titulo + '</h2><p class="bandeja-sub">' + subtitulo + '</p>';
+    const listaEl = document.createElement('div');
+    listaEl.innerHTML = '<p class="bandeja-vacia">Cargando...</p>';
+    wrap.appendChild(listaEl);
+    document.getElementById('bandejas').appendChild(wrap);
+
     try {
-      const supabase = getSupabaseClient();
-      const { data: { session } } = await supabase.auth.getSession();
-      const meta = session.user.user_metadata || {};
-
-      // Prioridad: jefe_personal → director → jefe (una persona puede
-      // tener varias funciones a la vez, pero cada una ve su propia bandeja).
-      if (meta.es_jefe_personal) modoActual = 'personal';
-      else if (meta.es_director) modoActual = 'director';
-      else modoActual = 'jefe';
-
-      document.getElementById('pageTitle').textContent =
-        modoActual === 'personal' ? 'Solicitudes para registrar' :
-        modoActual === 'director' ? 'Solicitudes para tu aprobación final' :
-        'Solicitudes de tu equipo';
-      document.getElementById('pageSub').textContent =
-        modoActual === 'personal' ? 'Estas solicitudes ya fueron aprobadas por el jefe directo y el director. Regístralas como paso final.' :
-        modoActual === 'director' ? 'Estas solicitudes ya fueron aprobadas por el jefe directo correspondiente.' :
-        'Revisa las solicitudes de permiso administrativo de las personas que dependen de ti.';
-
-      const res = await fetch('/api/listar-solicitudes?modo=' + modoActual, {
-        headers: { 'Authorization': 'Bearer ' + session.access_token }
+      const res = await fetch('/api/listar-solicitudes?modo=' + modo, {
+        headers: { 'Authorization': 'Bearer ' + token }
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
 
-      lista.innerHTML = '';
+      listaEl.innerHTML = '';
       if (!data.solicitudes || data.solicitudes.length === 0) {
-        lista.innerHTML = '<p class="vacio">No tienes solicitudes pendientes por revisar. 🎉</p>';
+        listaEl.innerHTML = '<p class="bandeja-vacia">No tienes solicitudes pendientes en esta bandeja. 🎉</p>';
+        return;
+      }
+      data.solicitudes.forEach(sol => listaEl.appendChild(crearTarjeta(sol, modo)));
+    } catch (err) {
+      console.error(err);
+      listaEl.innerHTML = '<p class="bandeja-vacia">No se pudo cargar esta bandeja.</p>';
+    }
+  }
+
+  async function cargarAprobaciones() {
+    const contenedor = document.getElementById('bandejas');
+    try {
+      const supabase = getSupabaseClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      const meta = session.user.user_metadata || {};
+      const token = session.access_token;
+
+      // Muestra una bandeja por cada función que tenga la persona — no
+      // son excluyentes, alguien puede ser jefe directo y director a la vez.
+      const tareas = [];
+      if (meta.es_jefe_directo) {
+        tareas.push(cargarBandeja('jefe', '👥 Solicitudes de tu equipo', 'Personas que te tienen como jefe directo.', token));
+      }
+      if (meta.es_director) {
+        tareas.push(cargarBandeja('director', '🖋️ Solicitudes para tu aprobación final', 'Ya fueron aprobadas por el jefe directo correspondiente.', token));
+      }
+      if (meta.es_jefe_personal) {
+        tareas.push(cargarBandeja('personal', '📋 Solicitudes para registrar', 'Ya aprobadas por el jefe directo y el director.', token));
+      }
+
+      if (tareas.length === 0) {
+        contenedor.innerHTML = '<p class="vacio">Tu cuenta no tiene ninguna función de aprobación asignada.</p>';
         return;
       }
 
-      data.solicitudes.forEach(sol => lista.appendChild(crearTarjeta(sol)));
+      await Promise.all(tareas);
     } catch (err) {
       console.error(err);
-      lista.innerHTML = '<p class="vacio">No se pudieron cargar las solicitudes.</p>';
+      contenedor.innerHTML = '<p class="vacio">No se pudieron cargar las aprobaciones.</p>';
     }
   }
 
