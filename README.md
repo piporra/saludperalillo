@@ -206,66 +206,22 @@ contraseña, y quedan con acceso hasta que cierren sesión.
 > `service_role` que puede crear usuarios solo vive en el servidor de
 > Vercel, nunca en el navegador ni en GitHub.
 
-## 🗓️ Días administrativos (hoja individual por funcionario)
+## 🗓️ Días administrativos (calculado automáticamente)
 
 El portal de funcionarios (`dashboard.html`) muestra a cada funcionario
-cuántos de sus 6 días administrativos anuales le quedan disponibles.
-Como cada funcionario tiene **su propia hoja** dentro de una carpeta de
-Drive (en vez de una planilla única con todos), el sitio lee la hoja
-específica de la persona que inició sesión — vinculada a su cuenta.
+cuántos de sus 6 días administrativos anuales lleva usados este año —
+**calculado automáticamente**, sumando solo sus solicitudes de permiso
+ya **aprobadas** en el flujo de aprobación (día completo = 1, medio
+día = 0,5). Ya no depende de ninguna hoja de Google Sheets ni de
+actualizar nada a mano: apenas una solicitud queda aprobada por completo
+(jefe directo → director → Jefe de Personal), el conteo se actualiza
+solo, tanto en el portal del funcionario como en "Historial de permisos"
+(para Director y Jefe de Personal).
 
-### Paso 1 — Crea la carpeta y las hojas individuales
-
-1. En Google Drive, crea (o usa) una carpeta, por ejemplo
-   "Días administrativos 2026".
-2. Descarga la plantilla `permiso_administrativo_plantilla.xlsx` (te la
-   dejé junto a este README) — mantiene el mismo formato y textos que su
-   documento Word actual: datos del funcionario, la solicitud, los
-   espacios de firma (funcionario, jefe directo, jefe de personal,
-   director) y las observaciones.
-3. Súbela a la carpeta de Drive y **ábrela con Google Sheets** (clic
-   derecho → Abrir con → Google Sheets). Duplícala una vez por cada
-   funcionario y complétala con sus datos (nombre, RUT, cargo, nivel).
-4. Arriba, bajo el título, hay una celda destacada:
-   **"SALDO ACTUAL DE DÍAS ADMINISTRATIVOS"** — ahí escribes cuántos días
-   le quedan disponibles a esa persona (0 a 6). **Esta es la única celda
-   que el sitio necesita leer**; el resto del formulario (firmas, fechas,
-   observaciones) lo sigues llenando igual que siempre para cada solicitud
-   puntual.
-5. Cada vez que un funcionario use o recupere un día administrativo,
-   actualizas ese número — el sitio reflejará el cambio la próxima vez
-   que esa persona entre a su portal.
-
-### Paso 2 — Publica cada hoja como CSV
-
-Por cada hoja individual:
-
-1. Con la hoja abierta, ve a **Archivo → Compartir → Publicar en la Web**.
-2. Elige la hoja (si tiene una sola pestaña, ya viene seleccionada) y el
-   formato **"Valores separados por comas (.csv)"**.
-3. Haz clic en **Publicar** y confirma.
-4. Copia el link que te entrega (termina en `output=csv`). Ese link es
-   único para esa persona.
-
-> **Nota de privacidad:** cada link publicado solo muestra los datos de
-> esa hoja puntual (un número), no el resto de tus documentos ni otras
-> hojas de la carpeta — es un riesgo menor, pero técnicamente cualquiera
-> con ese link específico podría verlo.
-
-### Paso 3 — Vincula cada link a la cuenta del funcionario
-
-Tienes dos formas de hacerlo desde `admin-funcionarios.html`:
-
-- **Al crear la cuenta:** en el formulario "➕ Crear cuenta de funcionario"
-  hay un campo opcional "Link de su hoja de días administrativos" — pégalo
-  ahí directamente.
-- **Para una cuenta que ya existe:** usa la tarjeta "🔗 Vincular hoja de
-  días administrativos" — pones el RUT del funcionario y el link de su
-  hoja, y se guarda (puedes usarla también para actualizar el link si
-  cambia).
-
-Listo — la próxima vez que ese funcionario entre a su portal, verá una
-barra con sus días disponibles, leídos en vivo desde su propia hoja.
+> **Nota:** si en algún momento usaste el sistema anterior con hojas de
+> Google Sheets individuales por funcionario (con el campo `hoja_dias_url`
+> en su cuenta), ese campo ya no se usa ni se muestra en el sitio — no es
+> necesario borrarlo, simplemente queda sin efecto.
 
 ## 🗓️ Calendario de reuniones
 

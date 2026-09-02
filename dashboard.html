@@ -75,6 +75,8 @@
   .perm-count .num{font-size:1.8rem; font-weight:700;}
   .perm-count .of6{font-size:.95rem; color:var(--gray); font-weight:500;}
   .perm-state{font-size:.85rem; color:var(--gray); margin-top:4px;}
+  .perm-link{display:inline-block; margin-top:12px; font-size:.85rem; font-weight:700; color:var(--gold); text-decoration:none;}
+  .perm-link:hover{text-decoration:underline;}
   .option-card{
     background:#fff; border:1px solid var(--line); border-radius:var(--radius); padding:32px 26px;
     text-decoration:none; color:var(--ink); box-shadow:0 12px 30px rgba(10,61,115,.06);
@@ -139,13 +141,14 @@
 
     <div class="perm-card" id="permCard" style="display:none;">
       <h2>🗓️ Tus días administrativos</h2>
-      <p class="perm-sub">Permisos administrativos disponibles este año.</p>
+      <p class="perm-sub">Días usados este año, según tus solicitudes ya aprobadas.</p>
       <div class="perm-bar-track"><div class="perm-bar-fill" id="permBarFill" style="width:0%;"></div></div>
       <div class="perm-count">
         <span class="num" id="permDisponibles">–</span>
-        <span class="of6">de 6 disponibles</span>
+        <span class="of6">de 6 usados</span>
       </div>
       <p class="perm-state" id="permState"></p>
+      <a href="solicitud-permiso.html" class="perm-link">Ver historial completo →</a>
     </div>
 
     <div class="options-grid">
@@ -235,47 +238,16 @@
 
 <script src="assets/auth-guard.js"></script>
 <script>
-  // ===== Días administrativos (hoja individual por funcionario) =====
-  // Cada funcionario tiene su propia Google Sheet (dentro de una carpeta
-  // en Drive), publicada como CSV. El link de SU hoja se guarda al crear
-  // su cuenta (o después) desde admin-funcionarios.html → "Vincular hoja".
-  // La hoja debe usar la plantilla oficial "permiso_administrativo_plantilla.xlsx"
-  // (mismo formato que el documento Word), que tiene una fila con la
-  // etiqueta "SALDO ACTUAL DE DÍAS ADMINISTRATIVOS" — el sitio busca esa
-  // fila y lee el número desde ahí, sin importar en qué línea esté.
+  // ===== Días administrativos (calculado automáticamente) =====
+  // Ya no depende de ninguna hoja de Google Sheets: se calcula en vivo
+  // sumando las solicitudes de permiso administrativo ya APROBADAS de
+  // este funcionario (día completo = 1, medio día = 0,5).
   const DIAS_TOTALES = 6;
 
-  function parseCSV(text) {
-    return text.trim().split(/\r?\n/).map(line => {
-      const cells = [];
-      let cur = '', inQuotes = false;
-      for (let i = 0; i < line.length; i++) {
-        const ch = line[i];
-        if (ch === '"') { inQuotes = !inQuotes; }
-        else if (ch === ',' && !inQuotes) { cells.push(cur); cur = ''; }
-        else { cur += ch; }
-      }
-      cells.push(cur);
-      return cells.map(c => c.trim().replace(/^"|"$/g, ''));
-    });
+  function diasDeSolicitud(sol) {
+    return sol.tipo === 'Medio día' ? 0.5 : 1;
   }
 
-  // Interpreta valores como "2", "1 ½", "½", "1.5" o "1,5" y los convierte
-  // siempre a número decimal (1 ½ → 1.5).
-  function parseDias(valor) {
-    if (!valor) return 0;
-    let str = valor.toString().trim();
-    let extra = 0;
-    if (str.includes('½') || str.includes('1/2')) {
-      extra = 0.5;
-      str = str.replace('½', '').replace('1/2', '').trim();
-    }
-    const base = parseFloat(str.replace(',', '.')) || 0;
-    return base + extra;
-  }
-
-  // Hace el camino inverso: 1.5 → "1 ½", 0.5 → "½", 2 → "2" (para mostrarlo
-  // en el mismo formato que usa la plantilla, no como decimal).
   function formatDias(num) {
     const entero = Math.floor(num);
     const tieneMedio = (num - entero) >= 0.5 - 1e-9 && (num - entero) < 1;
@@ -294,48 +266,31 @@
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
 
-      const hojaUrl = session.user.user_metadata && session.user.user_metadata.hoja_dias_url;
+      const res = await fetch('/api/listar-solicitudes?modo=propias', {
+        headers: { 'Authorization': 'Bearer ' + session.access_token }
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
 
-      if (!hojaUrl) {
-        card.style.display = 'block';
-        numEl.textContent = '–';
-        fill.style.width = '0%';
-        stateEl.textContent = 'Aún no se ha vinculado tu hoja de días administrativos. Consulta con administración.';
-        return;
-      }
-
-      const res = await fetch(hojaUrl + (hojaUrl.includes('?') ? '&' : '?') + 't=' + Date.now());
-      const text = await res.text();
-      const rows = parseCSV(text);
-
-      // Busca la fila cuya primera columna diga "SALDO ACTUAL..." y toma
-      // el valor de la columna D (misma fila que en la plantilla oficial).
-      // Admite días completos y medios días (ej: "1 ½", "½", "2").
-      const filaSaldo = rows.find(r => (r[0] || '').toUpperCase().includes('SALDO ACTUAL'));
-      const disponibles = filaSaldo ? parseDias(filaSaldo[3]) : null;
-
-      if (disponibles === null) {
-        card.style.display = 'block';
-        stateEl.textContent = 'No se encontró la celda de saldo en tu hoja. Revisa que uses la plantilla oficial.';
-        return;
-      }
-
-      const porcentaje = Math.max(0, Math.min(100, (disponibles / DIAS_TOTALES) * 100));
-      const usados = DIAS_TOTALES - disponibles;
+      const usados = (data.solicitudes || [])
+        .filter(s => s.estado === 'aprobado')
+        .reduce((sum, s) => sum + diasDeSolicitud(s), 0);
+      const disponibles = Math.max(DIAS_TOTALES - usados, 0);
+      const porcentaje = Math.min(100, (usados / DIAS_TOTALES) * 100);
 
       card.style.display = 'block';
-      numEl.textContent = formatDias(disponibles);
+      numEl.textContent = formatDias(usados);
       fill.style.width = porcentaje + '%';
-      stateEl.textContent = formatDias(usados) + ' de ' + DIAS_TOTALES + ' ya utilizados este año.';
+      stateEl.textContent = formatDias(disponibles) + ' de ' + DIAS_TOTALES + ' disponibles.';
 
       if (disponibles <= 0) {
         fill.style.background = '#B33A3A';
         stateEl.textContent = 'Ya utilizaste todos tus días administrativos este año.';
       }
     } catch (err) {
-      console.error('No se pudo cargar días administrativos:', err);
+      console.error('No se pudo calcular tus días administrativos:', err);
       card.style.display = 'block';
-      stateEl.textContent = 'No se pudo cargar tu hoja en este momento.';
+      stateEl.textContent = 'No se pudo calcular tu conteo en este momento.';
     }
   }
 

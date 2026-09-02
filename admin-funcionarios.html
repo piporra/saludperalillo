@@ -57,9 +57,6 @@
       <label for="password">Contraseña provisoria</label>
       <input type="text" id="password" required minlength="6">
       <p class="hint">Compártela con el funcionario para que la cambie luego si quieres.</p>
-      <label for="hojaUrl">Link de su hoja de días administrativos (opcional)</label>
-      <input type="text" id="hojaUrl" placeholder="https://docs.google.com/.../pub?output=csv">
-      <p class="hint">Puedes dejarlo en blanco y agregarlo después desde la tarjeta de abajo.</p>
       <label>Funciones adicionales (puede tener más de una, o ninguna)</label>
       <div class="checks">
         <label class="check-line"><input type="checkbox" id="esJefeDirecto"> Jefe directo</label>
@@ -92,19 +89,6 @@
       <p class="hint">Compártesela al funcionario por un medio seguro.</p>
       <button type="submit" id="resetBtn">Restablecer contraseña</button>
       <p id="reset-status"></p>
-    </form>
-  </div>
-
-  <div class="card" id="hojaCard" style="display:none;">
-    <h1>🔗 Vincular hoja de días administrativos</h1>
-    <p class="sub">Pega o actualiza el link de la hoja individual de un funcionario (ver instrucciones en el README).</p>
-    <form id="hojaForm">
-      <label for="hoja-rut">RUT del funcionario</label>
-      <input type="text" id="hoja-rut" required placeholder="12.345.678-9">
-      <label for="hoja-url">Link de su hoja (CSV publicado)</label>
-      <input type="text" id="hoja-url" required placeholder="https://docs.google.com/.../pub?output=csv">
-      <button type="submit" id="hojaBtn">Guardar link</button>
-      <p id="hoja-status"></p>
     </form>
   </div>
 
@@ -158,7 +142,6 @@
     adminSecret = document.getElementById('admin-secret').value;
     document.getElementById('createCard').style.display = 'block';
     document.getElementById('resetCard').style.display = 'block';
-    document.getElementById('hojaCard').style.display = 'block';
     document.getElementById('rolCard').style.display = 'block';
     document.getElementById('mfaCard').style.display = 'block';
     document.getElementById('adminAuthForm').closest('.card').style.display = 'none';
@@ -208,7 +191,6 @@
     const nombre = document.getElementById('nombre').value.trim();
     const rut = document.getElementById('rut').value.trim();
     const password = document.getElementById('password').value;
-    const hojaUrl = document.getElementById('hojaUrl').value.trim();
     const esJefeDirecto = document.getElementById('esJefeDirecto').checked;
     const esDirector = document.getElementById('esDirector').checked;
     const esJefePersonal = document.getElementById('esJefePersonal').checked;
@@ -229,7 +211,7 @@
       const res = await fetch('/api/crear-funcionario', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ adminSecret, nombre, rut, password, hojaUrl, esJefeDirecto, esDirector, esJefePersonal, jefeRut, subrogante })
+        body: JSON.stringify({ adminSecret, nombre, rut, password, esJefeDirecto, esDirector, esJefePersonal, jefeRut, subrogante })
       });
       const data = await res.json();
 
@@ -282,45 +264,6 @@
       status.style.color = 'var(--teal)';
       status.textContent = '✅ Contraseña restablecida para el RUT ' + formatearRut(rut);
       document.getElementById('resetForm').reset();
-      btn.disabled = false;
-    } catch (err) {
-      status.style.color = '#B33A3A';
-      status.textContent = 'Error de conexión. Inténtalo nuevamente.';
-      btn.disabled = false;
-      console.error(err);
-    }
-  });
-
-  document.getElementById('hojaForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const status = document.getElementById('hoja-status');
-    const btn = document.getElementById('hojaBtn');
-
-    const rut = document.getElementById('hoja-rut').value.trim();
-    const hojaUrl = document.getElementById('hoja-url').value.trim();
-
-    btn.disabled = true;
-    status.style.color = 'var(--gray)';
-    status.textContent = 'Guardando...';
-
-    try {
-      const res = await fetch('/api/actualizar-hoja', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ adminSecret, rut, hojaUrl })
-      });
-      const data = await res.json();
-
-      if (!res.ok) {
-        status.style.color = '#B33A3A';
-        status.textContent = '❌ ' + (data.error || 'No se pudo guardar el link.');
-        btn.disabled = false;
-        return;
-      }
-
-      status.style.color = 'var(--teal)';
-      status.textContent = '✅ Hoja vinculada para el RUT ' + formatearRut(rut);
-      document.getElementById('hojaForm').reset();
       btn.disabled = false;
     } catch (err) {
       status.style.color = '#B33A3A';
