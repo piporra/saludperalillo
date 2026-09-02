@@ -509,6 +509,30 @@ tener una, varias, o ninguna:
   la Jefa de Personal las que ya aprobaron ambos — con los comentarios
   de las etapas anteriores visibles para tener el contexto completo.
 
+## 📊 Historial de permisos y conteo de días
+
+Además de "Aprobaciones pendientes", hay una nueva sección
+**"Historial de permisos"** (`historial-permisos.html`), visible solo
+para cuentas marcadas como **Director** o **Jefe de Personal**. Muestra,
+por cada funcionario que haya hecho al menos una solicitud:
+
+- Una barra con **cuántos de sus 6 días administrativos lleva usados**
+  este año (se calcula automáticamente sumando solo las solicitudes ya
+  **aprobadas**: día completo = 1, medio día = 0,5 — las pendientes o
+  rechazadas no se cuentan).
+- Su **historial completo** al desplegar su tarjeta: cada solicitud con
+  fecha, tipo, motivo y estado.
+- Un buscador para encontrar rápido a un funcionario por nombre.
+
+No requiere ninguna configuración adicional — se calcula en vivo desde
+la misma tabla `solicitudes_permiso` de Supabase que ya creaste para el
+flujo de aprobaciones.
+
+**Archivos para subir a GitHub:**
+- `historial-permisos.html` (nuevo, va en la raíz)
+- `api/historial-permisos.js` (nuevo, va dentro de `api/`)
+- `dashboard.html` (reemplazar — ahora incluye la tarjeta condicional)
+
 ## ⚠️ Pendiente antes de publicar oficialmente
 
 Este es un **borrador de diseño**. Antes de lanzarlo como sitio oficial del
