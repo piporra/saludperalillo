@@ -426,6 +426,80 @@ configuración, se dibuja solo).
 Listo — cada mañana, si alguien cumple años ese día, aparece
 automáticamente arriba del portal para todos los funcionarios.
 
+## ✅ Flujo de aprobación de permisos administrativos
+
+Los funcionarios pueden solicitar un permiso administrativo desde el
+portal (`solicitud-permiso.html`). La solicitud pasa automáticamente por
+**tres etapas**: primero su **jefe directo** la aprueba o rechaza, luego
+el **director** da su aprobación, y por último la **Jefa de Personal**
+la recibe y registra como paso final (con las 3 firmas ya completas:
+funcionario, jefe directo y director). Todo esto se revisa en
+`aprobaciones.html`, y el resultado se ve en todo momento en el portal
+del funcionario que la solicitó.
+
+> **Importante:** este flujo maneja el *proceso de aprobación* (quién
+> pidió, quién revisó, en qué estado va) — no actualiza automáticamente
+> el número de "días disponibles" de la hoja individual de cada persona.
+> Ese número lo sigues actualizando tú a mano, como hasta ahora, una vez
+> que la solicitud quede aprobada.
+
+### Paso 1 — Crea o actualiza la tabla en Supabase
+
+- **Si es la primera vez** que configuras esto: ejecuta el contenido de
+  `sql/01_solicitudes_permiso.sql` en Supabase → SQL Editor → Run (ya
+  incluye la etapa de Jefa de Personal).
+- **Si ya habías ejecutado el script 01 antes** (antes de agregar esta
+  etapa): en vez de repetirlo, ejecuta `sql/02_agregar_jefe_personal.sql`
+  — agrega solo las columnas que faltan, sin duplicar nada.
+
+### Paso 2 — Sube los archivos nuevos y actualizados a GitHub
+
+**Nuevos** (van en la raíz del repositorio):
+- `solicitud-permiso.html`
+- `aprobaciones.html`
+
+**Nuevos** (van dentro de la carpeta `api/`):
+- `crear-solicitud-permiso.js`
+- `listar-solicitudes.js`
+- `revisar-solicitud.js`
+- `actualizar-rol.js`
+
+**Reemplazar** (mismo nombre, misma ubicación):
+- `dashboard.html`
+- `admin-funcionarios.html`
+- `api/crear-funcionario.js`
+
+### Paso 3 — Define el rol y el jefe directo de cada funcionario
+
+Cada cuenta necesita saber **quién es su jefe directo** (para enrutar sus
+solicitudes) y **qué rol tiene**: Funcionario, Jefe directo, Director, o
+**Jefa de Personal**.
+
+- **Al crear una cuenta nueva:** ya aparece en el formulario de
+  `admin-funcionarios.html` — eliges el rol y escribes el RUT de su jefe
+  directo.
+- **Para cuentas que ya existen:** usa la tarjeta
+  **"🧭 Actualizar rol y jefe directo"** en el mismo panel.
+
+> Al director y a la Jefa de Personal no les hace falta asignarles un
+> "jefe directo" (puedes dejar ese campo en blanco en sus cuentas) — las
+> solicitudes les llegan automáticamente en su etapa correspondiente, sin
+> necesidad de configurar nada más para ellos. Solo debe existir **una**
+> cuenta con rol Director y **una** con rol Jefa de Personal.
+
+### Cómo se ve para cada persona
+
+- **Cualquier funcionario:** ve la tarjeta "Solicitar permiso
+  administrativo" en su portal — ahí pide su permiso y ve el estado de
+  todas sus solicitudes (esperando jefe directo / esperando director /
+  registrando con Jefa de Personal / aprobado / rechazado).
+- **Jefes directos, director y Jefa de Personal:** ven además una
+  tarjeta **"Aprobaciones pendientes"** (los demás funcionarios no la
+  ven), cada uno con su propia bandeja: al jefe directo le llegan las
+  solicitudes nuevas, al director las que ya aprobó el jefe directo, y a
+  la Jefa de Personal las que ya aprobaron ambos — con los comentarios
+  de las etapas anteriores visibles para tener el contexto completo.
+
 ## ⚠️ Pendiente antes de publicar oficialmente
 
 Este es un **borrador de diseño**. Antes de lanzarlo como sitio oficial del
