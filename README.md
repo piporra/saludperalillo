@@ -489,6 +489,33 @@ flujo de aprobaciones.
 - `api/historial-permisos.js` (nuevo, va dentro de `api/`)
 - `dashboard.html` (reemplazar — ahora incluye la tarjeta condicional)
 
+## 📆 Solicitar varios días seguidos en una sola solicitud
+
+En "Solicitar permiso administrativo", además de la fecha principal hay
+un campo opcional **"Hasta"** — si un funcionario necesita, por ejemplo,
+2 días seguidos (03/09/2026 y 04/09/2026), completa "Fecha del permiso"
+con el primer día y "Hasta" con el último. El sistema cuenta
+automáticamente todos los días del rango como días completos (en el
+ejemplo, 2 días) para el conteo de sus 6 días administrativos.
+
+Si el permiso es de un solo día, se deja "Hasta" en blanco (como hasta
+ahora). El campo "Hasta" se oculta automáticamente si el tipo elegido es
+"Medio día", ya que un medio día no aplica a un rango de fechas.
+
+### Requiere una columna nueva en Supabase
+
+Ejecuta `sql/03_agregar_fecha_fin.sql` en Supabase → SQL Editor → Run
+(agrega la columna `fecha_fin`, sin afectar las solicitudes que ya
+existen).
+
+### Archivos a reemplazar en GitHub
+
+- `solicitud-permiso.html`
+- `aprobaciones.html`
+- `historial-permisos.html`
+- `dashboard.html`
+- `api/crear-solicitud-permiso.js`
+
 ## ⚠️ Pendiente antes de publicar oficialmente
 
 Este es un **borrador de diseño**. Antes de lanzarlo como sitio oficial del

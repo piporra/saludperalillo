@@ -95,12 +95,28 @@
     return new Date(iso + 'T00:00:00').toLocaleDateString('es-CL');
   }
 
+  function diasDe(sol) {
+    if (sol.fecha_fin && sol.fecha_fin !== sol.fecha_permiso) {
+      const d1 = new Date(sol.fecha_permiso + 'T00:00:00');
+      const d2 = new Date(sol.fecha_fin + 'T00:00:00');
+      return Math.round((d2 - d1) / 86400000) + 1;
+    }
+    return sol.tipo === 'Medio día' ? 0.5 : 1;
+  }
+
+  function fmtFechaSol(sol) {
+    if (sol.fecha_fin && sol.fecha_fin !== sol.fecha_permiso) {
+      return fmtFecha(sol.fecha_permiso) + ' al ' + fmtFecha(sol.fecha_fin) + ' (' + diasDe(sol) + ' días)';
+    }
+    return fmtFecha(sol.fecha_permiso);
+  }
+
   function crearTarjeta(sol, modo) {
     const div = document.createElement('div');
     div.className = 'sol-card';
     div.innerHTML =
       '<h3>' + sol.nombre_solicitante + '</h3>' +
-      '<div class="meta">RUT ' + sol.rut_solicitante + ' · ' + fmtFecha(sol.fecha_permiso) + ' · ' + sol.tipo + (sol.turno ? ' (' + sol.turno + ')' : '') + '</div>' +
+      '<div class="meta">RUT ' + sol.rut_solicitante + ' · ' + fmtFechaSol(sol) + ' · ' + sol.tipo + (sol.turno ? ' (' + sol.turno + ')' : '') + '</div>' +
       (sol.motivo ? '<div class="motivo">"' + sol.motivo + '"</div>' : '') +
       ((modo === 'director' || modo === 'personal') && sol.comentario_jefe ? '<div class="motivo" style="color:var(--teal-deep);"><strong>Comentario del jefe directo:</strong> ' + sol.comentario_jefe + '</div>' : '') +
       (modo === 'personal' && sol.comentario_director ? '<div class="motivo" style="color:var(--teal-deep);"><strong>Comentario del director:</strong> ' + sol.comentario_director + '</div>' : '') +

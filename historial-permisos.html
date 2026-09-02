@@ -119,6 +119,11 @@
   }
 
   function diasDe(sol) {
+    if (sol.fecha_fin && sol.fecha_fin !== sol.fecha_permiso) {
+      const d1 = new Date(sol.fecha_permiso + 'T00:00:00');
+      const d2 = new Date(sol.fecha_fin + 'T00:00:00');
+      return Math.round((d2 - d1) / 86400000) + 1;
+    }
     return sol.tipo === 'Medio día' ? 0.5 : 1;
   }
 
@@ -131,6 +136,13 @@
 
   function fmtFecha(iso) {
     return new Date(iso + 'T00:00:00').toLocaleDateString('es-CL');
+  }
+
+  function fmtFechaSol(sol) {
+    if (sol.fecha_fin && sol.fecha_fin !== sol.fecha_permiso) {
+      return fmtFecha(sol.fecha_permiso) + ' al ' + fmtFecha(sol.fecha_fin) + ' (' + diasDe(sol) + ' días)';
+    }
+    return fmtFecha(sol.fecha_permiso);
   }
 
   function renderLista(filtro) {
@@ -176,7 +188,7 @@
         const item = document.createElement('div');
         item.className = 'item-hist';
         item.innerHTML =
-          '<div class="info"><h4>' + fmtFecha(sol.fecha_permiso) + ' — ' + sol.tipo + (sol.turno ? ' (' + sol.turno + ')' : '') + '</h4>' +
+          '<div class="info"><h4>' + fmtFechaSol(sol) + ' — ' + sol.tipo + (sol.turno ? ' (' + sol.turno + ')' : '') + '</h4>' +
           '<p>' + (sol.motivo || 'Sin motivo especificado') + '</p></div>' +
           badgeEstado(sol);
         bodyInner.appendChild(item);

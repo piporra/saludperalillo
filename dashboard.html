@@ -245,6 +245,11 @@
   const DIAS_TOTALES = 6;
 
   function diasDeSolicitud(sol) {
+    if (sol.fecha_fin && sol.fecha_fin !== sol.fecha_permiso) {
+      const d1 = new Date(sol.fecha_permiso + 'T00:00:00');
+      const d2 = new Date(sol.fecha_fin + 'T00:00:00');
+      return Math.round((d2 - d1) / 86400000) + 1;
+    }
     return sol.tipo === 'Medio día' ? 0.5 : 1;
   }
 
