@@ -57,6 +57,16 @@
       <label for="hojaUrl">Link de su hoja de días administrativos (opcional)</label>
       <input type="text" id="hojaUrl" placeholder="https://docs.google.com/.../pub?output=csv">
       <p class="hint">Puedes dejarlo en blanco y agregarlo después desde la tarjeta de abajo.</p>
+      <label for="rol">Rol</label>
+      <select id="rol">
+        <option value="funcionario">Funcionario</option>
+        <option value="jefe">Jefe directo</option>
+        <option value="director">Director</option>
+        <option value="jefe_personal">Jefa de Personal</option>
+      </select>
+      <label for="jefeRut">RUT de su jefe directo (para aprobar permisos)</label>
+      <input type="text" id="jefeRut" placeholder="12.345.678-9">
+      <p class="hint">Necesario para que sus solicitudes de permiso administrativo lleguen a la persona correcta. Si él mismo es el director, puedes dejarlo en blanco.</p>
       <button type="submit" id="createBtn">Crear cuenta</button>
       <p id="status"></p>
     </form>
@@ -89,6 +99,27 @@
     </form>
   </div>
 
+  <div class="card" id="rolCard" style="display:none;">
+    <h1>🧭 Actualizar rol y jefe directo</h1>
+    <p class="sub">Para cuentas ya creadas: define si es funcionario, jefe directo o director, y quién es su jefe directo (para el flujo de aprobación de permisos).</p>
+    <form id="rolForm">
+      <label for="rol-rut">RUT del funcionario</label>
+      <input type="text" id="rol-rut" required placeholder="12.345.678-9">
+      <label for="rol-select">Rol</label>
+      <select id="rol-select">
+        <option value="funcionario">Funcionario</option>
+        <option value="jefe">Jefe directo</option>
+        <option value="director">Director</option>
+        <option value="jefe_personal">Jefa de Personal</option>
+      </select>
+      <label for="rol-jefeRut">RUT de su jefe directo</label>
+      <input type="text" id="rol-jefeRut" placeholder="12.345.678-9">
+      <p class="hint">Si es el director, puedes dejarlo en blanco.</p>
+      <button type="submit" id="rolBtn">Guardar</button>
+      <p id="rol-status"></p>
+    </form>
+  </div>
+
   <div class="card" id="mfaCard" style="display:none;">
     <h1>🔐 Restablecer verificación en dos pasos</h1>
     <p class="sub">¿Un funcionario perdió su celular o no puede leer el código de Google Authenticator? Restablécelo aquí — la próxima vez que inicie sesión, se le pedirá activarlo de nuevo desde cero.</p>
@@ -114,6 +145,7 @@
     document.getElementById('createCard').style.display = 'block';
     document.getElementById('resetCard').style.display = 'block';
     document.getElementById('hojaCard').style.display = 'block';
+    document.getElementById('rolCard').style.display = 'block';
     document.getElementById('mfaCard').style.display = 'block';
     document.getElementById('adminAuthForm').closest('.card').style.display = 'none';
   });
@@ -134,6 +166,8 @@
     const rut = document.getElementById('rut').value.trim();
     const password = document.getElementById('password').value;
     const hojaUrl = document.getElementById('hojaUrl').value.trim();
+    const rol = document.getElementById('rol').value;
+    const jefeRut = document.getElementById('jefeRut').value.trim();
 
     if (!validarRut(rut)) {
       status.style.color = '#B33A3A';
@@ -149,7 +183,7 @@
       const res = await fetch('/api/crear-funcionario', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ adminSecret, nombre, rut, password, hojaUrl })
+        body: JSON.stringify({ adminSecret, nombre, rut, password, hojaUrl, rol, jefeRut })
       });
       const data = await res.json();
 
@@ -279,6 +313,46 @@
       status.style.color = 'var(--teal)';
       status.textContent = '✅ Verificación restablecida. Deberá activarla de nuevo en su próximo ingreso.';
       document.getElementById('mfaForm').reset();
+      btn.disabled = false;
+    } catch (err) {
+      status.style.color = '#B33A3A';
+      status.textContent = 'Error de conexión. Inténtalo nuevamente.';
+      btn.disabled = false;
+      console.error(err);
+    }
+  });
+
+  document.getElementById('rolForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const status = document.getElementById('rol-status');
+    const btn = document.getElementById('rolBtn');
+
+    const rut = document.getElementById('rol-rut').value.trim();
+    const rol = document.getElementById('rol-select').value;
+    const jefeRut = document.getElementById('rol-jefeRut').value.trim();
+
+    btn.disabled = true;
+    status.style.color = 'var(--gray)';
+    status.textContent = 'Guardando...';
+
+    try {
+      const res = await fetch('/api/actualizar-rol', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adminSecret, rut, rol, jefeRut })
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        status.style.color = '#B33A3A';
+        status.textContent = '❌ ' + (data.error || 'No se pudo actualizar.');
+        btn.disabled = false;
+        return;
+      }
+
+      status.style.color = 'var(--teal)';
+      status.textContent = '✅ Rol y jefe directo actualizados.';
+      document.getElementById('rolForm').reset();
       btn.disabled = false;
     } catch (err) {
       status.style.color = '#B33A3A';

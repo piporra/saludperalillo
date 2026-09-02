@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es-CL">
 <head>
@@ -22,7 +21,7 @@
   p{margin:0 0 1em; color:var(--gray);}
   a{color:var(--teal-deep);}
   .container{max-width:900px; margin:0 auto; padding:0 24px;}
- 
+
   header.site-header{background:#fff; border-bottom:1px solid var(--line);}
   .site-header .container{display:flex; align-items:center; justify-content:space-between; padding:16px 24px; max-width:1180px;}
   .brand{display:flex; align-items:center; gap:12px; text-decoration:none;}
@@ -32,19 +31,19 @@
   .header-right{display:flex; align-items:center; gap:16px; font-size:.85rem; color:var(--gray);}
   .header-right a{color:var(--teal-deep); text-decoration:none; font-weight:700;}
   .header-right a:hover{text-decoration:underline;}
- 
+
   main{padding:56px 0 80px;}
   .page-head{text-align:center; margin-bottom:40px;}
   .page-head .eyebrow{color:var(--gold); font-weight:700; text-transform:uppercase; letter-spacing:.07em; font-size:.8rem;}
   .page-head h1{font-size:1.8rem;}
- 
+
   .options-grid{display:grid; grid-template-columns:1fr 1fr 1fr; gap:24px;}
- 
+
   /* ===== Días administrativos ===== */
   /* ===== Cumpleaños + Calendario ===== */
   .top-row{display:grid; grid-template-columns:1fr 1fr; gap:24px; margin-bottom:28px;}
   @media (max-width:760px){ .top-row{grid-template-columns:1fr;} }
- 
+
   .cumple-card{
     background:linear-gradient(135deg, #FFF2CC 0%, #FDE6A8 100%); border:1px solid #F0D98C;
     border-radius:var(--radius); padding:24px; box-shadow:0 12px 30px rgba(10,61,115,.05);
@@ -54,7 +53,7 @@
   .cumple-card .cumple-lista{display:flex; flex-direction:column; gap:6px; margin-top:8px;}
   .cumple-card .cumple-nombre{font-family:var(--font-head); font-weight:700; color:#7A5B0E; font-size:1.05rem;}
   .cumple-card .cumple-vacio{color:#8A7647; font-size:.9rem; margin:0;}
- 
+
   .cal-card{background:#fff; border:1px solid var(--line); border-radius:var(--radius); padding:22px; box-shadow:0 12px 30px rgba(10,61,115,.06);}
   .cal-card .cal-header{display:flex; align-items:center; justify-content:center; margin-bottom:12px;}
   .cal-card .cal-header h3{font-family:var(--font-head); color:var(--teal-deep); font-size:1rem; margin:0; text-transform:capitalize;}
@@ -63,7 +62,7 @@
   .cal-grid .cal-day{font-size:.85rem; padding:6px 0; border-radius:8px; color:var(--ink);}
   .cal-grid .cal-day.cal-empty{visibility:hidden;}
   .cal-grid .cal-day.cal-today{background:var(--teal-deep); color:#fff; font-weight:700;}
- 
+
   .perm-card{
     background:#fff; border:1px solid var(--line); border-radius:var(--radius); padding:26px 28px;
     margin-bottom:28px; box-shadow:0 12px 30px rgba(10,61,115,.06);
@@ -89,7 +88,7 @@
   .option-card h2{font-family:var(--font-head); color:var(--teal-deep); font-size:1.15rem; margin:4px 0 2px;}
   .option-card p{font-size:.92rem; margin:0; color:var(--gray);}
   .option-card .go{font-size:.85rem; font-weight:700; color:var(--gold); margin-top:auto;}
- 
+
   @media (max-width:900px){
     .options-grid{grid-template-columns:1fr 1fr;}
   }
@@ -99,7 +98,7 @@
 </style>
 </head>
 <body>
- 
+
 <header class="site-header">
   <div class="container">
     <a href="index.html" class="brand">
@@ -116,14 +115,14 @@
     </div>
   </div>
 </header>
- 
+
 <main>
   <div class="container">
     <div class="page-head">
       <span class="eyebrow">Portal de funcionarios</span>
       <h1>¿Qué necesitas hacer hoy?</h1>
     </div>
- 
+
     <div class="top-row">
       <div class="cumple-card" id="cumpleCard">
         <h2>🎂 Cumpleaños de hoy</h2>
@@ -131,13 +130,13 @@
           <p class="cumple-vacio">Cargando...</p>
         </div>
       </div>
- 
+
       <div class="cal-card">
         <div class="cal-header"><h3 id="calMesAno"></h3></div>
         <div class="cal-grid" id="calGrid"></div>
       </div>
     </div>
- 
+
     <div class="perm-card" id="permCard" style="display:none;">
       <h2>🗓️ Tus días administrativos</h2>
       <p class="perm-sub">Permisos administrativos disponibles este año.</p>
@@ -148,7 +147,7 @@
       </div>
       <p class="perm-state" id="permState"></p>
     </div>
- 
+
     <div class="options-grid">
       <a class="option-card" href="certificado-compras.html">
         <div class="icon" aria-hidden="true">
@@ -158,7 +157,7 @@
         <p>Certifica la recepción de compras, licitaciones o prestaciones de servicio y genera el Excel oficial.</p>
         <span class="go">Abrir formulario →</span>
       </a>
- 
+
       <a class="option-card" href="solicitud-servicio.html">
         <div class="icon" aria-hidden="true">
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 15h6"/><path d="M9 11h2"/></svg>
@@ -167,7 +166,25 @@
         <p>Reporta requerimientos de insumos, electricidad, informática y más.</p>
         <span class="go">Abrir formulario →</span>
       </a>
- 
+
+      <a class="option-card" href="solicitud-permiso.html">
+        <div class="icon" aria-hidden="true">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="M9 16l2 2 4-4"/></svg>
+        </div>
+        <h2>Solicitar permiso administrativo</h2>
+        <p>Envía tu solicitud a tu jefe directo y luego al director, y revisa el estado.</p>
+        <span class="go">Solicitar →</span>
+      </a>
+
+      <a class="option-card" href="aprobaciones.html" id="cardAprobaciones" style="display:none;">
+        <div class="icon" aria-hidden="true">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        </div>
+        <h2>Aprobaciones pendientes</h2>
+        <p>Revisa y responde las solicitudes de permiso administrativo de tu equipo.</p>
+        <span class="go">Ver solicitudes →</span>
+      </a>
+
       <a class="option-card" href="reuniones.html">
         <div class="icon" aria-hidden="true">
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
@@ -176,7 +193,7 @@
         <p>Revisa las fechas de reuniones de todos los comités y equipos del CESFAM durante el año.</p>
         <span class="go">Ver calendario →</span>
       </a>
- 
+
       <a class="option-card" href="protocolos.html">
         <div class="icon" aria-hidden="true">
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 13h6M9 17h6M9 9h1"/></svg>
@@ -185,7 +202,7 @@
         <p>Revisa y descarga los protocolos vigentes que debe tener cada funcionario.</p>
         <span class="go">Ver protocolos →</span>
       </a>
- 
+
       <a class="option-card" href="cometido.html">
         <div class="icon" aria-hidden="true">
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3v2M15 3v2M4 8h16M6 5h12a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z"/><path d="M9 13l2 2 4-4"/></svg>
@@ -194,7 +211,7 @@
         <p>Genera un cometido para actividades fuera del CESFAM, con los datos y el detalle del encargo.</p>
         <span class="go">Generar PDF →</span>
       </a>
- 
+
       <a class="option-card" href="solicitud-curso.html">
         <div class="icon" aria-hidden="true">
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5-10-5z"/><path d="M6 12v5c0 1.1 2.7 2 6 2s6-.9 6-2v-5"/></svg>
@@ -206,7 +223,7 @@
     </div>
   </div>
 </main>
- 
+
 <script src="assets/auth-guard.js"></script>
 <script>
   // ===== Días administrativos (hoja individual por funcionario) =====
@@ -218,7 +235,7 @@
   // etiqueta "SALDO ACTUAL DE DÍAS ADMINISTRATIVOS" — el sitio busca esa
   // fila y lee el número desde ahí, sin importar en qué línea esté.
   const DIAS_TOTALES = 6;
- 
+
   function parseCSV(text) {
     return text.trim().split(/\r?\n/).map(line => {
       const cells = [];
@@ -233,7 +250,7 @@
       return cells.map(c => c.trim().replace(/^"|"$/g, ''));
     });
   }
- 
+
   // Interpreta valores como "2", "1 ½", "½", "1.5" o "1,5" y los convierte
   // siempre a número decimal (1 ½ → 1.5).
   function parseDias(valor) {
@@ -247,7 +264,7 @@
     const base = parseFloat(str.replace(',', '.')) || 0;
     return base + extra;
   }
- 
+
   // Hace el camino inverso: 1.5 → "1 ½", 0.5 → "½", 2 → "2" (para mostrarlo
   // en el mismo formato que usa la plantilla, no como decimal).
   function formatDias(num) {
@@ -256,20 +273,20 @@
     if (tieneMedio) return (entero > 0 ? entero + ' ' : '') + '½';
     return String(entero);
   }
- 
+
   async function cargarDiasAdministrativos() {
     const card = document.getElementById('permCard');
     const fill = document.getElementById('permBarFill');
     const numEl = document.getElementById('permDisponibles');
     const stateEl = document.getElementById('permState');
- 
+
     try {
       const supabase = getSupabaseClient();
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
- 
+
       const hojaUrl = session.user.user_metadata && session.user.user_metadata.hoja_dias_url;
- 
+
       if (!hojaUrl) {
         card.style.display = 'block';
         numEl.textContent = '–';
@@ -277,31 +294,31 @@
         stateEl.textContent = 'Aún no se ha vinculado tu hoja de días administrativos. Consulta con administración.';
         return;
       }
- 
+
       const res = await fetch(hojaUrl + (hojaUrl.includes('?') ? '&' : '?') + 't=' + Date.now());
       const text = await res.text();
       const rows = parseCSV(text);
- 
+
       // Busca la fila cuya primera columna diga "SALDO ACTUAL..." y toma
       // el valor de la columna D (misma fila que en la plantilla oficial).
       // Admite días completos y medios días (ej: "1 ½", "½", "2").
       const filaSaldo = rows.find(r => (r[0] || '').toUpperCase().includes('SALDO ACTUAL'));
       const disponibles = filaSaldo ? parseDias(filaSaldo[3]) : null;
- 
+
       if (disponibles === null) {
         card.style.display = 'block';
         stateEl.textContent = 'No se encontró la celda de saldo en tu hoja. Revisa que uses la plantilla oficial.';
         return;
       }
- 
+
       const porcentaje = Math.max(0, Math.min(100, (disponibles / DIAS_TOTALES) * 100));
       const usados = DIAS_TOTALES - disponibles;
- 
+
       card.style.display = 'block';
       numEl.textContent = formatDias(disponibles);
       fill.style.width = porcentaje + '%';
       stateEl.textContent = formatDias(usados) + ' de ' + DIAS_TOTALES + ' ya utilizados este año.';
- 
+
       if (disponibles <= 0) {
         fill.style.background = '#B33A3A';
         stateEl.textContent = 'Ya utilizaste todos tus días administrativos este año.';
@@ -312,41 +329,41 @@
       stateEl.textContent = 'No se pudo cargar tu hoja en este momento.';
     }
   }
- 
+
   window.addEventListener('DOMContentLoaded', cargarDiasAdministrativos);
- 
+
   // ===== Calendario del mes (no necesita datos externos) =====
   function dibujarCalendario() {
     const hoy = new Date();
     const anio = hoy.getFullYear();
     const mes = hoy.getMonth();
- 
+
     const meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
     document.getElementById('calMesAno').textContent = meses[mes] + ' ' + anio;
- 
+
     const grid = document.getElementById('calGrid');
     grid.innerHTML = '';
- 
+
     ['Lu','Ma','Mi','Ju','Vi','Sá','Do'].forEach(d => {
       const el = document.createElement('div');
       el.className = 'cal-dow';
       el.textContent = d;
       grid.appendChild(el);
     });
- 
+
     const primerDia = new Date(anio, mes, 1);
     // getDay(): 0=domingo..6=sábado → lo convertimos para que la semana empiece en lunes
     let offset = primerDia.getDay() - 1;
     if (offset < 0) offset = 6;
- 
+
     const diasEnMes = new Date(anio, mes + 1, 0).getDate();
- 
+
     for (let i = 0; i < offset; i++) {
       const vacio = document.createElement('div');
       vacio.className = 'cal-day cal-empty';
       grid.appendChild(vacio);
     }
- 
+
     for (let dia = 1; dia <= diasEnMes; dia++) {
       const el = document.createElement('div');
       el.className = 'cal-day' + (dia === hoy.getDate() ? ' cal-today' : '');
@@ -354,14 +371,14 @@
       grid.appendChild(el);
     }
   }
- 
+
   // ===== Cumpleaños de hoy (leído en vivo desde Google Sheets) =====
   // 1. Crea una Google Sheet con las columnas: Nombre | Fecha de cumpleaños
   //    (la fecha puede ser DD/MM o DD/MM/AAAA, cualquiera de los dos funciona).
   // 2. Publícala como CSV (Archivo → Compartir → Publicar en la Web → CSV).
   // 3. Pega aquí el link que te entrega Google (termina en output=csv).
-  const CUMPLEANOS_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ9NLZNs2qwld3oYWD9BojO07yeNeJnhKU8zxMEzm_eJkfLTtRxNxcQxIjnsmQi6PVm78dx5Idyejjb/pub?output=csv";
- 
+  const CUMPLEANOS_CSV_URL = "PEGA_AQUI_TU_URL_CSV_PUBLICADA";
+
   function parseCSVSimple(text) {
     return text.trim().split(/\r?\n/).map(line => {
       const cells = [];
@@ -376,7 +393,7 @@
       return cells.map(c => c.trim().replace(/^"|"$/g, ''));
     });
   }
- 
+
   // Extrae día y mes de "15/03", "15/03/1990", "15-03-1990", etc.
   function extraerDiaMes(valor) {
     if (!valor) return null;
@@ -384,34 +401,34 @@
     if (!match) return null;
     return { dia: parseInt(match[1], 10), mes: parseInt(match[2], 10) };
   }
- 
+
   async function cargarCumpleanos() {
     const lista = document.getElementById('cumpleLista');
- 
+
     if (CUMPLEANOS_CSV_URL.includes('PEGA_AQUI')) {
       lista.innerHTML = '<p class="cumple-vacio">Aún no se ha conectado la planilla de cumpleaños.</p>';
       return;
     }
- 
+
     try {
       const res = await fetch(CUMPLEANOS_CSV_URL + (CUMPLEANOS_CSV_URL.includes('?') ? '&' : '?') + 't=' + Date.now());
       const text = await res.text();
       const rows = parseCSVSimple(text);
- 
+
       const hoy = new Date();
       const diaHoy = hoy.getDate();
       const mesHoy = hoy.getMonth() + 1;
- 
+
       const cumpleaneros = rows.slice(1)
         .filter(r => (r[0] || '').trim() !== '')
         .map(r => ({ nombre: r[0].trim(), fecha: extraerDiaMes(r[1]) }))
         .filter(p => p.fecha && p.fecha.dia === diaHoy && p.fecha.mes === mesHoy);
- 
+
       if (cumpleaneros.length === 0) {
         lista.innerHTML = '<p class="cumple-vacio">Hoy no hay cumpleaños registrados.</p>';
         return;
       }
- 
+
       lista.innerHTML = cumpleaneros
         .map(p => '<span class="cumple-nombre">🎉 ' + p.nombre + '</span>')
         .join('');
@@ -420,11 +437,26 @@
       lista.innerHTML = '<p class="cumple-vacio">No se pudo cargar la información de cumpleaños.</p>';
     }
   }
- 
+
   dibujarCalendario();
   window.addEventListener('DOMContentLoaded', cargarCumpleanos);
+
+  // ===== Mostrar "Aprobaciones pendientes" solo a jefes directos y al director =====
+  async function revisarRolParaAprobaciones() {
+    try {
+      const supabase = getSupabaseClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      const rol = session.user.user_metadata && session.user.user_metadata.rol;
+      if (rol === 'jefe' || rol === 'director' || rol === 'jefe_personal') {
+        document.getElementById('cardAprobaciones').style.display = 'flex';
+      }
+    } catch (err) {
+      console.error('No se pudo verificar el rol:', err);
+    }
+  }
+  window.addEventListener('DOMContentLoaded', revisarRolParaAprobaciones);
 </script>
- 
+
 </body>
 </html>
- 
