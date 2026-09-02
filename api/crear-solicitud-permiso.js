@@ -44,9 +44,12 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: "Tu cuenta no tiene un jefe directo asignado. Contacta a administración." });
   }
 
-  const { fechaPermiso, tipo, turno, motivo } = req.body || {};
+  const { fechaPermiso, fechaFin, tipo, turno, motivo } = req.body || {};
   if (!fechaPermiso || !tipo) {
     return res.status(400).json({ error: "Faltan datos de la solicitud" });
+  }
+  if (fechaFin && fechaFin < fechaPermiso) {
+    return res.status(400).json({ error: "La fecha de término no puede ser anterior a la fecha de inicio" });
   }
 
   try {
@@ -62,6 +65,7 @@ export default async function handler(req, res) {
         rut_solicitante: rutSolicitante,
         nombre_solicitante: nombreSolicitante,
         fecha_permiso: fechaPermiso,
+        fecha_fin: fechaFin || null,
         tipo,
         turno: turno || null,
         motivo: motivo || null,
