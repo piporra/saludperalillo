@@ -495,8 +495,28 @@ En "Solicitar permiso administrativo", además de la fecha principal hay
 un campo opcional **"Hasta"** — si un funcionario necesita, por ejemplo,
 2 días seguidos (03/09/2026 y 04/09/2026), completa "Fecha del permiso"
 con el primer día y "Hasta" con el último. El sistema cuenta
-automáticamente todos los días del rango como días completos (en el
-ejemplo, 2 días) para el conteo de sus 6 días administrativos.
+automáticamente todos los **días hábiles** del rango como días
+completos (en el ejemplo, 2 días) para el conteo de sus 6 días
+administrativos.
+
+**No se cuentan los fines de semana ni los feriados.** Por ejemplo, si
+alguien pide del viernes 4 al lunes 7 de septiembre de 2026, el sistema
+cuenta solo 2 días (viernes y lunes), no 4 — porque el sábado y domingo
+de por medio no se descuentan de sus días administrativos.
+
+### Actualizar el calendario de feriados cada año
+
+Los feriados de Chile 2026 ya están cargados en el sitio. **El próximo
+año (o si se agrega un feriado nuevo), hay que actualizar la lista** en
+estos 4 archivos, buscando la constante `FERIADOS_CHILE`:
+- `solicitud-permiso.html`
+- `aprobaciones.html`
+- `historial-permisos.html`
+- `dashboard.html`
+
+Cada fecha va en formato `'AAAA-MM-DD'`, separadas por coma. Si tu
+comuna tiene un feriado regional propio, puedes agregarlo también a esa
+misma lista en los 4 archivos.
 
 Si el permiso es de un solo día, se deja "Hasta" en blanco (como hasta
 ahora). El campo "Hasta" se oculta automáticamente si el tipo elegido es

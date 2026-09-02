@@ -244,14 +244,42 @@
   // este funcionario (día completo = 1, medio día = 0,5).
   const DIAS_TOTALES = 6;
 
+  // Feriados nacionales de Chile 2026. Actualiza esta lista cada año
+  // (y agrega feriados regionales propios si corresponde).
+  const FERIADOS_CHILE = [
+    '2026-01-01', '2026-04-03', '2026-04-04', '2026-05-01', '2026-05-21',
+    '2026-06-29', '2026-07-16', '2026-08-15', '2026-09-18', '2026-09-19',
+    '2026-10-12', '2026-10-31', '2026-11-01', '2026-12-08', '2026-12-25'
+  ];
+
+  function isoLocal(d) {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return y + '-' + m + '-' + day;
+  }
+
+  function esDiaHabil(d) {
+    const dow = d.getDay();
+    if (dow === 0 || dow === 6) return false;
+    if (FERIADOS_CHILE.includes(isoLocal(d))) return false;
+    return true;
+  }
+
   function diasDeSolicitud(sol) {
     if (sol.fecha_fin && sol.fecha_fin !== sol.fecha_permiso) {
-      const d1 = new Date(sol.fecha_permiso + 'T00:00:00');
-      const d2 = new Date(sol.fecha_fin + 'T00:00:00');
-      return Math.round((d2 - d1) / 86400000) + 1;
+      let count = 0;
+      const cursor = new Date(sol.fecha_permiso + 'T00:00:00');
+      const fin = new Date(sol.fecha_fin + 'T00:00:00');
+      while (cursor <= fin) {
+        if (esDiaHabil(cursor)) count++;
+        cursor.setDate(cursor.getDate() + 1);
+      }
+      return count;
     }
     return sol.tipo === 'Medio día' ? 0.5 : 1;
   }
+
 
   function formatDias(num) {
     const entero = Math.floor(num);

@@ -165,14 +165,56 @@
   const DIAS_TOTALES = 6;
   let diasUsadosActuales = 0;
 
+  // Feriados nacionales de Chile 2026. Actualiza esta lista cada año
+  // (y agrega feriados regionales propios si corresponde).
+  const FERIADOS_CHILE = [
+    '2026-01-01', // Año Nuevo
+    '2026-04-03', // Viernes Santo
+    '2026-04-04', // Sábado Santo
+    '2026-05-01', // Día del Trabajo
+    '2026-05-21', // Glorias Navales
+    '2026-06-29', // San Pedro y San Pablo
+    '2026-07-16', // Virgen del Carmen
+    '2026-08-15', // Asunción de la Virgen
+    '2026-09-18', // Fiestas Patrias
+    '2026-09-19', // Glorias del Ejército
+    '2026-10-12', // Encuentro de Dos Mundos
+    '2026-10-31', // Iglesias Evangélicas y Protestantes
+    '2026-11-01', // Todos los Santos
+    '2026-12-08', // Inmaculada Concepción
+    '2026-12-25'  // Navidad
+  ];
+
+  function isoLocal(d) {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return y + '-' + m + '-' + day;
+  }
+
+  function esDiaHabil(d) {
+    const dow = d.getDay(); // 0=domingo, 6=sábado
+    if (dow === 0 || dow === 6) return false;
+    if (FERIADOS_CHILE.includes(isoLocal(d))) return false;
+    return true;
+  }
+
+  // Cuenta solo días hábiles (sin fines de semana ni feriados) cuando es
+  // un rango de varios días; si es un solo día, se mantiene igual que antes.
   function diasDe(sol) {
     if (sol.fecha_fin && sol.fecha_fin !== sol.fecha_permiso) {
-      const d1 = new Date(sol.fecha_permiso + 'T00:00:00');
-      const d2 = new Date(sol.fecha_fin + 'T00:00:00');
-      return Math.round((d2 - d1) / 86400000) + 1;
+      let count = 0;
+      const cursor = new Date(sol.fecha_permiso + 'T00:00:00');
+      const fin = new Date(sol.fecha_fin + 'T00:00:00');
+      while (cursor <= fin) {
+        if (esDiaHabil(cursor)) count++;
+        cursor.setDate(cursor.getDate() + 1);
+      }
+      return count;
     }
     return sol.tipo === 'Medio día' ? 0.5 : 1;
   }
+
 
   function fmtDias(n) {
     const entero = Math.floor(n);
