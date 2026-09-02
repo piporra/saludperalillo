@@ -185,6 +185,15 @@
         <span class="go">Ver solicitudes →</span>
       </a>
 
+      <a class="option-card" href="historial-permisos.html" id="cardHistorial" style="display:none;">
+        <div class="icon" aria-hidden="true">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="9"/></svg>
+        </div>
+        <h2>Historial de permisos</h2>
+        <p>Revisa el historial y el conteo de días administrativos de cada funcionario.</p>
+        <span class="go">Ver historial →</span>
+      </a>
+
       <a class="option-card" href="reuniones.html">
         <div class="icon" aria-hidden="true">
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
@@ -450,6 +459,9 @@
       const meta = session.user.user_metadata || {};
       if (meta.es_jefe_directo || meta.es_director || meta.es_jefe_personal) {
         document.getElementById('cardAprobaciones').style.display = 'flex';
+      }
+      if (meta.es_director || meta.es_jefe_personal) {
+        document.getElementById('cardHistorial').style.display = 'flex';
       }
     } catch (err) {
       console.error('No se pudo verificar el rol:', err);
