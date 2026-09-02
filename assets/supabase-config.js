@@ -12,6 +12,13 @@ const SUPABASE_ANON_KEY = "sb_publishable_ebzScXLAf6r-VZrCQhdunQ_QDKCOq8v";
 // nunca ve ni usa este dominio, solo escribe su RUT.
 const USERNAME_DOMAIN = "cesfamperalillo.internal";
 
+// ===== Interruptor de verificación en dos pasos (Google Authenticator) =====
+// true  → obligatorio para todos (modo normal de producción)
+// false → desactivado, para hacer pruebas rápidas sin pedir el código
+// Cuando termines de probar, vuelve a poner esto en "true" y sube este
+// archivo de nuevo a GitHub.
+const MFA_REQUERIDO = false;
+
 function getSupabaseClient() {
   if (!window.supabase) {
     throw new Error("La librería de Supabase no cargó. Revisa tu conexión a internet.");
