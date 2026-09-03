@@ -36,6 +36,7 @@
   button:hover{background:#0E86AC;}
   button:disabled{opacity:.6; cursor:not-allowed;}
   #status{font-size:.88rem; margin-top:12px; text-align:center;}
+  #admin-auth-status{font-size:.88rem; margin-top:12px; text-align:center;}
   .back{display:block; text-align:center; margin-top:6px; font-size:.85rem; color:var(--teal-deep); text-decoration:none;}
   .hint{font-size:.82rem; color:var(--gray); margin:-10px 0 16px;}
 </style>
@@ -49,7 +50,8 @@
     <form id="adminAuthForm">
       <label for="admin-secret">Clave de administrador</label>
       <input type="password" id="admin-secret" required>
-      <button type="submit">Desbloquear panel</button>
+      <button type="submit" id="adminAuthBtn">Desbloquear panel</button>
+      <p id="admin-auth-status"></p>
     </form>
   </div>
 
@@ -168,18 +170,47 @@
 <script>
   let adminSecret = '';
 
-  document.getElementById('adminAuthForm').addEventListener('submit', (e) => {
+  document.getElementById('adminAuthForm').addEventListener('submit', async (e) => {
     e.preventDefault();
-    adminSecret = document.getElementById('admin-secret').value;
-    document.getElementById('createCard').style.display = 'block';
-    document.getElementById('resetCard').style.display = 'block';
-    document.getElementById('rolCard').style.display = 'block';
-    document.getElementById('listadoCard').style.display = 'block';
-    document.getElementById('mfaCard').style.display = 'block';
-    document.getElementById('repararCard').style.display = 'block';
-    document.getElementById('adminAuthForm').closest('.card').style.display = 'none';
-    cargarJefesDirectos();
-    cargarListadoFuncionarios();
+    const status = document.getElementById('admin-auth-status');
+    const btn = document.getElementById('adminAuthBtn');
+    const claveIngresada = document.getElementById('admin-secret').value;
+
+    btn.disabled = true;
+    status.style.color = 'var(--gray)';
+    status.textContent = 'Verificando...';
+
+    try {
+      const res = await fetch('/api/admin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adminSecret: claveIngresada, accion: 'verificar_clave' })
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        status.style.color = '#B33A3A';
+        status.textContent = '❌ Clave incorrecta.';
+        btn.disabled = false;
+        return;
+      }
+
+      adminSecret = claveIngresada;
+      document.getElementById('createCard').style.display = 'block';
+      document.getElementById('resetCard').style.display = 'block';
+      document.getElementById('rolCard').style.display = 'block';
+      document.getElementById('listadoCard').style.display = 'block';
+      document.getElementById('mfaCard').style.display = 'block';
+      document.getElementById('repararCard').style.display = 'block';
+      document.getElementById('adminAuthForm').closest('.card').style.display = 'none';
+      cargarJefesDirectos();
+      cargarListadoFuncionarios();
+    } catch (err) {
+      status.style.color = '#B33A3A';
+      status.textContent = 'Error de conexión. Inténtalo nuevamente.';
+      btn.disabled = false;
+      console.error(err);
+    }
   });
 
   async function cargarJefesDirectos() {
