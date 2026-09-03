@@ -203,10 +203,11 @@
   // un rango de varios días; si es un solo día, se mantiene igual que antes.
   function diasDe(sol) {
     if (sol.fecha_fin && sol.fecha_fin !== sol.fecha_permiso) {
+      // Se compara por fecha (texto AAAA-MM-DD), no por hora exacta, para
+      // que los cambios de horario de verano/invierno no salten un día.
       let count = 0;
       const cursor = new Date(sol.fecha_permiso + 'T00:00:00');
-      const fin = new Date(sol.fecha_fin + 'T00:00:00');
-      while (cursor <= fin) {
+      while (isoLocal(cursor) <= sol.fecha_fin) {
         if (esDiaHabil(cursor)) count++;
         cursor.setDate(cursor.getDate() + 1);
       }
