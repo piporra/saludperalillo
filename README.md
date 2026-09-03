@@ -741,6 +741,33 @@ Después de eso, esa persona debe **cerrar sesión y volver a entrar**, y
 luego puede volver a registrar su firma normalmente desde "Mi firma"
 (esta vez se guardará correctamente en la tabla nueva).
 
+> **Detalle técnico (por si vuelve a pasar):** la API de Supabase para
+> actualizar la metadata de una cuenta **combina** los datos en vez de
+> reemplazarlos por completo — así que para borrar un campo hay que
+> ponerlo explícitamente en `null`, no basta con omitirlo del objeto que
+> se envía. La primera versión de la reparación tenía justo ese error
+> (omitía el campo en vez de ponerlo en `null`), por eso no funcionaba
+> la primera vez — ya está corregido en `api/admin.js` y
+> `api/guardar-firma.js`.
+
+## 🔒 Corrección: el panel dejaba entrar con cualquier clave
+
+Se corrigió un problema en `admin-funcionarios.html`: al escribir la
+clave de administrador y hacer clic en "Desbloquear panel", el panel se
+mostraba **sin validar primero** que la clave fuera correcta — recién se
+detectaba el error al intentar hacer algo (crear cuenta, etc.), lo cual
+era confuso ("entra pero no deja hacer nada").
+
+Ahora, antes de mostrar el panel, se hace una verificación rápida contra
+el servidor. Si la clave es incorrecta, se queda en la pantalla de
+acceso con un mensaje claro ("❌ Clave incorrecta"), sin mostrar ninguna
+de las tarjetas.
+
+### Archivos a reemplazar en GitHub
+
+- `api/admin.js`
+- `admin-funcionarios.html`
+
 ## ⚠️ Pendiente antes de publicar oficialmente
 
 Este es un **borrador de diseño**. Antes de lanzarlo como sitio oficial del
