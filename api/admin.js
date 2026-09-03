@@ -72,6 +72,11 @@ export default async function handler(req, res) {
   }
 
   try {
+    // ===== Solo verificar que la clave sea correcta (no hace nada más) =====
+    if (accion === "verificar_clave") {
+      return res.status(200).json({ ok: true });
+    }
+
     // ===== Crear funcionario =====
     if (accion === "crear_funcionario") {
       const { nombre, rut, password, esJefeDirecto, esDirector, esJefePersonal, esJefeDepartamento, jefeRut, subrogante } = body;
