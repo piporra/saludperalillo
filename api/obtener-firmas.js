@@ -4,6 +4,9 @@
 // y de quienes ya la aprobaron/registraron: jefe directo, director, y
 // Jefa de Personal — solo las que ya correspondan según en qué etapa va.
 // Solo el propio solicitante puede pedir las firmas de su solicitud.
+//
+// Las firmas viven en la tabla "firmas_funcionarios" (no en la metadata
+// de cada usuario), para no inflar el token de sesión de nadie.
 
 async function obtenerUsuarioDesdeToken(token) {
   const res = await fetch(`${process.env.SUPABASE_URL}/auth/v1/user`, {
@@ -62,6 +65,8 @@ export default async function handler(req, res) {
       return res.status(403).json({ error: "No puedes ver las firmas de una solicitud que no es tuya" });
     }
 
+    // Averigua quién es el director y la Jefa de Personal (asume que hay
+    // una sola cuenta con cada función, como en el resto del sitio).
     const listRes = await fetch(
       `${process.env.SUPABASE_URL}/auth/v1/admin/users?per_page=1000`,
       {
@@ -74,20 +79,39 @@ export default async function handler(req, res) {
     const listData = await listRes.json();
     const users = (listData.users || []).map((u) => u.user_metadata || {});
 
-    function firmaDe(rut) {
-      const u = users.find((m) => normalizarRut(m.rut) === normalizarRut(rut));
-      return (u && u.firma_base64) || null;
-    }
-    function firmaDePrimerCon(campoRol) {
-      const u = users.find((m) => m[campoRol]);
-      return (u && u.firma_base64) || null;
-    }
+    const rutDirector = solicitud.estado_director === "aprobado"
+      ? (users.find((m) => m.es_director) || {}).rut
+      : null;
+    const rutJefePersonal = solicitud.archivado_personal
+      ? (users.find((m) => m.es_jefe_personal) || {}).rut
+      : null;
+
+    const rutsNecesarios = [solicitud.rut_solicitante];
+    if (solicitud.estado_jefe === "aprobado") rutsNecesarios.push(solicitud.rut_jefe);
+    if (rutDirector) rutsNecesarios.push(rutDirector);
+    if (rutJefePersonal) rutsNecesarios.push(rutJefePersonal);
+
+    const rutsLimpios = rutsNecesarios.filter(Boolean).map(normalizarRut);
+    const filtroIn = rutsLimpios.map((r) => `"${r}"`).join(",");
+
+    const firmasRes = await fetch(
+      `${process.env.SUPABASE_URL}/rest/v1/firmas_funcionarios?rut=in.(${filtroIn})&select=rut,firma_base64`,
+      {
+        headers: {
+          "apikey": process.env.SUPABASE_SERVICE_ROLE_KEY,
+          "Authorization": `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`
+        }
+      }
+    );
+    const firmasData = await firmasRes.json();
+    const firmasPorRut = {};
+    (firmasData || []).forEach((f) => { firmasPorRut[normalizarRut(f.rut)] = f.firma_base64; });
 
     const firmas = {
-      funcionario: firmaDe(solicitud.rut_solicitante),
-      jefeDirecto: solicitud.estado_jefe === "aprobado" ? firmaDe(solicitud.rut_jefe) : null,
-      director: solicitud.estado_director === "aprobado" ? firmaDePrimerCon("es_director") : null,
-      jefePersonal: solicitud.archivado_personal ? firmaDePrimerCon("es_jefe_personal") : null
+      funcionario: firmasPorRut[normalizarRut(solicitud.rut_solicitante)] || null,
+      jefeDirecto: solicitud.estado_jefe === "aprobado" ? (firmasPorRut[normalizarRut(solicitud.rut_jefe)] || null) : null,
+      director: rutDirector ? (firmasPorRut[normalizarRut(rutDirector)] || null) : null,
+      jefePersonal: rutJefePersonal ? (firmasPorRut[normalizarRut(rutJefePersonal)] || null) : null
     };
 
     return res.status(200).json({ ok: true, firmas, solicitud });

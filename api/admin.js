@@ -258,6 +258,41 @@ export default async function handler(req, res) {
       return res.status(200).json({ ok: true, jefes });
     }
 
+    // ===== Reparar cuenta con token demasiado grande =====
+    // Quita cualquier dato pesado (como una firma vieja) que haya quedado
+    // guardado dentro de la metadata del usuario, la cual Supabase incluye
+    // en su token de sesión y puede causar errores "494 Request Header Too
+    // Large" que bloquean TODAS sus peticiones. Como esta reparación usa la
+    // clave maestra (no el token de la persona afectada), funciona incluso
+    // si su cuenta ya está bloqueada.
+    if (accion === "reparar_token_grande") {
+      const { rut } = body;
+      if (!rut) return res.status(400).json({ error: "Falta el RUT" });
+
+      const user = await buscarUsuarioPorRut(rut);
+      if (!user) return res.status(404).json({ error: "No existe un funcionario con ese RUT" });
+
+      const metadataActual = user.user_metadata || {};
+      if (!metadataActual.firma_base64) {
+        return res.status(200).json({ ok: true, mensaje: "Esta cuenta no tenía ningún dato pesado guardado. No hacía falta repararla." });
+      }
+
+      const { firma_base64, ...metadataLimpia } = metadataActual;
+      const updateRes = await fetch(`${process.env.SUPABASE_URL}/auth/v1/admin/users/${user.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": process.env.SUPABASE_SERVICE_ROLE_KEY,
+          "Authorization": `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`
+        },
+        body: JSON.stringify({ user_metadata: metadataLimpia })
+      });
+      const updateData = await updateRes.json();
+      if (!updateRes.ok) return res.status(updateRes.status).json({ error: updateData.msg || "No se pudo reparar la cuenta" });
+
+      return res.status(200).json({ ok: true, mensaje: "Cuenta reparada. Debe cerrar sesión y volver a entrar para que se aplique." });
+    }
+
     return res.status(400).json({ error: "Acción no reconocida: " + accion });
   } catch (err) {
     console.error(err);
