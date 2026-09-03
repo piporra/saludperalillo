@@ -255,7 +255,6 @@
         : 'jefa de personal';
       return '<span class="badge badge-rechazado">❌ Rechazado por ' + quien + '</span>';
     }
-    if (sol.estado === 'pendiente_personal') return '<span class="badge badge-pendiente">⏳ Registrando con Jefa de Personal</span>';
     if (sol.estado === 'pendiente_director') return '<span class="badge badge-pendiente">⏳ Esperando al director</span>';
     return '<span class="badge badge-pendiente">⏳ Esperando a jefe directo</span>';
   }

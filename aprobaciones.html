@@ -143,16 +143,19 @@
   function crearTarjeta(sol, modo) {
     const div = document.createElement('div');
     div.className = 'sol-card';
+
+    const esArchivo = modo === 'personal';
+
     div.innerHTML =
       '<h3>' + sol.nombre_solicitante + '</h3>' +
       '<div class="meta">RUT ' + sol.rut_solicitante + ' · ' + fmtFechaSol(sol) + ' · ' + sol.tipo + (sol.turno ? ' (' + sol.turno + ')' : '') + '</div>' +
       (sol.motivo ? '<div class="motivo">"' + sol.motivo + '"</div>' : '') +
-      ((modo === 'director' || modo === 'personal') && sol.comentario_jefe ? '<div class="motivo" style="color:var(--teal-deep);"><strong>Comentario del jefe directo:</strong> ' + sol.comentario_jefe + '</div>' : '') +
-      (modo === 'personal' && sol.comentario_director ? '<div class="motivo" style="color:var(--teal-deep);"><strong>Comentario del director:</strong> ' + sol.comentario_director + '</div>' : '') +
+      ((modo === 'director' || esArchivo) && sol.comentario_jefe ? '<div class="motivo" style="color:var(--teal-deep);"><strong>Comentario del jefe directo:</strong> ' + sol.comentario_jefe + '</div>' : '') +
+      (esArchivo && sol.comentario_director ? '<div class="motivo" style="color:var(--teal-deep);"><strong>Comentario del director:</strong> ' + sol.comentario_director + '</div>' : '') +
       '<textarea placeholder="Comentario (opcional)" class="comentario"></textarea>' +
       '<div class="btn-row">' +
-        '<button class="btn-aprobar">' + (modo === 'personal' ? '✅ Registrar recepción' : '✅ Aprobar') + '</button>' +
-        '<button class="btn-rechazar">❌ Rechazar</button>' +
+        '<button class="btn-aprobar">' + (esArchivo ? '📁 Registrar y archivar' : '✅ Aprobar') + '</button>' +
+        (esArchivo ? '' : '<button class="btn-rechazar">❌ Rechazar</button>') +
       '</div>' +
       '<p class="sol-status"></p>';
 
@@ -163,7 +166,7 @@
 
     async function revisar(decision) {
       btnAprobar.disabled = true;
-      btnRechazar.disabled = true;
+      if (btnRechazar) btnRechazar.disabled = true;
       statusEl.style.color = 'var(--gray)';
       statusEl.textContent = 'Guardando...';
 
@@ -188,12 +191,12 @@
         statusEl.style.color = '#B33A3A';
         statusEl.textContent = '❌ ' + (err.message || 'No se pudo guardar.');
         btnAprobar.disabled = false;
-        btnRechazar.disabled = false;
+        if (btnRechazar) btnRechazar.disabled = false;
       }
     }
 
-    btnAprobar.addEventListener('click', () => revisar('aprobado'));
-    btnRechazar.addEventListener('click', () => revisar('rechazado'));
+    btnAprobar.addEventListener('click', () => revisar(esArchivo ? 'archivado' : 'aprobado'));
+    if (btnRechazar) btnRechazar.addEventListener('click', () => revisar('rechazado'));
 
     return div;
   }

@@ -593,6 +593,50 @@ sus funciones, su jefe directo, y su subrogante, y guardar.
 - `api/actualizar-rol.js` (reemplazar — ahora también actualiza el nombre)
 - `admin-funcionarios.html` (reemplazar)
 
+## 🎖️ Caso especial: cuando el Director solicita su propio permiso
+
+Si el solicitante de un permiso es el propio **Director** (la cuenta con
+la función "Director" marcada), nadie más podría darle la aprobación de
+"director" — sería aprobarse a sí mismo. Para ese caso puntual, la
+aprobación de su jefe directo (normalmente la **Jefa de Departamento**)
+cuenta como aprobación final, y la solicitud salta directo a la etapa de
+Jefe de Personal, sin pasar por la bandeja de "director".
+
+Esto es automático: no necesitas configurar nada aparte de asegurarte de
+que la cuenta del Director tenga como **jefe directo** a la persona que
+corresponda (ej. la Jefa de Departamento), usando el combo box de
+"Jefe directo" al crear o editar su cuenta.
+
+### Archivo a reemplazar en GitHub
+
+- `api/revisar-solicitud.js`
+
+## ✍️ Corrección: la Jefa de Personal no aprueba, solo archiva
+
+El flujo quedó corregido para reflejar cómo funciona en la realidad: la
+solicitud queda **aprobada apenas el director la firma** (ya cuenta de
+inmediato en los 6 días administrativos de esa persona). La **Jefa de
+Personal** ya no aprueba ni rechaza — solo **recibe y archiva** (con su
+firma) las solicitudes que ya están aprobadas, como registro
+administrativo, sin que eso cambie el estado.
+
+Su bandeja en "Aprobaciones pendientes" ahora se llama **"Solicitudes
+para registrar"**, con un solo botón: **"📁 Registrar y archivar"** (ya
+no tiene la opción de rechazar, porque no le corresponde).
+
+### Requiere una migración en Supabase
+
+Ejecuta `sql/05_jefa_personal_solo_archiva.sql` en Supabase → SQL Editor
+→ Run.
+
+### Archivos a reemplazar en GitHub
+
+- `api/revisar-solicitud.js`
+- `api/listar-solicitudes.js`
+- `aprobaciones.html`
+- `solicitud-permiso.html`
+- `historial-permisos.html`
+
 ## ⚠️ Pendiente antes de publicar oficialmente
 
 Este es un **borrador de diseño**. Antes de lanzarlo como sitio oficial del
