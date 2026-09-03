@@ -267,6 +267,8 @@
     return sol.estado !== 'cancelado' && sol.estado !== 'rechazado';
   }
 
+  const LOGO_CESFAM_BASE64 = 'data:image/jpeg;base64,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';
+
   async function generarPdfSolicitud(sol, btn) {
     const textoOriginal = btn.textContent;
     btn.disabled = true;
@@ -287,14 +289,21 @@
       const pageW = doc.internal.pageSize.getWidth();
       const marginL = 18, marginR = 18;
       const usableW = pageW - marginL - marginR;
-      let y = 18;
+      let y = 16;
 
+      // ===== Encabezado institucional con logo =====
+      try { doc.addImage(LOGO_CESFAM_BASE64, 'JPEG', marginL, y - 2, 16, 16); } catch (e) { /* si el logo falla, sigue sin él */ }
+      const xTextoHeader = marginL + 20;
       doc.setFont('times', 'bold');
       doc.setFontSize(11);
-      doc.text('ILUSTRE MUNICIPALIDAD DE PERALILLO', marginL, y);
-      y += 6;
-      doc.text('DEPARTAMENTO DE SALUD MUNICIPAL', marginL, y);
-      y += 12;
+      doc.text('ILUSTRE MUNICIPALIDAD', xTextoHeader, y + 3);
+      doc.text('PERALILLO', xTextoHeader + 6, y + 8);
+      doc.setFont('times', 'normal');
+      doc.setFontSize(10);
+      doc.text('Departamento Salud', xTextoHeader, y + 13);
+      y += 24;
+
+      doc.setFont('times', 'bold');
       doc.setFontSize(15);
       doc.text('SOLICITUD PERMISO ADMINISTRATIVO', pageW / 2, y, { align: 'center' });
       y += 12;
@@ -309,36 +318,57 @@
         doc.text(valor || '', x + labelW, yPos);
       }
 
-      campo('Yo:', sol.nombre_solicitante, marginL, y, 12);
-      campo('RUT:', sol.rut_solicitante, marginL + 95, y, 14);
-      y += 10;
+      // ===== Datos del funcionario (igual al formulario original) =====
+      campo('Yo', sol.nombre_solicitante, marginL, y, 10);
+      campo('RUT Nº', sol.rut_solicitante, marginL + 105, y, 18);
+      y += 9;
+      campo('Funcionario del CESFAM', '', marginL, y, 50);
+      y += 12;
 
       const fechaFmt = iso => { const [a,m,d] = iso.split('-'); return d + '/' + m + '/' + a; };
       const esRango = sol.fecha_fin && sol.fecha_fin !== sol.fecha_permiso;
       const dias = diasDe(sol);
+      const anioSolicitud = sol.fecha_permiso.slice(2, 4);
 
-      campo('Tipo de permiso:', sol.tipo + (sol.turno ? ' (' + sol.turno + ')' : ''), marginL, y, 40);
-      y += 8;
+      // ===== Solicito Adm. Año/XX Correspondiente a 06 Días hábiles... =====
+      campo('Solicito Adm.', 'Año/' + anioSolicitud, marginL, y, 24);
+      campo('Correspondiente a', '06', marginL + 60, y, 32);
+      campo('Días hábiles', '', marginL + 105, y, 24);
+      y += 9;
+
+      // ===== Por lo cual, solicito la cantidad de X día(s) a contar del... =====
+      const cantidadTexto = esRango ? String(dias) : (sol.tipo === 'Medio día' ? '½' : '1');
+      campo('Por lo cual, solicito la cantidad de', cantidadTexto, marginL, y, 68);
+      campo('Día(s) a contar del', fechaFmt(sol.fecha_permiso), marginL + 90, y, 34);
       if (esRango) {
-        campo('Del:', fechaFmt(sol.fecha_permiso), marginL, y, 12);
-        campo('Al:', fechaFmt(sol.fecha_fin), marginL + 60, y, 12);
-        campo('Total días hábiles:', String(dias), marginL + 110, y, 42);
-      } else {
-        campo('Fecha:', fechaFmt(sol.fecha_permiso), marginL, y, 16);
-        campo('Días hábiles:', String(dias), marginL + 60, y, 30);
+        campo('al', fechaFmt(sol.fecha_fin), marginL + 140, y, 6);
+      } else if (sol.turno) {
+        campo('Turno:', sol.turno, marginL + 140, y, 14);
       }
-      y += 10;
+      y += 9;
 
+      // ===== Ambas fechas inclusive, quedando pendiente un total de X días =====
+      const textoRango = doc.splitTextToSize('Ambas fechas inclusive, quedando pendiente un total de', 95);
       doc.setFont('times', 'bold');
-      doc.text('Motivo:', marginL, y);
+      doc.text(textoRango, marginL, y);
       doc.setFont('times', 'normal');
-      const motivoLines = doc.splitTextToSize(sol.motivo || 'Sin motivo especificado', usableW - 22);
-      doc.text(motivoLines, marginL + 22, y);
-      y += motivoLines.length * 5.5 + 10;
+      doc.text(String(dias) + ' Días hábiles', marginL + 97, y);
+      doc.text('Año ' + sol.fecha_permiso.slice(0, 4), marginL + 140, y);
+      y += 12;
+
+      if (sol.motivo) {
+        doc.setFont('times', 'bold');
+        doc.text('Motivo:', marginL, y);
+        doc.setFont('times', 'normal');
+        const motivoLines = doc.splitTextToSize(sol.motivo, usableW - 22);
+        doc.text(motivoLines, marginL + 22, y);
+        y += motivoLines.length * 5.5 + 6;
+      }
 
       const estadoTexto = {
         aprobado: 'APROBADO',
         rechazado: 'RECHAZADO',
+        cancelado: 'CANCELADO',
         pendiente_jefe: 'Pendiente — esperando a jefe directo',
         pendiente_director: 'Pendiente — esperando a director'
       }[sol.estado] || sol.estado;
@@ -346,37 +376,46 @@
       doc.text('Estado actual: ' + estadoTexto, marginL, y);
       y += 12;
 
-      // ===== Bloques de firma =====
-      function bloqueFirma(titulo, firmaBase64, comentario, fecha) {
-        const anchoLinea = 75;
+      // ===== Bloques de firma, en el mismo orden del formulario original =====
+      function bloqueFirma(fechaLinea, titulo, firmaBase64, comentario) {
+        const anchoLinea = 78;
         const xLinea = marginL;
 
+        if (fechaLinea) {
+          doc.setFont('times', 'normal');
+          doc.setFontSize(10);
+          doc.text('Peralillo, ' + fechaLinea, xLinea, y - 8);
+          doc.setFontSize(11);
+        }
+
         if (firmaBase64) {
-          try { doc.addImage(firmaBase64, 'PNG', xLinea, y - 14, 55, 16); } catch (e) { /* ignora si el formato no es compatible */ }
+          try { doc.addImage(firmaBase64, 'PNG', xLinea + 8, y - 15, 50, 14); } catch (e) { /* ignora si el formato no es compatible */ }
         }
         doc.setLineWidth(0.2);
         doc.line(xLinea, y, xLinea + anchoLinea, y);
         doc.setFontSize(9);
-        doc.setFont('times', 'normal');
-        doc.text(titulo, xLinea, y + 4);
-        if (fecha) doc.text('Fecha: ' + new Date(fecha).toLocaleDateString('es-CL'), xLinea, y + 8);
+        doc.setFont('times', 'bold');
+        doc.text(titulo, xLinea + anchoLinea / 2, y + 4, { align: 'center' });
         doc.setFontSize(11);
+        doc.setFont('times', 'normal');
 
         if (comentario) {
           doc.setFont('times', 'italic');
           doc.setFontSize(9);
-          const comLines = doc.splitTextToSize('"' + comentario + '"', usableW - anchoLinea - 10);
-          doc.text(comLines, xLinea + anchoLinea + 10, y - 4);
+          const comLines = doc.splitTextToSize('"' + comentario + '"', usableW - anchoLinea - 12);
+          doc.text(comLines, xLinea + anchoLinea + 12, y - 6);
           doc.setFontSize(11);
           doc.setFont('times', 'normal');
         }
-        y += 22;
+        y += 24;
       }
 
-      bloqueFirma('FIRMA FUNCIONARIO', firmas.funcionario, null, sol.created_at);
-      bloqueFirma('Vº Bº JEFE DIRECTO', firmas.jefeDirecto, sol.comentario_jefe, sol.fecha_revision_jefe);
-      bloqueFirma('Vº Bº DIRECTOR', firmas.director, sol.comentario_director, sol.fecha_revision_director);
-      bloqueFirma('FIRMA JEFE DE PERSONAL (registro y archivo)', firmas.jefePersonal, sol.comentario_personal, sol.fecha_archivo_personal);
+      const fechaCorta = iso => iso ? new Date(iso).toLocaleDateString('es-CL') : null;
+
+      bloqueFirma(fechaCorta(sol.created_at), 'FIRMA FUNCIONARIO', firmas.funcionario, null);
+      bloqueFirma(fechaCorta(sol.fecha_revision_jefe), 'Vº Bº JEFE DIRECTO', firmas.jefeDirecto, sol.comentario_jefe);
+      bloqueFirma(fechaCorta(sol.fecha_revision_director), 'Vº Bº DIRECTOR CESFAM', firmas.director, sol.comentario_director);
+      bloqueFirma(fechaCorta(sol.fecha_archivo_personal), 'FIRMA JEFE DE PERSONAL', firmas.jefePersonal, sol.comentario_personal);
 
       const nombreArchivo = 'Permiso_' + (sol.nombre_solicitante || 'funcionario').replace(/[^\w]+/g, '_') + '_' + sol.fecha_permiso + '.pdf';
       doc.save(nombreArchivo);
