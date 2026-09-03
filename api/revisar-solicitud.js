@@ -1,14 +1,19 @@
 // api/revisar-solicitud.js
-// Función serverless de Vercel. Aprueba o rechaza una solicitud de permiso,
-// ya sea en el paso del jefe directo, el del director, o el de Jefe de
-// Personal, verificando que quien la revisa sea realmente la persona
-// correspondiente.
+// Función serverless de Vercel. Maneja dos cosas distintas sobre una
+// solicitud de permiso:
+//
+// 1. APROBAR/RECHAZAR — lo hacen el jefe directo y, después, el director.
+//    En cuanto el director aprueba, la solicitud queda con estado
+//    "aprobado" (ya es definitivo).
+// 2. ARCHIVAR — lo hace la Jefa de Personal. Ella NO aprueba ni rechaza:
+//    solo recibe la solicitud YA aprobada, la registra con su firma y la
+//    archiva. Esto no cambia el estado de aprobación, solo marca que ya
+//    quedó archivada.
 //
 // CASO ESPECIAL: si quien SOLICITA el permiso es el propio Director, nadie
-// más puede darle la aprobación de "director" (sería aprobarse a sí mismo).
-// En ese caso, la aprobación de su jefe directo (normalmente la Jefa de
-// Departamento) cuenta como aprobación final, y la solicitud salta directo
-// a la etapa de Jefe de Personal.
+// más puede darle la aprobación de "director" (sería aprobarse a sí
+// mismo). En ese caso, la aprobación de su jefe directo (normalmente la
+// Jefa de Departamento) ya deja la solicitud "aprobado" directamente.
 
 async function obtenerUsuarioDesdeToken(token) {
   const res = await fetch(`${process.env.SUPABASE_URL}/auth/v1/user`, {
@@ -63,7 +68,7 @@ export default async function handler(req, res) {
   const meta = usuario.user_metadata || {};
   const { solicitudId, decision, comentario } = req.body || {};
 
-  if (!solicitudId || !["aprobado", "rechazado"].includes(decision)) {
+  if (!solicitudId || !["aprobado", "rechazado", "archivado"].includes(decision)) {
     return res.status(400).json({ error: "Faltan datos o decisión inválida" });
   }
 
@@ -86,7 +91,23 @@ export default async function handler(req, res) {
 
     let cambios = {};
 
-    if (solicitud.estado === "pendiente_jefe") {
+    if (decision === "archivado") {
+      // ===== Jefa de Personal: solo registra y archiva, no aprueba/rechaza =====
+      if (!meta.es_jefe_personal) {
+        return res.status(403).json({ error: "No tienes permiso para archivar esta solicitud" });
+      }
+      if (solicitud.estado !== "aprobado") {
+        return res.status(400).json({ error: "Solo se pueden archivar solicitudes ya aprobadas" });
+      }
+      if (solicitud.archivado_personal) {
+        return res.status(400).json({ error: "Esta solicitud ya estaba archivada" });
+      }
+      cambios = {
+        archivado_personal: true,
+        fecha_archivo_personal: new Date().toISOString(),
+        comentario_personal: comentario || null
+      };
+    } else if (solicitud.estado === "pendiente_jefe") {
       // Debe ser el jefe directo correspondiente
       if (normalizarRut(meta.rut) !== normalizarRut(solicitud.rut_jefe)) {
         return res.status(403).json({ error: "No tienes permiso para revisar esta solicitud" });
@@ -97,8 +118,8 @@ export default async function handler(req, res) {
         const esDirector = await solicitanteEsDirector(solicitud.rut_solicitante);
         if (esDirector) {
           // Caso especial: el solicitante es el propio Director → esta
-          // aprobación ya cuenta como final, se salta la etapa "director".
-          siguienteEstado = "pendiente_personal";
+          // aprobación ya es la definitiva, no pasa por "director".
+          siguienteEstado = "aprobado";
         }
       } else {
         siguienteEstado = "rechazado";
@@ -119,17 +140,8 @@ export default async function handler(req, res) {
         estado_director: decision,
         comentario_director: comentario || null,
         fecha_revision_director: new Date().toISOString(),
-        estado: decision === "aprobado" ? "pendiente_personal" : "rechazado"
-      };
-    } else if (solicitud.estado === "pendiente_personal") {
-      // Debe tener la función de Jefe de Personal
-      if (!meta.es_jefe_personal) {
-        return res.status(403).json({ error: "No tienes permiso para revisar esta solicitud" });
-      }
-      cambios = {
-        estado_personal: decision,
-        comentario_personal: comentario || null,
-        fecha_revision_personal: new Date().toISOString(),
+        // Al aprobar el director, la solicitud queda definitivamente
+        // aprobada — la Jefa de Personal después solo la archiva.
         estado: decision === "aprobado" ? "aprobado" : "rechazado"
       };
     } else {

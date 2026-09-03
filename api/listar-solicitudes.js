@@ -4,6 +4,8 @@
 //   - modo=propias    → sus propias solicitudes (cualquier funcionario)
 //   - modo=jefe        → las que le corresponde revisar a él como jefe directo
 //   - modo=director     → las que ya aprobó un jefe y esperan al director
+//   - modo=personal     → las YA aprobadas que la Jefa de Personal debe
+//                          registrar/archivar (ella no aprueba ni rechaza)
 // Verifica la identidad real del que consulta a través de su sesión.
 
 async function obtenerUsuarioDesdeToken(token) {
@@ -50,7 +52,9 @@ export default async function handler(req, res) {
     if (!meta.es_jefe_personal) {
       return res.status(403).json({ error: "No tienes permiso para ver esta lista" });
     }
-    filtro = `estado=eq.pendiente_personal`;
+    // Ya no es un paso de aprobación: son solicitudes YA aprobadas que
+    // todavía no se han registrado/archivado con su firma.
+    filtro = `estado=eq.aprobado&archivado_personal=eq.false`;
   } else {
     return res.status(400).json({ error: "Modo inválido" });
   }
