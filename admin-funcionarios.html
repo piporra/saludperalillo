@@ -62,6 +62,7 @@
         <label class="check-line"><input type="checkbox" id="esJefeDirecto"> Jefe directo</label>
         <label class="check-line"><input type="checkbox" id="esDirector"> Director</label>
         <label class="check-line"><input type="checkbox" id="esJefePersonal"> Jefe de Personal</label>
+        <label class="check-line"><input type="checkbox" id="esJefeDepartamento"> Jefe de Departamento</label>
       </div>
       <label for="jefeRut">Jefe directo (para aprobar permisos)</label>
       <select id="jefeRut">
@@ -71,8 +72,7 @@
       <select id="subrogante">
         <option value="">Selecciona un subrogante...</option>
       </select>
-      <p class="hint">Ambas listas se llenan con los funcionarios marcados como "Jefe directo". Si aún no has marcado a nadie, guarda primero a esa persona con esa casilla activada, y vuelve después a completar este campo.</p>
-      <p class="hint">Necesario para que sus solicitudes de permiso administrativo lleguen a la persona correcta. Si él mismo es el director, puedes dejarlo en blanco.</p>
+      <p class="hint">Ambas listas se llenan con los funcionarios marcados como "Jefe directo" (si aún no has marcado a nadie, guarda primero a esa persona con esa casilla activada). Es necesario para que sus solicitudes de permiso administrativo lleguen a la persona correcta; si él mismo es el director, puedes dejarlo en blanco.</p>
       <button type="submit" id="createBtn">Crear cuenta</button>
       <p id="status"></p>
     </form>
@@ -103,6 +103,7 @@
         <label class="check-line"><input type="checkbox" id="rol-esJefeDirecto"> Jefe directo</label>
         <label class="check-line"><input type="checkbox" id="rol-esDirector"> Director</label>
         <label class="check-line"><input type="checkbox" id="rol-esJefePersonal"> Jefe de Personal</label>
+        <label class="check-line"><input type="checkbox" id="rol-esJefeDepartamento"> Jefe de Departamento</label>
       </div>
       <label for="rol-jefeRut">Jefe directo</label>
       <select id="rol-jefeRut">
@@ -194,6 +195,7 @@
     const esJefeDirecto = document.getElementById('esJefeDirecto').checked;
     const esDirector = document.getElementById('esDirector').checked;
     const esJefePersonal = document.getElementById('esJefePersonal').checked;
+    const esJefeDepartamento = document.getElementById('esJefeDepartamento').checked;
     const jefeRut = document.getElementById('jefeRut').value.trim();
     const subrogante = document.getElementById('subrogante').value.trim();
 
@@ -211,7 +213,7 @@
       const res = await fetch('/api/crear-funcionario', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ adminSecret, nombre, rut, password, esJefeDirecto, esDirector, esJefePersonal, jefeRut, subrogante })
+        body: JSON.stringify({ adminSecret, nombre, rut, password, esJefeDirecto, esDirector, esJefePersonal, esJefeDepartamento, jefeRut, subrogante })
       });
       const data = await res.json();
 
@@ -320,6 +322,7 @@
     const esJefeDirecto = document.getElementById('rol-esJefeDirecto').checked;
     const esDirector = document.getElementById('rol-esDirector').checked;
     const esJefePersonal = document.getElementById('rol-esJefePersonal').checked;
+    const esJefeDepartamento = document.getElementById('rol-esJefeDepartamento').checked;
     const jefeRut = document.getElementById('rol-jefeRut').value.trim();
     const subrogante = document.getElementById('rol-subrogante').value.trim();
 
@@ -331,7 +334,7 @@
       const res = await fetch('/api/actualizar-rol', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ adminSecret, rut, esJefeDirecto, esDirector, esJefePersonal, jefeRut, subrogante })
+        body: JSON.stringify({ adminSecret, rut, esJefeDirecto, esDirector, esJefePersonal, esJefeDepartamento, jefeRut, subrogante })
       });
       const data = await res.json();
 

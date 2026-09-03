@@ -63,6 +63,7 @@
   .badge-pendiente{background:#FFF2CC; color:#7A5B0E;}
   .badge-aprobado{background:#DFF2E4; color:#1E6B3C;}
   .badge-rechazado{background:#FBE3E3; color:#A32D2D;}
+  .badge-cancelado{background:#E7E9EC; color:#4A5568;}
 
   #estado{text-align:center; color:var(--gray); padding:30px; font-size:.95rem;}
   #estado.error{color:#B33A3A;}
@@ -112,6 +113,7 @@
 
   function badgeEstado(sol) {
     if (sol.estado === 'aprobado') return '<span class="badge badge-aprobado">✅ Aprobado</span>';
+    if (sol.estado === 'cancelado') return '<span class="badge badge-cancelado">🔄 Cancelado</span>';
     if (sol.estado === 'rechazado') return '<span class="badge badge-rechazado">❌ Rechazado</span>';
     if (sol.estado === 'pendiente_personal') return '<span class="badge badge-pendiente">⏳ Con Jefe de Personal</span>';
     if (sol.estado === 'pendiente_director') return '<span class="badge badge-pendiente">⏳ Con director</span>';

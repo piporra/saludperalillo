@@ -536,6 +536,39 @@ existen).
 - `dashboard.html`
 - `api/crear-solicitud-permiso.js`
 
+## 🔄 Cancelar o devolver un permiso administrativo
+
+En "Solicitar permiso administrativo" → "Mis solicitudes", cada solicitud
+que aún no esté rechazada o cancelada tiene un botón:
+- **"✕ Cancelar"** si todavía está pendiente de revisión (con jefe
+  directo, director, o Jefe de Personal).
+- **"↩️ Devolver"** si ya estaba aprobada — por ejemplo, cuando un
+  funcionario pidió el día pero finalmente no se lo va a tomar.
+
+Al cancelar, la solicitud pasa a estado **"Cancelado"** y **deja de
+contar** en su conteo de los 6 días administrativos automáticamente (el
+día vuelve a estar disponible). Solo el propio funcionario que la creó
+puede cancelarla.
+
+### Requiere una migración en Supabase
+
+Ejecuta `sql/04_cancelar_solicitud.sql` en Supabase → SQL Editor → Run.
+
+### Archivos nuevos/actualizados
+
+- `api/cancelar-solicitud.js` (nuevo, dentro de `api/`)
+- `solicitud-permiso.html` (reemplazar)
+- `historial-permisos.html` (reemplazar)
+
+## 🧭 Nueva función: Jefe de Departamento
+
+Se agregó una cuarta casilla de función en `admin-funcionarios.html`:
+**Jefe de Departamento** (junto a Jefe directo, Director, y Jefe de
+Personal). Por ahora queda guardada como atributo de la cuenta
+(`es_jefe_departamento`), lista para usarse más adelante si se necesita
+conectarla a alguna parte del flujo de aprobaciones — avísame si quieres
+que participe en algún paso específico.
+
 ## ⚠️ Pendiente antes de publicar oficialmente
 
 Este es un **borrador de diseño**. Antes de lanzarlo como sitio oficial del

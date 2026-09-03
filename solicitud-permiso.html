@@ -72,6 +72,11 @@
   .badge-pendiente{background:#FFF2CC; color:#7A5B0E;}
   .badge-aprobado{background:#DFF2E4; color:#1E6B3C;}
   .badge-rechazado{background:#FBE3E3; color:#A32D2D;}
+  .badge-cancelado{background:#E7E9EC; color:#4A5568;}
+  .sol-right{display:flex; align-items:center; gap:10px; flex-wrap:wrap;}
+  .btn-cancelar{background:none; border:1.5px solid #A32D2D; color:#A32D2D; font-size:.78rem; font-weight:700; padding:6px 12px; border-radius:999px; cursor:pointer; font-family:var(--font-body); white-space:nowrap;}
+  .btn-cancelar:hover{background:#FBE3E3;}
+  .btn-cancelar:disabled{opacity:.6; cursor:not-allowed;}
   .vacio{color:var(--gray); font-size:.9rem; text-align:center; padding:20px;}
 
   @media (max-width:600px){ .form-grid{grid-template-columns:1fr;} }
@@ -243,6 +248,7 @@
 
   function badgeEstado(sol) {
     if (sol.estado === 'aprobado') return '<span class="badge badge-aprobado">✅ Aprobado</span>';
+    if (sol.estado === 'cancelado') return '<span class="badge badge-cancelado">🔄 Cancelado por ti</span>';
     if (sol.estado === 'rechazado') {
       const quien = sol.estado_jefe === 'rechazado' ? 'jefe directo'
         : sol.estado_director === 'rechazado' ? 'director'
@@ -252,6 +258,72 @@
     if (sol.estado === 'pendiente_personal') return '<span class="badge badge-pendiente">⏳ Registrando con Jefa de Personal</span>';
     if (sol.estado === 'pendiente_director') return '<span class="badge badge-pendiente">⏳ Esperando al director</span>';
     return '<span class="badge badge-pendiente">⏳ Esperando a jefe directo</span>';
+  }
+
+  function seCancelaAun(sol) {
+    return sol.estado !== 'cancelado' && sol.estado !== 'rechazado';
+  }
+
+  function crearItemSolicitud(sol) {
+    const div = document.createElement('div');
+    div.className = 'sol-item';
+
+    const fecha = new Date(sol.fecha_permiso + 'T00:00:00').toLocaleDateString('es-CL');
+    const esRango = sol.fecha_fin && sol.fecha_fin !== sol.fecha_permiso;
+    const fechaTexto = esRango
+      ? fecha + ' al ' + new Date(sol.fecha_fin + 'T00:00:00').toLocaleDateString('es-CL') + ' (' + diasDe(sol) + ' días)'
+      : fecha;
+
+    const info = document.createElement('div');
+    info.className = 'sol-info';
+    info.innerHTML = '<h3>' + fechaTexto + ' — ' + sol.tipo + (sol.turno ? ' (' + sol.turno + ')' : '') + '</h3>' +
+      '<p>' + (sol.motivo || 'Sin motivo especificado') + '</p>';
+
+    const right = document.createElement('div');
+    right.className = 'sol-right';
+    right.innerHTML = badgeEstado(sol);
+
+    if (seCancelaAun(sol)) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'btn-cancelar';
+      btn.textContent = sol.estado === 'aprobado' ? '↩️ Devolver' : '✕ Cancelar';
+      btn.addEventListener('click', async () => {
+        const confirmado = confirm(
+          sol.estado === 'aprobado'
+            ? '¿Confirmas que quieres devolver este permiso ya aprobado? El día vuelve a quedar disponible.'
+            : '¿Confirmas que quieres cancelar esta solicitud?'
+        );
+        if (!confirmado) return;
+
+        btn.disabled = true;
+        btn.textContent = 'Guardando...';
+        try {
+          const supabase = getSupabaseClient();
+          const { data: { session } } = await supabase.auth.getSession();
+          const res = await fetch('/api/cancelar-solicitud', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer ' + session.access_token
+            },
+            body: JSON.stringify({ solicitudId: sol.id })
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error);
+          cargarMisSolicitudes();
+        } catch (err) {
+          alert('No se pudo cancelar: ' + (err.message || 'Error desconocido'));
+          btn.disabled = false;
+          btn.textContent = sol.estado === 'aprobado' ? '↩️ Devolver' : '✕ Cancelar';
+        }
+      });
+      right.appendChild(btn);
+    }
+
+    div.appendChild(info);
+    div.appendChild(right);
+    return div;
   }
 
   async function cargarMisSolicitudes() {
@@ -272,17 +344,8 @@
         return;
       }
 
-      lista.innerHTML = data.solicitudes.map(sol => {
-        const fecha = new Date(sol.fecha_permiso + 'T00:00:00').toLocaleDateString('es-CL');
-        const esRango = sol.fecha_fin && sol.fecha_fin !== sol.fecha_permiso;
-        const fechaTexto = esRango
-          ? fecha + ' al ' + new Date(sol.fecha_fin + 'T00:00:00').toLocaleDateString('es-CL') + ' (' + diasDe(sol) + ' días)'
-          : fecha;
-        return '<div class="sol-item"><div class="sol-info">' +
-          '<h3>' + fechaTexto + ' — ' + sol.tipo + (sol.turno ? ' (' + sol.turno + ')' : '') + '</h3>' +
-          '<p>' + (sol.motivo || 'Sin motivo especificado') + '</p></div>' +
-          badgeEstado(sol) + '</div>';
-      }).join('');
+      lista.innerHTML = '';
+      data.solicitudes.forEach(sol => lista.appendChild(crearItemSolicitud(sol)));
     } catch (err) {
       console.error(err);
       lista.innerHTML = '<p class="vacio">No se pudieron cargar tus solicitudes.</p>';
