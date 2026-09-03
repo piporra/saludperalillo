@@ -277,7 +277,10 @@ export default async function handler(req, res) {
         return res.status(200).json({ ok: true, mensaje: "Esta cuenta no tenía ningún dato pesado guardado. No hacía falta repararla." });
       }
 
-      const { firma_base64, ...metadataLimpia } = metadataActual;
+      // Importante: la API de Supabase COMBINA la metadata en vez de
+      // reemplazarla — para borrar un campo de verdad hay que ponerlo en
+      // null explícitamente (omitirlo no alcanza, se queda igual).
+      const metadataLimpia = { ...metadataActual, firma_base64: null };
       const updateRes = await fetch(`${process.env.SUPABASE_URL}/auth/v1/admin/users/${user.id}`, {
         method: "PUT",
         headers: {

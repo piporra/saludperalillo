@@ -25,7 +25,10 @@ async function obtenerUsuarioDesdeToken(token) {
 async function limpiarFirmaDeMetadataSiExiste(usuario) {
   const meta = usuario.user_metadata || {};
   if (!meta.firma_base64) return;
-  const { firma_base64, ...metadataSinFirma } = meta;
+  // Importante: la API de Supabase COMBINA la metadata en vez de
+  // reemplazarla — para borrar un campo de verdad hay que ponerlo en
+  // null explícitamente (omitirlo no alcanza, se queda igual).
+  const metadataSinFirma = { ...meta, firma_base64: null };
   await fetch(`${process.env.SUPABASE_URL}/auth/v1/admin/users/${usuario.id}`, {
     method: "PUT",
     headers: {
