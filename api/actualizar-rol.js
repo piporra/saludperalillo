@@ -1,8 +1,8 @@
 // api/actualizar-rol.js
-// Función serverless de Vercel. Actualiza las funciones adicionales
-// (Jefe directo / Director / Jefe de Personal — puede tener varias a la
-// vez) y el RUT del jefe directo de una cuenta ya existente, buscándola
-// por RUT. Requiere las mismas variables de entorno que las demás funciones.
+// Función serverless de Vercel. Actualiza el nombre, las funciones
+// adicionales (Jefe directo / Director / Jefe de Personal / Jefe de
+// Departamento — puede tener varias a la vez), el jefe directo y el
+// subrogante de una cuenta ya existente, buscándola por RUT.
 
 const USERNAME_DOMAIN = "cesfamperalillo.internal";
 
@@ -15,7 +15,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Método no permitido" });
   }
 
-  const { adminSecret, rut, esJefeDirecto, esDirector, esJefePersonal, esJefeDepartamento, jefeRut, subrogante } = req.body || {};
+  const { adminSecret, rut, nombre, esJefeDirecto, esDirector, esJefePersonal, esJefeDepartamento, jefeRut, subrogante } = req.body || {};
 
   if (!process.env.ADMIN_SECRET || adminSecret !== process.env.ADMIN_SECRET) {
     return res.status(401).json({ error: "Clave de administrador incorrecta" });
@@ -53,6 +53,7 @@ export default async function handler(req, res) {
     const metadataActual = user.user_metadata || {};
     const nuevaMetadata = {
       ...metadataActual,
+      nombre: nombre && nombre.trim() ? nombre.trim() : metadataActual.nombre,
       es_jefe_directo: !!esJefeDirecto,
       es_director: !!esDirector,
       es_jefe_personal: !!esJefePersonal,
