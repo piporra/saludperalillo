@@ -17,7 +17,7 @@ const USERNAME_DOMAIN = "cesfamperalillo.internal";
 // false → desactivado, para hacer pruebas rápidas sin pedir el código
 // Cuando termines de probar, vuelve a poner esto en "true" y sube este
 // archivo de nuevo a GitHub.
-const MFA_REQUERIDO = TRUE;
+const MFA_REQUERIDO = true;
 
 function getSupabaseClient() {
   if (!window.supabase) {
