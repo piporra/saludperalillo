@@ -22,6 +22,14 @@
   label{display:block; font-weight:700; font-size:.9rem; margin-bottom:6px; color:var(--teal-deep);}
   .checks{margin-bottom:16px;}
   .check-line{display:flex; align-items:center; gap:8px; font-weight:400; color:var(--ink); margin-bottom:8px;}
+
+  .func-item{display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 14px; border:1px solid var(--line); border-radius:10px; margin-bottom:8px; flex-wrap:wrap;}
+  .func-info h3{margin:0 0 2px; font-size:.95rem; color:var(--teal-deep); font-family:var(--font-head);}
+  .func-info p{margin:0; font-size:.8rem; color:var(--gray);}
+  .func-badges{display:flex; gap:6px; flex-wrap:wrap; margin-top:4px;}
+  .func-badge{font-size:.7rem; font-weight:700; padding:3px 9px; border-radius:999px; background:var(--teal-light); color:var(--teal-deep); white-space:nowrap;}
+  .func-editar{background:var(--gold); color:#fff; border:none; padding:8px 16px; border-radius:999px; font-weight:700; font-size:.85rem; cursor:pointer; font-family:var(--font-body); white-space:nowrap;}
+  .func-editar:hover{background:#0E86AC;}
   .check-line input{width:auto; margin:0;}
   input{width:100%; padding:12px 14px; border:1.5px solid var(--line); border-radius:10px; margin-bottom:16px; font-family:var(--font-body); font-size:.95rem;}
   button{width:100%; background:var(--gold); color:#fff; border:none; padding:14px; border-radius:999px; font-weight:700; font-size:1rem; cursor:pointer; font-family:var(--font-body);}
@@ -93,11 +101,13 @@
   </div>
 
   <div class="card" id="rolCard" style="display:none;">
-    <h1>🧭 Actualizar funciones y jefe directo</h1>
-    <p class="sub">Para cuentas ya creadas: marca qué funciones adicionales tiene (puede tener varias) y quién es su jefe directo (para el flujo de aprobación de permisos).</p>
+    <h1>🧭 Editar funcionario</h1>
+    <p class="sub">Busca por RUT (o usa el botón "Editar" desde el listado de abajo) para actualizar su nombre, funciones, jefe directo y subrogante.</p>
     <form id="rolForm">
       <label for="rol-rut">RUT del funcionario</label>
       <input type="text" id="rol-rut" required placeholder="12.345.678-9">
+      <label for="rol-nombre">Nombre completo</label>
+      <input type="text" id="rol-nombre" placeholder="Se mantiene igual si lo dejas en blanco">
       <label>Funciones adicionales (puede tener más de una, o ninguna)</label>
       <div class="checks">
         <label class="check-line"><input type="checkbox" id="rol-esJefeDirecto"> Jefe directo</label>
@@ -117,6 +127,15 @@
       <button type="submit" id="rolBtn">Guardar</button>
       <p id="rol-status"></p>
     </form>
+  </div>
+
+  <div class="card" id="listadoCard" style="display:none;">
+    <h1>📋 Funcionarios registrados</h1>
+    <p class="sub">Todas las cuentas creadas hasta ahora. Haz clic en "Editar" para cargar sus datos arriba, en "🧭 Editar funcionario".</p>
+    <input type="text" id="listado-buscador" placeholder="🔎 Buscar por nombre o RUT..." style="margin-bottom:16px;">
+    <div id="listadoFuncionarios">
+      <p class="hint" style="margin:0;">Cargando...</p>
+    </div>
   </div>
 
   <div class="card" id="mfaCard" style="display:none;">
@@ -144,9 +163,11 @@
     document.getElementById('createCard').style.display = 'block';
     document.getElementById('resetCard').style.display = 'block';
     document.getElementById('rolCard').style.display = 'block';
+    document.getElementById('listadoCard').style.display = 'block';
     document.getElementById('mfaCard').style.display = 'block';
     document.getElementById('adminAuthForm').closest('.card').style.display = 'none';
     cargarJefesDirectos();
+    cargarListadoFuncionarios();
   });
 
   async function cargarJefesDirectos() {
@@ -349,6 +370,7 @@
       status.textContent = '✅ Rol y jefe directo actualizados.';
       document.getElementById('rolForm').reset();
       btn.disabled = false;
+      cargarListadoFuncionarios();
     } catch (err) {
       status.style.color = '#B33A3A';
       status.textContent = 'Error de conexión. Inténtalo nuevamente.';
@@ -356,6 +378,84 @@
       console.error(err);
     }
   });
+
+  // ===== Listado de funcionarios =====
+  let todosLosFuncionarios = [];
+
+  function nombrePorRut(rut, lista) {
+    const f = lista.find(x => x.rut === rut);
+    return f ? f.nombre : null;
+  }
+
+  function renderListado(filtro) {
+    const cont = document.getElementById('listadoFuncionarios');
+    const f = (filtro || '').trim().toLowerCase();
+    const filtrados = todosLosFuncionarios.filter(func =>
+      !f || func.nombre.toLowerCase().includes(f) || func.rut.toLowerCase().includes(f)
+    );
+
+    if (filtrados.length === 0) {
+      cont.innerHTML = '<p class="hint" style="margin:0;">No se encontraron funcionarios con ese criterio.</p>';
+      return;
+    }
+
+    cont.innerHTML = '';
+    filtrados.forEach(func => {
+      const badges = [];
+      if (func.es_jefe_directo) badges.push('Jefe directo');
+      if (func.es_director) badges.push('Director');
+      if (func.es_jefe_personal) badges.push('Jefe de Personal');
+      if (func.es_jefe_departamento) badges.push('Jefe de Departamento');
+
+      const jefeNombre = func.jefe_directo_rut ? nombrePorRut(func.jefe_directo_rut, todosLosFuncionarios) : null;
+
+      const div = document.createElement('div');
+      div.className = 'func-item';
+      div.innerHTML =
+        '<div class="func-info">' +
+          '<h3>' + func.nombre + '</h3>' +
+          '<p>RUT ' + formatearRut(func.rut) + (jefeNombre ? ' · Jefe directo: ' + jefeNombre : '') + '</p>' +
+          (badges.length ? '<div class="func-badges">' + badges.map(b => '<span class="func-badge">' + b + '</span>').join('') + '</div>' : '') +
+        '</div>' +
+        '<button type="button" class="func-editar">✏️ Editar</button>';
+
+      div.querySelector('.func-editar').addEventListener('click', () => cargarParaEditar(func));
+      cont.appendChild(div);
+    });
+  }
+
+  function cargarParaEditar(func) {
+    document.getElementById('rol-rut').value = formatearRut(func.rut);
+    document.getElementById('rol-nombre').value = func.nombre;
+    document.getElementById('rol-esJefeDirecto').checked = func.es_jefe_directo;
+    document.getElementById('rol-esDirector').checked = func.es_director;
+    document.getElementById('rol-esJefePersonal').checked = func.es_jefe_personal;
+    document.getElementById('rol-esJefeDepartamento').checked = func.es_jefe_departamento;
+    document.getElementById('rol-jefeRut').value = func.jefe_directo_rut || '';
+    document.getElementById('rol-subrogante').value = func.subrogante_rut || '';
+    document.getElementById('rolCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  async function cargarListadoFuncionarios() {
+    const cont = document.getElementById('listadoFuncionarios');
+    try {
+      const res = await fetch('/api/listar-funcionarios', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adminSecret })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+
+      todosLosFuncionarios = data.funcionarios || [];
+      renderListado('');
+    } catch (err) {
+      console.error('No se pudo cargar el listado de funcionarios:', err);
+      cont.innerHTML = '<p class="hint" style="margin:0; color:#B33A3A;">No se pudo cargar el listado.</p>';
+    }
+  }
+
+  document.getElementById('listado-buscador').addEventListener('input', (e) => renderListado(e.target.value));
 </script>
 
 </body>

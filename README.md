@@ -569,6 +569,30 @@ Personal). Por ahora queda guardada como atributo de la cuenta
 conectarla a alguna parte del flujo de aprobaciones — avísame si quieres
 que participe en algún paso específico.
 
+## 📋 Listado de funcionarios y edición
+
+En `admin-funcionarios.html` hay una nueva tarjeta, **"📋 Funcionarios
+registrados"**, con todas las cuentas creadas hasta ahora — nombre, RUT,
+sus funciones (Jefe directo / Director / Jefe de Personal / Jefe de
+Departamento) y quién es su jefe directo. Incluye un buscador por nombre
+o RUT.
+
+Cada funcionario tiene un botón **"✏️ Editar"** que carga sus datos
+arriba, en la tarjeta **"🧭 Editar funcionario"** (antes llamada
+"Actualizar rol y jefe directo") — desde ahí puedes cambiar su **nombre**,
+sus funciones, su jefe directo, y su subrogante, y guardar.
+
+> **Lo que no se puede editar desde aquí:** el RUT (es el identificador
+> de la cuenta, cambiarlo requeriría crear una cuenta nueva) y la
+> contraseña (para eso sigue existiendo la tarjeta "🔑 Restablecer
+> contraseña").
+
+### Archivos nuevos/actualizados
+
+- `api/listar-funcionarios.js` (nuevo, dentro de `api/`)
+- `api/actualizar-rol.js` (reemplazar — ahora también actualiza el nombre)
+- `admin-funcionarios.html` (reemplazar)
+
 ## ⚠️ Pendiente antes de publicar oficialmente
 
 Este es un **borrador de diseño**. Antes de lanzarlo como sitio oficial del
