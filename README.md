@@ -670,6 +670,40 @@ en el papel).
 - `solicitud-permiso.html` (reemplazar)
 - `dashboard.html` (reemplazar — nueva tarjeta "Mi firma")
 
+## ⚠️ Importante: límite de 12 funciones en Vercel (plan gratuito)
+
+Vercel, en el plan gratuito (Hobby), **no permite más de 12 funciones
+serverless por proyecto** (los archivos dentro de `api/`). Si el sitio
+sigue creciendo y en algún momento el despliegue empieza a fallar con un
+error como *"No more than 12 Serverless Functions can be added..."*,
+significa que se llegó a ese límite de nuevo.
+
+**Qué se hizo para resolverlo esta vez:** las 6 funciones del panel de
+administrador (crear cuenta, restablecer contraseña, resetear
+verificación en dos pasos, actualizar rol/jefe directo, listar
+funcionarios, listar jefes directos) se combinaron en **un solo
+archivo**, `api/admin.js`, que recibe un campo `"accion"` indicando cuál
+de las 6 operaciones ejecutar. También se eliminó `api/actualizar-hoja.js`,
+que ya no se usaba desde que se quitó la integración con Google Sheets.
+
+Esto bajó el conteo de **14 a 8 funciones**, dejando margen para seguir
+agregando funciones nuevas antes de volver a toparse con el límite. Si
+en el futuro hace falta liberar más espacio, se puede aplicar la misma
+idea: combinar funciones relacionadas (por ejemplo, las de solicitudes
+de permiso) en un solo archivo con un campo que indique la acción.
+
+### Archivos que cambiaron en esta corrección
+
+- `api/admin.js` (nuevo — reemplaza a los 6 archivos de abajo)
+- ~~`api/crear-funcionario.js`~~ (eliminar de GitHub)
+- ~~`api/actualizar-rol.js`~~ (eliminar de GitHub)
+- ~~`api/cambiar-clave.js`~~ (eliminar de GitHub)
+- ~~`api/resetear-mfa.js`~~ (eliminar de GitHub)
+- ~~`api/listar-funcionarios.js`~~ (eliminar de GitHub)
+- ~~`api/listar-jefes.js`~~ (eliminar de GitHub)
+- ~~`api/actualizar-hoja.js`~~ (eliminar de GitHub — ya no se usaba)
+- `admin-funcionarios.html` (reemplazar — ahora llama a `/api/admin`)
+
 ## ⚠️ Pendiente antes de publicar oficialmente
 
 Este es un **borrador de diseño**. Antes de lanzarlo como sitio oficial del
