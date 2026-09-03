@@ -172,10 +172,10 @@
 
   async function cargarJefesDirectos() {
     try {
-      const res = await fetch('/api/listar-jefes', {
+      const res = await fetch('/api/admin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ adminSecret })
+        body: JSON.stringify({ adminSecret, accion: 'listar_jefes' })
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
@@ -231,10 +231,10 @@
     status.textContent = 'Creando cuenta...';
 
     try {
-      const res = await fetch('/api/crear-funcionario', {
+      const res = await fetch('/api/admin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ adminSecret, nombre, rut, password, esJefeDirecto, esDirector, esJefePersonal, esJefeDepartamento, jefeRut, subrogante })
+        body: JSON.stringify({ adminSecret, accion: 'crear_funcionario', nombre, rut, password, esJefeDirecto, esDirector, esJefePersonal, esJefeDepartamento, jefeRut, subrogante })
       });
       const data = await res.json();
 
@@ -270,10 +270,10 @@
     status.textContent = 'Restableciendo...';
 
     try {
-      const res = await fetch('/api/cambiar-clave', {
+      const res = await fetch('/api/admin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ adminSecret, rut, newPassword })
+        body: JSON.stringify({ adminSecret, accion: 'cambiar_clave', rut, newPassword })
       });
       const data = await res.json();
 
@@ -308,10 +308,10 @@
     status.textContent = 'Restableciendo...';
 
     try {
-      const res = await fetch('/api/resetear-mfa', {
+      const res = await fetch('/api/admin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ adminSecret, rut })
+        body: JSON.stringify({ adminSecret, accion: 'resetear_mfa', rut })
       });
       const data = await res.json();
 
@@ -340,6 +340,7 @@
     const btn = document.getElementById('rolBtn');
 
     const rut = document.getElementById('rol-rut').value.trim();
+    const nombre = document.getElementById('rol-nombre').value.trim();
     const esJefeDirecto = document.getElementById('rol-esJefeDirecto').checked;
     const esDirector = document.getElementById('rol-esDirector').checked;
     const esJefePersonal = document.getElementById('rol-esJefePersonal').checked;
@@ -352,10 +353,10 @@
     status.textContent = 'Guardando...';
 
     try {
-      const res = await fetch('/api/actualizar-rol', {
+      const res = await fetch('/api/admin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ adminSecret, rut, esJefeDirecto, esDirector, esJefePersonal, esJefeDepartamento, jefeRut, subrogante })
+        body: JSON.stringify({ adminSecret, accion: 'actualizar_rol', rut, nombre, esJefeDirecto, esDirector, esJefePersonal, esJefeDepartamento, jefeRut, subrogante })
       });
       const data = await res.json();
 
@@ -439,10 +440,10 @@
   async function cargarListadoFuncionarios() {
     const cont = document.getElementById('listadoFuncionarios');
     try {
-      const res = await fetch('/api/listar-funcionarios', {
+      const res = await fetch('/api/admin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ adminSecret })
+        body: JSON.stringify({ adminSecret, accion: 'listar_funcionarios' })
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
