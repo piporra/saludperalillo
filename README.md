@@ -637,6 +637,39 @@ Ejecuta `sql/05_jefa_personal_solo_archiva.sql` en Supabase → SQL Editor
 - `solicitud-permiso.html`
 - `historial-permisos.html`
 
+## ✍️ Firmas digitales + PDF del permiso administrativo
+
+Cada persona (funcionario, jefe directo, director, Jefa de Personal)
+puede registrar su firma en **"Mi firma"** — dibujándola con el mouse o
+el dedo, o subiendo una foto/escaneo de su firma real.
+
+En "Solicitar permiso administrativo" → "Mis solicitudes", cada
+solicitud tiene un botón **"📄 PDF"** que genera un documento con el
+mismo formato oficial ("Solicitud Permiso Administrativo"), con los
+datos reales de la solicitud y las **firmas reales** de quienes ya la
+aprobaron hasta ese momento:
+- La firma del funcionario siempre aparece (si la registró).
+- La del jefe directo aparece recién cuando él la aprueba.
+- La del director aparece recién cuando él la aprueba.
+- La de la Jefa de Personal aparece recién cuando ella la registra/archiva.
+
+Si alguna de esas personas aún no ha registrado su firma en el sitio, o
+esa etapa todavía no se completa, esa línea queda en blanco (igual que
+en el papel).
+
+> **Nota:** el PDF no incluye "Cargo" ni "Nivel" del funcionario, porque
+> esos datos no se capturan en ninguna parte del sitio actualmente — si
+> quieres que aparezcan, se pueden agregar como campos nuevos al crear la
+> cuenta.
+
+### Archivos nuevos/actualizados
+
+- `mi-firma.html` (nuevo, raíz)
+- `api/guardar-firma.js` (nuevo, dentro de `api/`)
+- `api/obtener-firmas.js` (nuevo, dentro de `api/`)
+- `solicitud-permiso.html` (reemplazar)
+- `dashboard.html` (reemplazar — nueva tarjeta "Mi firma")
+
 ## ⚠️ Pendiente antes de publicar oficialmente
 
 Este es un **borrador de diseño**. Antes de lanzarlo como sitio oficial del

@@ -9,6 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&family=Atkinson+Hyperlegible:ital,wght@0,700;1,400&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="assets/supabase-config.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
   :root{
     --teal-deep:#0A3D73; --teal:#1B7FC2; --teal-light:#E7F2FB; --sky:#F4FAFE;
@@ -75,6 +76,9 @@
   .badge-cancelado{background:#E7E9EC; color:#4A5568;}
   .sol-right{display:flex; align-items:center; gap:10px; flex-wrap:wrap;}
   .btn-cancelar{background:none; border:1.5px solid #A32D2D; color:#A32D2D; font-size:.78rem; font-weight:700; padding:6px 12px; border-radius:999px; cursor:pointer; font-family:var(--font-body); white-space:nowrap;}
+  .btn-descargar{background:var(--teal-deep); border:none; color:#fff; font-size:.78rem; font-weight:700; padding:6px 12px; border-radius:999px; cursor:pointer; font-family:var(--font-body); white-space:nowrap;}
+  .btn-descargar:hover{background:#0A2E56;}
+  .btn-descargar:disabled{opacity:.6; cursor:not-allowed;}
   .btn-cancelar:hover{background:#FBE3E3;}
   .btn-cancelar:disabled{opacity:.6; cursor:not-allowed;}
   .vacio{color:var(--gray); font-size:.9rem; text-align:center; padding:20px;}
@@ -263,6 +267,128 @@
     return sol.estado !== 'cancelado' && sol.estado !== 'rechazado';
   }
 
+  async function generarPdfSolicitud(sol, btn) {
+    const textoOriginal = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Generando...';
+
+    try {
+      const supabase = getSupabaseClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch('/api/obtener-firmas?solicitudId=' + sol.id, {
+        headers: { 'Authorization': 'Bearer ' + session.access_token }
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+
+      const firmas = data.firmas || {};
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ unit: 'mm', format: 'letter' });
+      const pageW = doc.internal.pageSize.getWidth();
+      const marginL = 18, marginR = 18;
+      const usableW = pageW - marginL - marginR;
+      let y = 18;
+
+      doc.setFont('times', 'bold');
+      doc.setFontSize(11);
+      doc.text('ILUSTRE MUNICIPALIDAD DE PERALILLO', marginL, y);
+      y += 6;
+      doc.text('DEPARTAMENTO DE SALUD MUNICIPAL', marginL, y);
+      y += 12;
+      doc.setFontSize(15);
+      doc.text('SOLICITUD PERMISO ADMINISTRATIVO', pageW / 2, y, { align: 'center' });
+      y += 12;
+
+      doc.setFont('times', 'normal');
+      doc.setFontSize(11);
+
+      function campo(label, valor, x, yPos, labelW) {
+        doc.setFont('times', 'bold');
+        doc.text(label, x, yPos);
+        doc.setFont('times', 'normal');
+        doc.text(valor || '', x + labelW, yPos);
+      }
+
+      campo('Yo:', sol.nombre_solicitante, marginL, y, 12);
+      campo('RUT:', sol.rut_solicitante, marginL + 95, y, 14);
+      y += 10;
+
+      const fechaFmt = iso => { const [a,m,d] = iso.split('-'); return d + '/' + m + '/' + a; };
+      const esRango = sol.fecha_fin && sol.fecha_fin !== sol.fecha_permiso;
+      const dias = diasDe(sol);
+
+      campo('Tipo de permiso:', sol.tipo + (sol.turno ? ' (' + sol.turno + ')' : ''), marginL, y, 40);
+      y += 8;
+      if (esRango) {
+        campo('Del:', fechaFmt(sol.fecha_permiso), marginL, y, 12);
+        campo('Al:', fechaFmt(sol.fecha_fin), marginL + 60, y, 12);
+        campo('Total días hábiles:', String(dias), marginL + 110, y, 42);
+      } else {
+        campo('Fecha:', fechaFmt(sol.fecha_permiso), marginL, y, 16);
+        campo('Días hábiles:', String(dias), marginL + 60, y, 30);
+      }
+      y += 10;
+
+      doc.setFont('times', 'bold');
+      doc.text('Motivo:', marginL, y);
+      doc.setFont('times', 'normal');
+      const motivoLines = doc.splitTextToSize(sol.motivo || 'Sin motivo especificado', usableW - 22);
+      doc.text(motivoLines, marginL + 22, y);
+      y += motivoLines.length * 5.5 + 10;
+
+      const estadoTexto = {
+        aprobado: 'APROBADO',
+        rechazado: 'RECHAZADO',
+        pendiente_jefe: 'Pendiente — esperando a jefe directo',
+        pendiente_director: 'Pendiente — esperando a director'
+      }[sol.estado] || sol.estado;
+      doc.setFont('times', 'bold');
+      doc.text('Estado actual: ' + estadoTexto, marginL, y);
+      y += 12;
+
+      // ===== Bloques de firma =====
+      function bloqueFirma(titulo, firmaBase64, comentario, fecha) {
+        const anchoLinea = 75;
+        const xLinea = marginL;
+
+        if (firmaBase64) {
+          try { doc.addImage(firmaBase64, 'PNG', xLinea, y - 14, 55, 16); } catch (e) { /* ignora si el formato no es compatible */ }
+        }
+        doc.setLineWidth(0.2);
+        doc.line(xLinea, y, xLinea + anchoLinea, y);
+        doc.setFontSize(9);
+        doc.setFont('times', 'normal');
+        doc.text(titulo, xLinea, y + 4);
+        if (fecha) doc.text('Fecha: ' + new Date(fecha).toLocaleDateString('es-CL'), xLinea, y + 8);
+        doc.setFontSize(11);
+
+        if (comentario) {
+          doc.setFont('times', 'italic');
+          doc.setFontSize(9);
+          const comLines = doc.splitTextToSize('"' + comentario + '"', usableW - anchoLinea - 10);
+          doc.text(comLines, xLinea + anchoLinea + 10, y - 4);
+          doc.setFontSize(11);
+          doc.setFont('times', 'normal');
+        }
+        y += 22;
+      }
+
+      bloqueFirma('FIRMA FUNCIONARIO', firmas.funcionario, null, sol.created_at);
+      bloqueFirma('Vº Bº JEFE DIRECTO', firmas.jefeDirecto, sol.comentario_jefe, sol.fecha_revision_jefe);
+      bloqueFirma('Vº Bº DIRECTOR', firmas.director, sol.comentario_director, sol.fecha_revision_director);
+      bloqueFirma('FIRMA JEFE DE PERSONAL (registro y archivo)', firmas.jefePersonal, sol.comentario_personal, sol.fecha_archivo_personal);
+
+      const nombreArchivo = 'Permiso_' + (sol.nombre_solicitante || 'funcionario').replace(/[^\w]+/g, '_') + '_' + sol.fecha_permiso + '.pdf';
+      doc.save(nombreArchivo);
+    } catch (err) {
+      alert('No se pudo generar el PDF: ' + (err.message || 'Error desconocido'));
+      console.error(err);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = textoOriginal;
+    }
+  }
+
   function crearItemSolicitud(sol) {
     const div = document.createElement('div');
     div.className = 'sol-item';
@@ -281,6 +407,13 @@
     const right = document.createElement('div');
     right.className = 'sol-right';
     right.innerHTML = badgeEstado(sol);
+
+    const btnPdf = document.createElement('button');
+    btnPdf.type = 'button';
+    btnPdf.className = 'btn-descargar';
+    btnPdf.textContent = '📄 PDF';
+    btnPdf.addEventListener('click', () => generarPdfSolicitud(sol, btnPdf));
+    right.appendChild(btnPdf);
 
     if (seCancelaAun(sol)) {
       const btn = document.createElement('button');
