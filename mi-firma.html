@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mi firma — CESFAM Peralillo</title>
+<link rel="icon" type="image/jpeg" href="assets/logo-cesfam.jpeg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&family=Atkinson+Hyperlegible:ital,wght@0,700;1,400&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/supabase-config.js"></script>
+<style>
+  :root{
+    --teal-deep:#0A3D73; --teal:#1B7FC2; --teal-light:#E7F2FB; --sky:#F4FAFE;
+    --gold:#12A6D6; --ink:#1C2B36; --gray:#5A6B78; --line:#DCE7F0; --radius:16px;
+    --font-head:'Poppins', sans-serif; --font-body:'Atkinson Hyperlegible', system-ui, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; font-family:var(--font-body); color:var(--ink); background:var(--teal-light); line-height:1.6; font-size:16px;}
+  h1{font-family:var(--font-head); color:var(--teal-deep); margin:0 0 6px;}
+  p{margin:0 0 1em; color:var(--gray);}
+  a{color:var(--teal-deep);}
+  .container{max-width:640px; margin:0 auto; padding:0 24px;}
+
+  header.site-header{background:#fff; border-bottom:1px solid var(--line);}
+  .site-header .container{max-width:1180px; display:flex; align-items:center; justify-content:space-between; padding:16px 24px; flex-wrap:wrap; gap:10px;}
+  .brand{display:flex; align-items:center; gap:12px; text-decoration:none;}
+  .brand-logo{width:48px; height:48px; border-radius:50%; object-fit:cover; border:1.5px solid var(--line);}
+  .brand-text .eyebrow{display:block; font-size:.7rem; letter-spacing:.07em; text-transform:uppercase; color:var(--teal); font-weight:700;}
+  .brand-text .name{font-family:var(--font-head); font-weight:700; font-size:1.1rem; color:var(--teal-deep);}
+  .header-right{display:flex; align-items:center; gap:16px; font-size:.85rem; color:var(--gray);}
+  .header-right a{color:var(--teal-deep); text-decoration:none; font-weight:700;}
+  .header-right a:hover{text-decoration:underline;}
+
+  main{padding:40px 0 70px;}
+  .page-head{text-align:center; margin-bottom:24px;}
+  .page-head .eyebrow{color:var(--gold); font-weight:700; text-transform:uppercase; letter-spacing:.07em; font-size:.8rem;}
+  .page-head h1{font-size:1.5rem;}
+
+  .card{background:#fff; border:1px solid var(--line); border-radius:var(--radius); padding:26px; box-shadow:0 16px 40px rgba(10,61,115,.08); margin-bottom:20px;}
+
+  .tabs{display:flex; gap:8px; margin-bottom:18px;}
+  .tab-btn{flex:1; padding:11px; border-radius:10px; border:1.5px solid var(--line); background:#fff; color:var(--gray); font-weight:700; font-size:.9rem; cursor:pointer; font-family:var(--font-body);}
+  .tab-btn.active{background:var(--teal-deep); color:#fff; border-color:var(--teal-deep);}
+  .tab-panel{display:none;}
+  .tab-panel.active{display:block;}
+
+  #firmaCanvas{width:100%; height:200px; border:2px dashed var(--line); border-radius:12px; touch-action:none; background:#FAFCFE; cursor:crosshair;}
+  .canvas-actions{display:flex; gap:10px; margin-top:12px;}
+  .btn-secundario{flex:1; background:#fff; border:1.5px solid var(--line); color:var(--ink); padding:11px; border-radius:999px; font-weight:700; cursor:pointer; font-family:var(--font-body); font-size:.88rem;}
+  .btn-secundario:hover{background:var(--teal-light);}
+
+  input[type="file"]{width:100%; padding:11px; border:1.5px solid var(--line); border-radius:10px; font-family:var(--font-body); font-size:.9rem;}
+  #previewUpload{max-width:100%; max-height:160px; display:none; margin-top:12px; border:1px solid var(--line); border-radius:10px; background:#FAFCFE;}
+
+  .btn-primary{display:block; width:100%; background:var(--gold); color:#fff; border:none; padding:15px; border-radius:999px; font-weight:700; font-size:1rem; cursor:pointer; font-family:var(--font-body); margin-top:20px;}
+  .btn-primary:hover{background:#0E86AC;}
+  .btn-primary:disabled{opacity:.6; cursor:not-allowed;}
+  #status{margin-top:12px; font-size:.9rem; text-align:center;}
+
+  .firma-actual{text-align:center;}
+  .firma-actual img{max-width:280px; max-height:120px; border:1px solid var(--line); border-radius:10px; background:#fff; padding:10px;}
+  .firma-actual p.vacio{color:var(--gray); font-size:.9rem;}
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="container">
+    <a href="index.html" class="brand">
+      <img class="brand-logo" src="assets/logo-cesfam.jpeg" alt="Logo CESFAM Peralillo">
+      <span class="brand-text">
+        <span class="eyebrow">Servicio de Salud O'Higgins</span>
+        <span class="name">CESFAM Peralillo</span>
+      </span>
+    </a>
+    <div class="header-right">
+      <span>👤 <span id="auth-user-name"></span></span>
+      <a href="dashboard.html">← Volver al portal</a>
+      <a href="#" onclick="cerrarSesion(); return false;">Cerrar sesión</a>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="container">
+    <div class="page-head">
+      <span class="eyebrow">Mi cuenta</span>
+      <h1>✍️ Mi firma</h1>
+      <p>Se usa para completar automáticamente el PDF de tus permisos administrativos.</p>
+    </div>
+
+    <div class="card">
+      <h2 style="font-family:var(--font-head); color:var(--teal-deep); font-size:1rem; margin:0 0 14px;">Firma actual</h2>
+      <div class="firma-actual" id="firmaActual">
+        <p class="vacio">Cargando...</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="tabs">
+        <button type="button" class="tab-btn active" id="tabDibujar">✏️ Dibujar</button>
+        <button type="button" class="tab-btn" id="tabSubir">📤 Subir imagen</button>
+      </div>
+
+      <div class="tab-panel active" id="panelDibujar">
+        <canvas id="firmaCanvas"></canvas>
+        <div class="canvas-actions">
+          <button type="button" class="btn-secundario" id="btnLimpiar">🗑️ Borrar y repetir</button>
+        </div>
+      </div>
+
+      <div class="tab-panel" id="panelSubir">
+        <input type="file" id="firmaArchivo" accept="image/png, image/jpeg">
+        <img id="previewUpload" alt="Vista previa de la firma subida">
+      </div>
+
+      <button type="button" class="btn-primary" id="guardarBtn">Guardar mi firma</button>
+      <p id="status"></p>
+    </div>
+  </div>
+</main>
+
+<script src="assets/auth-guard.js"></script>
+<script>
+  let modoActivo = 'dibujar';
+  let imagenSubidaBase64 = null;
+
+  // ===== Pestañas =====
+  document.getElementById('tabDibujar').addEventListener('click', () => cambiarTab('dibujar'));
+  document.getElementById('tabSubir').addEventListener('click', () => cambiarTab('subir'));
+
+  function cambiarTab(modo) {
+    modoActivo = modo;
+    document.getElementById('tabDibujar').classList.toggle('active', modo === 'dibujar');
+    document.getElementById('tabSubir').classList.toggle('active', modo === 'subir');
+    document.getElementById('panelDibujar').classList.toggle('active', modo === 'dibujar');
+    document.getElementById('panelSubir').classList.toggle('active', modo === 'subir');
+  }
+
+  // ===== Canvas para dibujar la firma =====
+  const canvas = document.getElementById('firmaCanvas');
+  const ctx = canvas.getContext('2d');
+  let dibujando = false;
+  let huboTrazo = false;
+
+  function ajustarCanvas() {
+    const ratio = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width * ratio;
+    canvas.height = rect.height * ratio;
+    ctx.scale(ratio, ratio);
+    ctx.lineWidth = 2.2;
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = '#0A3D73';
+  }
+  window.addEventListener('resize', ajustarCanvas);
+  ajustarCanvas();
+
+  function posDesdeEvento(e) {
+    const rect = canvas.getBoundingClientRect();
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    return { x: clientX - rect.left, y: clientY - rect.top };
+  }
+
+  function empezarTrazo(e) {
+    e.preventDefault();
+    dibujando = true;
+    huboTrazo = true;
+    const p = posDesdeEvento(e);
+    ctx.beginPath();
+    ctx.moveTo(p.x, p.y);
+  }
+  function moverTrazo(e) {
+    if (!dibujando) return;
+    e.preventDefault();
+    const p = posDesdeEvento(e);
+    ctx.lineTo(p.x, p.y);
+    ctx.stroke();
+  }
+  function terminarTrazo() { dibujando = false; }
+
+  canvas.addEventListener('mousedown', empezarTrazo);
+  canvas.addEventListener('mousemove', moverTrazo);
+  window.addEventListener('mouseup', terminarTrazo);
+  canvas.addEventListener('touchstart', empezarTrazo);
+  canvas.addEventListener('touchmove', moverTrazo);
+  canvas.addEventListener('touchend', terminarTrazo);
+
+  document.getElementById('btnLimpiar').addEventListener('click', () => {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    huboTrazo = false;
+  });
+
+  // ===== Subida de imagen =====
+  document.getElementById('firmaArchivo').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      imagenSubidaBase64 = ev.target.result;
+      const preview = document.getElementById('previewUpload');
+      preview.src = imagenSubidaBase64;
+      preview.style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+  });
+
+  // ===== Firma actual guardada =====
+  async function cargarFirmaActual() {
+    const cont = document.getElementById('firmaActual');
+    try {
+      const supabase = getSupabaseClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      const firma = session.user.user_metadata && session.user.user_metadata.firma_base64;
+      if (firma) {
+        cont.innerHTML = '<img src="' + firma + '" alt="Tu firma actual">';
+      } else {
+        cont.innerHTML = '<p class="vacio">Aún no has registrado tu firma.</p>';
+      }
+    } catch (err) {
+      console.error(err);
+      cont.innerHTML = '<p class="vacio">No se pudo cargar tu firma actual.</p>';
+    }
+  }
+
+  // ===== Guardar =====
+  document.getElementById('guardarBtn').addEventListener('click', async () => {
+    const status = document.getElementById('status');
+    const btn = document.getElementById('guardarBtn');
+
+    let firmaBase64 = null;
+    if (modoActivo === 'dibujar') {
+      if (!huboTrazo) {
+        status.style.color = '#B33A3A';
+        status.textContent = 'Dibuja tu firma antes de guardar.';
+        return;
+      }
+      firmaBase64 = canvas.toDataURL('image/png');
+    } else {
+      if (!imagenSubidaBase64) {
+        status.style.color = '#B33A3A';
+        status.textContent = 'Selecciona una imagen antes de guardar.';
+        return;
+      }
+      firmaBase64 = imagenSubidaBase64;
+    }
+
+    btn.disabled = true;
+    status.style.color = 'var(--gray)';
+    status.textContent = 'Guardando...';
+
+    try {
+      const supabase = getSupabaseClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch('/api/guardar-firma', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + session.access_token
+        },
+        body: JSON.stringify({ firmaBase64 })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+
+      // Refresca la sesión para que el resto del sitio vea la firma nueva
+      await supabase.auth.refreshSession();
+
+      status.style.color = 'var(--teal)';
+      status.textContent = '✅ Firma guardada correctamente.';
+      btn.disabled = false;
+      cargarFirmaActual();
+    } catch (err) {
+      status.style.color = '#B33A3A';
+      status.textContent = '❌ ' + (err.message || 'No se pudo guardar la firma.');
+      btn.disabled = false;
+    }
+  });
+
+  window.addEventListener('DOMContentLoaded', cargarFirmaActual);
+</script>
+
+</body>
+</html>
