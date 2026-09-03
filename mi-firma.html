@@ -213,9 +213,14 @@
     try {
       const supabase = getSupabaseClient();
       const { data: { session } } = await supabase.auth.getSession();
-      const firma = session.user.user_metadata && session.user.user_metadata.firma_base64;
-      if (firma) {
-        cont.innerHTML = '<img src="' + firma + '" alt="Tu firma actual">';
+      const res = await fetch('/api/guardar-firma', {
+        headers: { 'Authorization': 'Bearer ' + session.access_token }
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+
+      if (data.firma) {
+        cont.innerHTML = '<img src="' + data.firma + '" alt="Tu firma actual">';
       } else {
         cont.innerHTML = '<p class="vacio">Aún no has registrado tu firma.</p>';
       }

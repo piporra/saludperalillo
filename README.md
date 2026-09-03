@@ -704,6 +704,43 @@ de permiso) en un solo archivo con un campo que indique la acción.
 - ~~`api/actualizar-hoja.js`~~ (eliminar de GitHub — ya no se usaba)
 - `admin-funcionarios.html` (reemplazar — ahora llama a `/api/admin`)
 
+## 🚨 Corrección crítica: error 494 al guardar una firma
+
+Se encontró y corrigió un problema serio: las firmas se estaban
+guardando dentro de la "metadata" de cada cuenta, la cual Supabase
+incluye automáticamente en el token de sesión de esa persona en **cada**
+petición que hace al sitio. Como una imagen de firma pesa bastante más
+que el resto de los datos de una cuenta, el token creció demasiado y el
+servidor empezó a rechazar **todas** las peticiones de esa persona con
+un error `494 Request Header Too Large` — afectando todo el sitio para
+ella, no solo la pantalla de la firma.
+
+**La solución:** las firmas ahora se guardan en su propia tabla
+(`firmas_funcionarios`), separada por completo del token de sesión.
+
+### Paso 1 — Crea la tabla nueva en Supabase
+
+Ejecuta `sql/06_tabla_firmas.sql` en Supabase → SQL Editor → Run.
+
+### Paso 2 — Sube los archivos corregidos
+
+- `api/guardar-firma.js` (reemplazar)
+- `api/obtener-firmas.js` (reemplazar)
+- `mi-firma.html` (reemplazar)
+- `api/admin.js` (reemplazar — se agregó una reparación de emergencia)
+- `admin-funcionarios.html` (reemplazar — nueva tarjeta de reparación)
+
+### Paso 3 — Repara cualquier cuenta que ya haya quedado bloqueada
+
+Si alguien ya guardó su firma con la versión anterior (antes de esta
+corrección) y ahora le aparecen errores raros en todo el sitio, no podrá
+arreglarlo por sí mismo (su sesión ya está bloqueada). Tú puedes
+repararla desde `admin-funcionarios.html` → tarjeta
+**"🩹 Reparar cuenta bloqueada"** → ingresa su RUT → Reparar cuenta.
+Después de eso, esa persona debe **cerrar sesión y volver a entrar**, y
+luego puede volver a registrar su firma normalmente desde "Mi firma"
+(esta vez se guardará correctamente en la tabla nueva).
+
 ## ⚠️ Pendiente antes de publicar oficialmente
 
 Este es un **borrador de diseño**. Antes de lanzarlo como sitio oficial del

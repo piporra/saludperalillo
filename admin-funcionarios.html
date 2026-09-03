@@ -149,6 +149,17 @@
     </form>
   </div>
 
+  <div class="card" id="repararCard" style="display:none;">
+    <h1>🩹 Reparar cuenta bloqueada</h1>
+    <p class="sub">Usa esto solo si a un funcionario le aparece un error extraño en TODAS las páginas (por ejemplo, "494" o "no se pudo cargar"), típicamente después de guardar una firma pesada. Quita el dato pesado que quedó atascado en su sesión.</p>
+    <form id="repararForm">
+      <label for="reparar-rut">RUT del funcionario</label>
+      <input type="text" id="reparar-rut" required placeholder="12.345.678-9">
+      <button type="submit" id="repararBtn">Reparar cuenta</button>
+      <p id="reparar-status"></p>
+    </form>
+  </div>
+
   <a class="back" href="index.html">← Volver al sitio</a>
 </div>
 
@@ -165,6 +176,7 @@
     document.getElementById('rolCard').style.display = 'block';
     document.getElementById('listadoCard').style.display = 'block';
     document.getElementById('mfaCard').style.display = 'block';
+    document.getElementById('repararCard').style.display = 'block';
     document.getElementById('adminAuthForm').closest('.card').style.display = 'none';
     cargarJefesDirectos();
     cargarListadoFuncionarios();
@@ -457,6 +469,43 @@
   }
 
   document.getElementById('listado-buscador').addEventListener('input', (e) => renderListado(e.target.value));
+
+  document.getElementById('repararForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const status = document.getElementById('reparar-status');
+    const btn = document.getElementById('repararBtn');
+    const rut = document.getElementById('reparar-rut').value.trim();
+
+    btn.disabled = true;
+    status.style.color = 'var(--gray)';
+    status.textContent = 'Reparando...';
+
+    try {
+      const res = await fetch('/api/admin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adminSecret, accion: 'reparar_token_grande', rut })
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        status.style.color = '#B33A3A';
+        status.textContent = '❌ ' + (data.error || 'No se pudo reparar la cuenta.');
+        btn.disabled = false;
+        return;
+      }
+
+      status.style.color = 'var(--teal)';
+      status.textContent = '✅ ' + (data.mensaje || 'Cuenta reparada.');
+      document.getElementById('repararForm').reset();
+      btn.disabled = false;
+    } catch (err) {
+      status.style.color = '#B33A3A';
+      status.textContent = 'Error de conexión. Inténtalo nuevamente.';
+      btn.disabled = false;
+      console.error(err);
+    }
+  });
 </script>
 
 </body>
