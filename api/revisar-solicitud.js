@@ -1,7 +1,14 @@
 // api/revisar-solicitud.js
 // Función serverless de Vercel. Aprueba o rechaza una solicitud de permiso,
-// ya sea en el paso del jefe directo o en el del director, verificando que
-// quien la revisa sea realmente la persona correspondiente (o el director).
+// ya sea en el paso del jefe directo, el del director, o el de Jefe de
+// Personal, verificando que quien la revisa sea realmente la persona
+// correspondiente.
+//
+// CASO ESPECIAL: si quien SOLICITA el permiso es el propio Director, nadie
+// más puede darle la aprobación de "director" (sería aprobarse a sí mismo).
+// En ese caso, la aprobación de su jefe directo (normalmente la Jefa de
+// Departamento) cuenta como aprobación final, y la solicitud salta directo
+// a la etapa de Jefe de Personal.
 
 async function obtenerUsuarioDesdeToken(token) {
   const res = await fetch(`${process.env.SUPABASE_URL}/auth/v1/user`, {
@@ -16,6 +23,25 @@ async function obtenerUsuarioDesdeToken(token) {
 
 function normalizarRut(rut) {
   return (rut || "").toString().trim().toUpperCase().replace(/[^0-9K]/g, "");
+}
+
+async function solicitanteEsDirector(rutSolicitante) {
+  const listRes = await fetch(
+    `${process.env.SUPABASE_URL}/auth/v1/admin/users?per_page=1000`,
+    {
+      headers: {
+        "apikey": process.env.SUPABASE_SERVICE_ROLE_KEY,
+        "Authorization": `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`
+      }
+    }
+  );
+  if (!listRes.ok) return false;
+  const data = await listRes.json();
+  const users = data.users || [];
+  const user = users.find(
+    (u) => u.user_metadata && normalizarRut(u.user_metadata.rut) === normalizarRut(rutSolicitante)
+  );
+  return !!(user && user.user_metadata && user.user_metadata.es_director);
 }
 
 export default async function handler(req, res) {
@@ -65,11 +91,24 @@ export default async function handler(req, res) {
       if (normalizarRut(meta.rut) !== normalizarRut(solicitud.rut_jefe)) {
         return res.status(403).json({ error: "No tienes permiso para revisar esta solicitud" });
       }
+
+      let siguienteEstado = "pendiente_director";
+      if (decision === "aprobado") {
+        const esDirector = await solicitanteEsDirector(solicitud.rut_solicitante);
+        if (esDirector) {
+          // Caso especial: el solicitante es el propio Director → esta
+          // aprobación ya cuenta como final, se salta la etapa "director".
+          siguienteEstado = "pendiente_personal";
+        }
+      } else {
+        siguienteEstado = "rechazado";
+      }
+
       cambios = {
         estado_jefe: decision,
         comentario_jefe: comentario || null,
         fecha_revision_jefe: new Date().toISOString(),
-        estado: decision === "aprobado" ? "pendiente_director" : "rechazado"
+        estado: siguienteEstado
       };
     } else if (solicitud.estado === "pendiente_director") {
       // Debe tener la función de Director
