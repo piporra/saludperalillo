@@ -183,7 +183,7 @@
 
         statusEl.style.color = 'var(--teal)';
         statusEl.textContent = '✅ Registrado correctamente.';
-        setTimeout(() => div.remove(), 800);
+        setTimeout(() => cargarAprobaciones(), 800);
       } catch (err) {
         statusEl.style.color = '#B33A3A';
         statusEl.textContent = '❌ ' + (err.message || 'No se pudo guardar.');
@@ -228,6 +228,7 @@
 
   async function cargarAprobaciones() {
     const contenedor = document.getElementById('bandejas');
+    contenedor.innerHTML = '';
     try {
       const supabase = getSupabaseClient();
       const { data: { session } } = await supabase.auth.getSession();
