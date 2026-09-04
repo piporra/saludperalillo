@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Activar verificación en dos pasos — CESFAM Peralillo</title>
+<link rel="icon" type="image/jpeg" href="assets/logo-cesfam.jpeg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/supabase-config.js"></script>
+<style>
+  :root{
+    --teal-deep:#0A3D73; --teal:#1B7FC2; --teal-light:#E7F2FB;
+    --gold:#12A6D6; --ink:#1C2B36; --gray:#5A6B78; --line:#DCE7F0; --radius:16px;
+    --field-bg:#F1F5F9; --field-line:#E3E9EF;
+    --font-head:'Poppins', sans-serif; --font-body:'Atkinson Hyperlegible', system-ui, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; min-height:100vh; background:var(--teal-light); font-family:var(--font-body); color:var(--ink); display:flex; align-items:center; justify-content:center;}
+  .card{background:#fff; border-radius:20px; box-shadow:0 20px 50px rgba(10,61,115,.12); padding:36px; width:100%; max-width:440px; margin:24px;}
+  .card img.logo{width:56px; height:56px; border-radius:50%; display:block; margin:0 auto 14px; border:1.5px solid var(--line);}
+  h1{font-family:var(--font-head); font-size:1.25rem; color:var(--teal-deep); text-align:center; margin:0 0 6px;}
+  p.sub{text-align:center; color:var(--gray); font-size:.9rem; margin:0 0 22px;}
+  .step{display:none;}
+  .step.active{display:block;}
+  ol.instrucciones{font-size:.88rem; color:var(--gray); padding-left:20px; margin:0 0 18px;}
+  ol.instrucciones li{margin-bottom:6px;}
+  .qr-wrap{background:var(--teal-light); border-radius:12px; padding:18px; display:flex; justify-content:center; margin-bottom:14px;}
+  .qr-wrap svg{width:180px; height:180px;}
+  .secret-box{background:var(--teal-light); border-radius:10px; padding:10px 14px; text-align:center; font-family:monospace; font-size:.95rem; letter-spacing:1px; margin-bottom:18px; word-break:break-all;}
+  label{display:block; font-weight:700; font-size:.85rem; margin-bottom:6px; color:var(--teal-deep);}
+  input{width:100%; padding:13px 14px; border:1.5px solid var(--field-line); background:var(--field-bg); border-radius:12px; margin-bottom:16px; font-family:var(--font-body); font-size:1.1rem; text-align:center; letter-spacing:4px;}
+  input:focus{outline:none; border-color:var(--teal); background:#fff;}
+  button{width:100%; background:var(--gold); color:#fff; border:none; padding:14px; border-radius:12px; font-weight:700; font-size:1rem; cursor:pointer; font-family:var(--font-body); box-shadow:0 8px 18px rgba(18,166,214,.28);}
+  button:hover{background:#0E86AC;}
+  button:disabled{opacity:.6; cursor:not-allowed; box-shadow:none;}
+  #status{text-align:center; font-size:.88rem; margin-top:14px; min-height:20px;}
+  .back{display:block; text-align:center; margin-top:16px; font-size:.85rem; color:var(--gray); text-decoration:none;}
+</style>
+</head>
+<body>
+
+<div class="card">
+  <img class="logo" src="assets/logo-cesfam.jpeg" alt="Logo CESFAM Peralillo">
+  <h1>🔐 Activar verificación en dos pasos</h1>
+  <p class="sub">Es obligatorio para todos los funcionarios, se hace una sola vez.</p>
+
+  <div class="step active" id="stepCargando">
+    <p style="text-align:center; color:var(--gray);">Preparando código QR...</p>
+  </div>
+
+  <div class="step" id="stepQR">
+    <ol class="instrucciones">
+      <li>Abre la app <strong>Google Authenticator</strong> en tu celular (descárgala gratis si no la tienes).</li>
+      <li>Toca el botón "+" para agregar una cuenta → "Escanear código QR".</li>
+      <li>Apunta la cámara a este código:</li>
+    </ol>
+    <div class="qr-wrap" id="qrContainer"></div>
+    <p style="text-align:center; font-size:.82rem; color:var(--gray);">¿No puedes escanear? Ingresa esta clave manualmente en la app:</p>
+    <div class="secret-box" id="secretBox"></div>
+
+    <form id="verifyForm">
+      <label for="codigo">Escribe el código de 6 dígitos que muestra la app</label>
+      <input type="text" id="codigo" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" required autocomplete="one-time-code">
+      <button type="submit" id="verifyBtn">Activar y entrar</button>
+      <p id="status"></p>
+    </form>
+  </div>
+
+  <a class="back" href="login.html">← Volver a iniciar sesión</a>
+</div>
+
+<script>
+  const params = new URLSearchParams(window.location.search);
+  const redirectTo = params.get('redirect') || 'dashboard.html';
+  let factorId = null;
+
+  async function iniciar() {
+    if (SUPABASE_URL.includes('PEGA_AQUI')) {
+      document.getElementById('stepCargando').innerHTML = '<p style="text-align:center; color:#B33A3A;">El sitio aún no está configurado. Contacta a administración.</p>';
+      return;
+    }
+
+    const supabase = getSupabaseClient();
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      window.location.href = 'login.html?redirect=' + encodeURIComponent(redirectTo);
+      return;
+    }
+
+    // Si ya tiene un factor verificado, no necesita activar de nuevo
+    const { data: factorsData } = await supabase.auth.mfa.listFactors();
+    const yaVerificado = (factorsData && factorsData.totp || []).find(f => f.status === 'verified');
+    if (yaVerificado) {
+      window.location.href = redirectTo;
+      return;
+    }
+
+    // Limpia cualquier código QR de intentos anteriores que no se haya
+    // llegado a confirmar (si no, Supabase no deja generar uno nuevo).
+    const pendientes = (factorsData && factorsData.totp || []).filter(f => f.status === 'unverified');
+    for (const p of pendientes) {
+      await supabase.auth.mfa.unenroll({ factorId: p.id });
+    }
+
+    const { data, error } = await supabase.auth.mfa.enroll({
+      factorType: 'totp',
+      friendlyName: 'CESFAM Peralillo'
+    });
+
+    if (error) {
+      document.getElementById('stepCargando').innerHTML = '<p style="text-align:center; color:#B33A3A;">No se pudo generar el código QR. Recarga la página o contacta a administración.</p>';
+      console.error(error);
+      return;
+    }
+
+    factorId = data.id;
+    const qrImg = document.createElement('img');
+    qrImg.src = data.totp.qr_code;
+    qrImg.alt = 'Código QR';
+    qrImg.style.width = '180px';
+    qrImg.style.height = '180px';
+    const qrContainer = document.getElementById('qrContainer');
+    qrContainer.innerHTML = '';
+    qrContainer.appendChild(qrImg);
+    document.getElementById('secretBox').textContent = data.totp.secret;
+
+    document.getElementById('stepCargando').style.display = 'none';
+    document.getElementById('stepQR').classList.add('active');
+  }
+
+  document.getElementById('verifyForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const status = document.getElementById('status');
+    const btn = document.getElementById('verifyBtn');
+    const codigo = document.getElementById('codigo').value.trim();
+
+    btn.disabled = true;
+    status.style.color = 'var(--gray)';
+    status.textContent = 'Verificando...';
+
+    try {
+      const supabase = getSupabaseClient();
+      const { data: challengeData, error: challengeError } = await supabase.auth.mfa.challenge({ factorId });
+      if (challengeError) throw challengeError;
+
+      const { error: verifyError } = await supabase.auth.mfa.verify({
+        factorId,
+        challengeId: challengeData.id,
+        code: codigo
+      });
+      if (verifyError) throw verifyError;
+
+      status.style.color = 'var(--teal)';
+      status.textContent = '✅ Activado correctamente, redirigiendo...';
+      window.location.href = redirectTo;
+    } catch (err) {
+      status.style.color = '#B33A3A';
+      status.textContent = 'Código incorrecto. Verifica la hora de tu celular e inténtalo de nuevo.';
+      btn.disabled = false;
+      console.error(err);
+    }
+  });
+
+  iniciar();
+</script>
+
+</body>
+</html>
