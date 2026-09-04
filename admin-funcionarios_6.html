@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Administración de funcionarios — CESFAM Peralillo</title>
+<link rel="icon" type="image/jpeg" href="assets/logo-cesfam.jpeg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --teal-deep:#0A3D73; --teal:#1B7FC2; --teal-light:#E7F2FB;
+    --gold:#12A6D6; --ink:#1C2B36; --gray:#5A6B78; --line:#DCE7F0; --radius:16px;
+    --font-head:'Poppins', sans-serif; --font-body:'Atkinson Hyperlegible', system-ui, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; background:var(--teal-light); font-family:var(--font-body); color:var(--ink); min-height:100vh;}
+  .container{max-width:520px; margin:0 auto; padding:50px 24px;}
+  .card{background:#fff; border-radius:var(--radius); box-shadow:0 20px 50px rgba(10,61,115,.1); padding:30px; margin-bottom:20px;}
+  h1{font-family:var(--font-head); color:var(--teal-deep); font-size:1.3rem; margin:0 0 6px;}
+  p.sub{color:var(--gray); font-size:.9rem; margin:0 0 20px;}
+  label{display:block; font-weight:700; font-size:.9rem; margin-bottom:6px; color:var(--teal-deep);}
+  .checks{margin-bottom:16px;}
+  .check-line{display:flex; align-items:center; gap:8px; font-weight:400; color:var(--ink); margin-bottom:8px;}
+
+  .func-item{display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 14px; border:1px solid var(--line); border-radius:10px; margin-bottom:8px; flex-wrap:wrap;}
+  .func-info h3{margin:0 0 2px; font-size:.95rem; color:var(--teal-deep); font-family:var(--font-head);}
+  .func-info p{margin:0; font-size:.8rem; color:var(--gray);}
+  .func-badges{display:flex; gap:6px; flex-wrap:wrap; margin-top:4px;}
+  .func-badge{font-size:.7rem; font-weight:700; padding:3px 9px; border-radius:999px; background:var(--teal-light); color:var(--teal-deep); white-space:nowrap;}
+  .func-editar{background:var(--gold); color:#fff; border:none; padding:8px 16px; border-radius:999px; font-weight:700; font-size:.85rem; cursor:pointer; font-family:var(--font-body); white-space:nowrap;}
+  .func-editar:hover{background:#0E86AC;}
+  .check-line input{width:auto; margin:0;}
+  input, textarea{width:100%; padding:12px 14px; border:1.5px solid var(--line); border-radius:10px; margin-bottom:16px; font-family:var(--font-body); font-size:.95rem;}
+  textarea{resize:vertical;}
+  button{width:100%; background:var(--gold); color:#fff; border:none; padding:14px; border-radius:999px; font-weight:700; font-size:1rem; cursor:pointer; font-family:var(--font-body);}
+  button:hover{background:#0E86AC;}
+  button:disabled{opacity:.6; cursor:not-allowed;}
+  #status{font-size:.88rem; margin-top:12px; text-align:center;}
+  #admin-auth-status{font-size:.88rem; margin-top:12px; text-align:center;}
+  .back{display:block; text-align:center; margin-top:6px; font-size:.85rem; color:var(--teal-deep); text-decoration:none;}
+  .hint{font-size:.82rem; color:var(--gray); margin:-10px 0 16px;}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="card">
+    <h1>🔐 Clave de administrador</h1>
+    <p class="sub">Ingresa la clave maestra para gestionar cuentas de funcionarios.</p>
+    <form id="adminAuthForm">
+      <label for="admin-secret">Clave de administrador</label>
+      <input type="password" id="admin-secret" required>
+      <button type="submit" id="adminAuthBtn">Desbloquear panel</button>
+      <p id="admin-auth-status"></p>
+    </form>
+  </div>
+
+  <div class="card" id="createCard" style="display:none;">
+    <h1>➕ Crear cuenta de funcionario</h1>
+    <p class="sub">Se genera un acceso con RUT y contraseña. El RUT es único, así que no se puede repetir.</p>
+    <form id="createForm">
+      <label for="nombre">Nombre completo</label>
+      <input type="text" id="nombre" required>
+      <label for="rut">RUT del funcionario</label>
+      <input type="text" id="rut" required placeholder="12.345.678-9">
+      <p class="hint" id="rut-hint">Con o sin puntos y guion, ej: 12345678-9 o 12.345.678-9.</p>
+      <label for="password">Contraseña provisoria</label>
+      <input type="text" id="password" required minlength="6">
+      <p class="hint">Compártela con el funcionario para que la cambie luego si quieres.</p>
+      <label>Funciones adicionales (puede tener más de una, o ninguna)</label>
+      <div class="checks">
+        <label class="check-line"><input type="checkbox" id="esJefeDirecto"> Jefe directo</label>
+        <label class="check-line"><input type="checkbox" id="esDirector"> Director</label>
+        <label class="check-line"><input type="checkbox" id="esJefePersonal"> Jefe de Personal</label>
+        <label class="check-line"><input type="checkbox" id="esJefeDepartamento"> Jefe de Departamento</label>
+      </div>
+      <label for="jefeRut">Jefe directo (para aprobar permisos)</label>
+      <select id="jefeRut">
+        <option value="">Selecciona un jefe directo...</option>
+      </select>
+      <label for="subrogante">Subrogante (opcional)</label>
+      <select id="subrogante">
+        <option value="">Selecciona un subrogante...</option>
+      </select>
+      <p class="hint">Ambas listas se llenan con los funcionarios marcados como "Jefe directo" (si aún no has marcado a nadie, guarda primero a esa persona con esa casilla activada). Es necesario para que sus solicitudes de permiso administrativo lleguen a la persona correcta; si él mismo es el director, puedes dejarlo en blanco.</p>
+      <button type="submit" id="createBtn">Crear cuenta</button>
+      <p id="status"></p>
+    </form>
+  </div>
+
+  <div class="card" id="resetCard" style="display:none;">
+    <h1>🔑 Restablecer contraseña</h1>
+    <p class="sub">¿Un funcionario olvidó su clave? Asígnale una nueva aquí.</p>
+    <form id="resetForm">
+      <label for="reset-rut">RUT del funcionario</label>
+      <input type="text" id="reset-rut" required placeholder="12.345.678-9">
+      <label for="reset-password">Nueva contraseña</label>
+      <input type="text" id="reset-password" required minlength="6">
+      <p class="hint">Compártesela al funcionario por un medio seguro.</p>
+      <button type="submit" id="resetBtn">Restablecer contraseña</button>
+      <p id="reset-status"></p>
+    </form>
+  </div>
+
+  <div class="card" id="rolCard" style="display:none;">
+    <h1>🧭 Editar funcionario</h1>
+    <p class="sub">Busca por RUT (o usa el botón "Editar" desde el listado de abajo) para actualizar su nombre, funciones, jefe directo y subrogante.</p>
+    <form id="rolForm">
+      <label for="rol-rut">RUT del funcionario</label>
+      <input type="text" id="rol-rut" required placeholder="12.345.678-9">
+      <label for="rol-nombre">Nombre completo</label>
+      <input type="text" id="rol-nombre" placeholder="Se mantiene igual si lo dejas en blanco">
+      <label>Funciones adicionales (puede tener más de una, o ninguna)</label>
+      <div class="checks">
+        <label class="check-line"><input type="checkbox" id="rol-esJefeDirecto"> Jefe directo</label>
+        <label class="check-line"><input type="checkbox" id="rol-esDirector"> Director</label>
+        <label class="check-line"><input type="checkbox" id="rol-esJefePersonal"> Jefe de Personal</label>
+        <label class="check-line"><input type="checkbox" id="rol-esJefeDepartamento"> Jefe de Departamento</label>
+      </div>
+      <label for="rol-jefeRut">Jefe directo</label>
+      <select id="rol-jefeRut">
+        <option value="">Selecciona un jefe directo...</option>
+      </select>
+      <label for="rol-subrogante">Subrogante (opcional)</label>
+      <select id="rol-subrogante">
+        <option value="">Selecciona un subrogante...</option>
+      </select>
+      <p class="hint">Si es el director, puedes dejarlo en blanco.</p>
+      <button type="submit" id="rolBtn">Guardar</button>
+      <p id="rol-status"></p>
+    </form>
+  </div>
+
+  <div class="card" id="listadoCard" style="display:none;">
+    <h1>📋 Funcionarios registrados</h1>
+    <p class="sub">Todas las cuentas creadas hasta ahora. Haz clic en "Editar" para cargar sus datos arriba, en "🧭 Editar funcionario".</p>
+    <input type="text" id="listado-buscador" placeholder="🔎 Buscar por nombre o RUT..." style="margin-bottom:16px;">
+    <div id="listadoFuncionarios">
+      <p class="hint" style="margin:0;">Cargando...</p>
+    </div>
+  </div>
+
+  <div class="card" id="noticiasCard" style="display:none;">
+    <h1>📰 Noticias del sitio</h1>
+    <p class="sub">Aparecen en la sección "Actualidad" de la página principal, ordenadas de la más reciente a la más antigua. Desmarca "Publicar de inmediato" para guardarla como borrador sin que se vea todavía en el sitio.</p>
+    <form id="noticiaForm">
+      <input type="hidden" id="noticia-id" value="">
+      <label for="noticia-titulo">Título</label>
+      <input type="text" id="noticia-titulo" required maxlength="140">
+      <label for="noticia-categoria">Categoría / etiqueta</label>
+      <input type="text" id="noticia-categoria" list="categorias-sugeridas" placeholder="Ej: Comunicado, Infraestructura, Vacunación" required>
+      <datalist id="categorias-sugeridas">
+        <option value="Comunicado">
+        <option value="Infraestructura">
+        <option value="Programas de salud">
+        <option value="Actividad comunitaria">
+        <option value="Vacunación">
+      </datalist>
+      <label for="noticia-fecha">Fecha</label>
+      <input type="date" id="noticia-fecha" required>
+      <label for="noticia-resumen">Texto de la noticia</label>
+      <textarea id="noticia-resumen" required rows="4"></textarea>
+      <label for="noticia-imagen">Imagen (enlace, opcional)</label>
+      <input type="url" id="noticia-imagen" placeholder="https://...">
+      <p class="hint">Pega el enlace de una imagen ya publicada (por ejemplo, súbela a la carpeta <code>assets/</code> en GitHub y copia su URL). Si lo dejas en blanco, la noticia se muestra solo con texto.</p>
+      <label class="check-line"><input type="checkbox" id="noticia-publicado" checked> Publicar de inmediato (si la desmarcas, queda guardada como borrador)</label>
+      <button type="submit" id="noticiaBtn">Publicar noticia</button>
+      <a href="#" id="noticiaCancelarEdicion" class="back" style="display:none;">Cancelar edición y crear una noticia nueva</a>
+      <p id="noticia-status"></p>
+    </form>
+  </div>
+
+  <div class="card" id="noticiasListadoCard" style="display:none;">
+    <h1>🗞️ Noticias publicadas y borradores</h1>
+    <p class="sub">Haz clic en "✏️ Editar" para modificarla arriba, o en "🗑️ Eliminar" para borrarla del sitio.</p>
+    <div id="listadoNoticias">
+      <p class="hint" style="margin:0;">Cargando...</p>
+    </div>
+  </div>
+
+  <div class="card" id="mfaCard" style="display:none;">
+    <h1>🔐 Restablecer verificación en dos pasos</h1>
+    <p class="sub">¿Un funcionario perdió su celular o no puede leer el código de Google Authenticator? Restablécelo aquí — la próxima vez que inicie sesión, se le pedirá activarlo de nuevo desde cero.</p>
+    <form id="mfaForm">
+      <label for="mfa-rut">RUT del funcionario</label>
+      <input type="text" id="mfa-rut" required placeholder="12.345.678-9">
+      <button type="submit" id="mfaBtn">Restablecer verificación</button>
+      <p id="mfa-status"></p>
+    </form>
+  </div>
+
+  <div class="card" id="repararCard" style="display:none;">
+    <h1>🩹 Reparar cuenta bloqueada</h1>
+    <p class="sub">Usa esto solo si a un funcionario le aparece un error extraño en TODAS las páginas (por ejemplo, "494" o "no se pudo cargar"), típicamente después de guardar una firma pesada. Quita el dato pesado que quedó atascado en su sesión.</p>
+    <form id="repararForm">
+      <label for="reparar-rut">RUT del funcionario</label>
+      <input type="text" id="reparar-rut" required placeholder="12.345.678-9">
+      <button type="submit" id="repararBtn">Reparar cuenta</button>
+      <p id="reparar-status"></p>
+    </form>
+  </div>
+
+  <a class="back" href="index.html">← Volver al sitio</a>
+</div>
+
+<script src="assets/supabase-config.js"></script>
+
+<script>
+  let adminSecret = '';
+
+  document.getElementById('adminAuthForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const status = document.getElementById('admin-auth-status');
+    const btn = document.getElementById('adminAuthBtn');
+    const claveIngresada = document.getElementById('admin-secret').value;
+
+    btn.disabled = true;
+    status.style.color = 'var(--gray)';
+    status.textContent = 'Verificando...';
+
+    try {
+      const res = await fetch('/api/admin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adminSecret: claveIngresada, accion: 'verificar_clave' })
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        status.style.color = '#B33A3A';
+        status.textContent = '❌ Clave incorrecta.';
+        btn.disabled = false;
+        return;
+      }
+
+      adminSecret = claveIngresada;
+      document.getElementById('createCard').style.display = 'block';
+      document.getElementById('resetCard').style.display = 'block';
+      document.getElementById('rolCard').style.display = 'block';
+      document.getElementById('listadoCard').style.display = 'block';
+      document.getElementById('noticiasCard').style.display = 'block';
+      document.getElementById('noticiasListadoCard').style.display = 'block';
+      document.getElementById('mfaCard').style.display = 'block';
+      document.getElementById('repararCard').style.display = 'block';
+      document.getElementById('adminAuthForm').closest('.card').style.display = 'none';
+      cargarJefesDirectos();
+      cargarListadoFuncionarios();
+      cargarListadoNoticias();
+    } catch (err) {
+      status.style.color = '#B33A3A';
+      status.textContent = 'Error de conexión. Inténtalo nuevamente.';
+      btn.disabled = false;
+      console.error(err);
+    }
+  });
+
+  async function cargarJefesDirectos() {
+    try {
+      const res = await fetch('/api/admin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adminSecret, accion: 'listar_jefes' })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+
+      const opciones = data.jefes.map(j =>
+        '<option value="' + j.rut + '">' + j.nombre + ' (' + formatearRut(j.rut) + ')</option>'
+      ).join('');
+
+      ['jefeRut', 'subrogante', 'rol-jefeRut', 'rol-subrogante'].forEach(id => {
+        const select = document.getElementById(id);
+        const placeholder = select.options[0].outerHTML;
+        select.innerHTML = placeholder + opciones;
+      });
+
+      if (data.jefes.length === 0) {
+        console.warn('Aún no hay ningún funcionario marcado como "Jefe directo".');
+      }
+    } catch (err) {
+      console.error('No se pudo cargar la lista de jefes directos:', err);
+    }
+  }
+
+  document.getElementById('rut').addEventListener('blur', (e) => {
+    if (e.target.value.trim()) e.target.value = formatearRut(e.target.value);
+  });
+  document.getElementById('reset-rut').addEventListener('blur', (e) => {
+    if (e.target.value.trim()) e.target.value = formatearRut(e.target.value);
+  });
+
+  document.getElementById('createForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const status = document.getElementById('status');
+    const btn = document.getElementById('createBtn');
+
+    const nombre = document.getElementById('nombre').value.trim();
+    const rut = document.getElementById('rut').value.trim();
+    const password = document.getElementById('password').value;
+    const esJefeDirecto = document.getElementById('esJefeDirecto').checked;
+    const esDirector = document.getElementById('esDirector').checked;
+    const esJefePersonal = document.getElementById('esJefePersonal').checked;
+    const esJefeDepartamento = document.getElementById('esJefeDepartamento').checked;
+    const jefeRut = document.getElementById('jefeRut').value.trim();
+    const subrogante = document.getElementById('subrogante').value.trim();
+
+    if (!validarRut(rut)) {
+      status.style.color = '#B33A3A';
+      status.textContent = '❌ El RUT ingresado no es válido. Revisa el dígito verificador.';
+      return;
+    }
+
+    btn.disabled = true;
+    status.style.color = 'var(--gray)';
+    status.textContent = 'Creando cuenta...';
+
+    try {
+      const res = await fetch('/api/admin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adminSecret, accion: 'crear_funcionario', nombre, rut, password, esJefeDirecto, esDirector, esJefePersonal, esJefeDepartamento, jefeRut, subrogante })
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        status.style.color = '#B33A3A';
+        status.textContent = '❌ ' + (data.error || 'No se pudo crear la cuenta.');
+        btn.disabled = false;
+        return;
+      }
+
+      status.style.color = 'var(--teal)';
+      status.textContent = '✅ Cuenta creada para ' + nombre + ' (RUT: ' + formatearRut(rut) + ')';
+      document.getElementById('createForm').reset();
+      btn.disabled = false;
+    } catch (err) {
+      status.style.color = '#B33A3A';
+      status.textContent = 'Error de conexión. Inténtalo nuevamente.';
+      btn.disabled = false;
+      console.error(err);
+    }
+  });
+
+  document.getElementById('resetForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const status = document.getElementById('reset-status');
+    const btn = document.getElementById('resetBtn');
+
+    const rut = document.getElementById('reset-rut').value.trim();
+    const newPassword = document.getElementById('reset-password').value;
+
+    btn.disabled = true;
+    status.style.color = 'var(--gray)';
+    status.textContent = 'Restableciendo...';
+
+    try {
+      const res = await fetch('/api/admin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adminSecret, accion: 'cambiar_clave', rut, newPassword })
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        status.style.color = '#B33A3A';
+        status.textContent = '❌ ' + (data.error || 'No se pudo restablecer la contraseña.');
+        btn.disabled = false;
+        return;
+      }
+
+      status.style.color = 'var(--teal)';
+      status.textContent = '✅ Contraseña restablecida para el RUT ' + formatearRut(rut);
+      document.getElementById('resetForm').reset();
+      btn.disabled = false;
+    } catch (err) {
+      status.style.color = '#B33A3A';
+      status.textContent = 'Error de conexión. Inténtalo nuevamente.';
+      btn.disabled = false;
+      console.error(err);
+    }
+  });
+
+  document.getElementById('mfaForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const status = document.getElementById('mfa-status');
+    const btn = document.getElementById('mfaBtn');
+
+    const rut = document.getElementById('mfa-rut').value.trim();
+
+    btn.disabled = true;
+    status.style.color = 'var(--gray)';
+    status.textContent = 'Restableciendo...';
+
+    try {
+      const res = await fetch('/api/admin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adminSecret, accion: 'resetear_mfa', rut })
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        status.style.color = '#B33A3A';
+        status.textContent = '❌ ' + (data.error || 'No se pudo restablecer la verificación.');
+        btn.disabled = false;
+        return;
+      }
+
+      status.style.color = 'var(--teal)';
+      status.textContent = '✅ Verificación restablecida. Deberá activarla de nuevo en su próximo ingreso.';
+      document.getElementById('mfaForm').reset();
+      btn.disabled = false;
+    } catch (err) {
+      status.style.color = '#B33A3A';
+      status.textContent = 'Error de conexión. Inténtalo nuevamente.';
+      btn.disabled = false;
+      console.error(err);
+    }
+  });
+
+  document.getElementById('rolForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const status = document.getElementById('rol-status');
+    const btn = document.getElementById('rolBtn');
+
+    const rut = document.getElementById('rol-rut').value.trim();
+    const nombre = document.getElementById('rol-nombre').value.trim();
+    const esJefeDirecto = document.getElementById('rol-esJefeDirecto').checked;
+    const esDirector = document.getElementById('rol-esDirector').checked;
+    const esJefePersonal = document.getElementById('rol-esJefePersonal').checked;
+    const esJefeDepartamento = document.getElementById('rol-esJefeDepartamento').checked;
+    const jefeRut = document.getElementById('rol-jefeRut').value.trim();
+    const subrogante = document.getElementById('rol-subrogante').value.trim();
+
+    btn.disabled = true;
+    status.style.color = 'var(--gray)';
+    status.textContent = 'Guardando...';
+
+    try {
+      const res = await fetch('/api/admin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adminSecret, accion: 'actualizar_rol', rut, nombre, esJefeDirecto, esDirector, esJefePersonal, esJefeDepartamento, jefeRut, subrogante })
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        status.style.color = '#B33A3A';
+        status.textContent = '❌ ' + (data.error || 'No se pudo actualizar.');
+        btn.disabled = false;
+        return;
+      }
+
+      status.style.color = 'var(--teal)';
+      status.textContent = '✅ Rol y jefe directo actualizados.';
+      document.getElementById('rolForm').reset();
+      btn.disabled = false;
+      cargarListadoFuncionarios();
+    } catch (err) {
+      status.style.color = '#B33A3A';
+      status.textContent = 'Error de conexión. Inténtalo nuevamente.';
+      btn.disabled = false;
+      console.error(err);
+    }
+  });
+
+  // ===== Listado de funcionarios =====
+  let todosLosFuncionarios = [];
+
+  function nombrePorRut(rut, lista) {
+    const f = lista.find(x => x.rut === rut);
+    return f ? f.nombre : null;
+  }
+
+  function renderListado(filtro) {
+    const cont = document.getElementById('listadoFuncionarios');
+    const f = (filtro || '').trim().toLowerCase();
+    const filtrados = todosLosFuncionarios.filter(func =>
+      !f || func.nombre.toLowerCase().includes(f) || func.rut.toLowerCase().includes(f)
+    );
+
+    if (filtrados.length === 0) {
+      cont.innerHTML = '<p class="hint" style="margin:0;">No se encontraron funcionarios con ese criterio.</p>';
+      return;
+    }
+
+    cont.innerHTML = '';
+    filtrados.forEach(func => {
+      const badges = [];
+      if (func.es_jefe_directo) badges.push('Jefe directo');
+      if (func.es_director) badges.push('Director');
+      if (func.es_jefe_personal) badges.push('Jefe de Personal');
+      if (func.es_jefe_departamento) badges.push('Jefe de Departamento');
+
+      const jefeNombre = func.jefe_directo_rut ? nombrePorRut(func.jefe_directo_rut, todosLosFuncionarios) : null;
+
+      const div = document.createElement('div');
+      div.className = 'func-item';
+      div.innerHTML =
+        '<div class="func-info">' +
+          '<h3>' + func.nombre + '</h3>' +
+          '<p>RUT ' + formatearRut(func.rut) + (jefeNombre ? ' · Jefe directo: ' + jefeNombre : '') + '</p>' +
+          (badges.length ? '<div class="func-badges">' + badges.map(b => '<span class="func-badge">' + b + '</span>').join('') + '</div>' : '') +
+        '</div>' +
+        '<button type="button" class="func-editar">✏️ Editar</button>';
+
+      div.querySelector('.func-editar').addEventListener('click', () => cargarParaEditar(func));
+      cont.appendChild(div);
+    });
+  }
+
+  function cargarParaEditar(func) {
+    document.getElementById('rol-rut').value = formatearRut(func.rut);
+    document.getElementById('rol-nombre').value = func.nombre;
+    document.getElementById('rol-esJefeDirecto').checked = func.es_jefe_directo;
+    document.getElementById('rol-esDirector').checked = func.es_director;
+    document.getElementById('rol-esJefePersonal').checked = func.es_jefe_personal;
+    document.getElementById('rol-esJefeDepartamento').checked = func.es_jefe_departamento;
+    document.getElementById('rol-jefeRut').value = func.jefe_directo_rut || '';
+    document.getElementById('rol-subrogante').value = func.subrogante_rut || '';
+    document.getElementById('rolCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  async function cargarListadoFuncionarios() {
+    const cont = document.getElementById('listadoFuncionarios');
+    try {
+      const res = await fetch('/api/admin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adminSecret, accion: 'listar_funcionarios' })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+
+      todosLosFuncionarios = data.funcionarios || [];
+      renderListado('');
+    } catch (err) {
+      console.error('No se pudo cargar el listado de funcionarios:', err);
+      cont.innerHTML = '<p class="hint" style="margin:0; color:#B33A3A;">No se pudo cargar el listado.</p>';
+    }
+  }
+
+  document.getElementById('listado-buscador').addEventListener('input', (e) => renderListado(e.target.value));
+
+  document.getElementById('repararForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const status = document.getElementById('reparar-status');
+    const btn = document.getElementById('repararBtn');
+    const rut = document.getElementById('reparar-rut').value.trim();
+
+    btn.disabled = true;
+    status.style.color = 'var(--gray)';
+    status.textContent = 'Reparando...';
+
+    try {
+      const res = await fetch('/api/admin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adminSecret, accion: 'reparar_token_grande', rut })
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        status.style.color = '#B33A3A';
+        status.textContent = '❌ ' + (data.error || 'No se pudo reparar la cuenta.');
+        btn.disabled = false;
+        return;
+      }
+
+      status.style.color = 'var(--teal)';
+      status.textContent = '✅ ' + (data.mensaje || 'Cuenta reparada.');
+      document.getElementById('repararForm').reset();
+      btn.disabled = false;
+    } catch (err) {
+      status.style.color = '#B33A3A';
+      status.textContent = 'Error de conexión. Inténtalo nuevamente.';
+      btn.disabled = false;
+      console.error(err);
+    }
+  });
+
+  // ===== Noticias =====
+  document.getElementById('noticia-fecha').value = new Date().toISOString().slice(0, 10);
+
+  function escapeHtml(str) {
+    return String(str == null ? '' : str).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+
+  function cancelarEdicionNoticia() {
+    document.getElementById('noticiaForm').reset();
+    document.getElementById('noticia-id').value = '';
+    document.getElementById('noticia-publicado').checked = true;
+    document.getElementById('noticia-fecha').value = new Date().toISOString().slice(0, 10);
+    document.getElementById('noticiaBtn').textContent = 'Publicar noticia';
+    document.getElementById('noticiaCancelarEdicion').style.display = 'none';
+  }
+  document.getElementById('noticiaCancelarEdicion').addEventListener('click', (e) => {
+    e.preventDefault();
+    cancelarEdicionNoticia();
+  });
+
+  function cargarParaEditarNoticia(n) {
+    document.getElementById('noticia-id').value = n.id;
+    document.getElementById('noticia-titulo').value = n.titulo;
+    document.getElementById('noticia-categoria').value = n.categoria;
+    document.getElementById('noticia-fecha').value = n.fecha;
+    document.getElementById('noticia-resumen').value = n.resumen;
+    document.getElementById('noticia-imagen').value = n.imagen_url || '';
+    document.getElementById('noticia-publicado').checked = n.publicado;
+    document.getElementById('noticiaBtn').textContent = 'Guardar cambios';
+    document.getElementById('noticiaCancelarEdicion').style.display = 'block';
+    document.getElementById('noticiasCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  document.getElementById('noticiaForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const status = document.getElementById('noticia-status');
+    const btn = document.getElementById('noticiaBtn');
+
+    const id = document.getElementById('noticia-id').value;
+    const titulo = document.getElementById('noticia-titulo').value.trim();
+    const categoria = document.getElementById('noticia-categoria').value.trim();
+    const fecha = document.getElementById('noticia-fecha').value;
+    const resumen = document.getElementById('noticia-resumen').value.trim();
+    const imagenUrl = document.getElementById('noticia-imagen').value.trim();
+    const publicado = document.getElementById('noticia-publicado').checked;
+
+    btn.disabled = true;
+    status.style.color = 'var(--gray)';
+    status.textContent = id ? 'Guardando cambios...' : 'Publicando...';
+
+    try {
+      const res = await fetch('/api/noticias', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          adminSecret,
+          accion: id ? 'actualizar' : 'crear',
+          id, titulo, categoria, fecha, resumen, imagenUrl, publicado
+        })
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        status.style.color = '#B33A3A';
+        status.textContent = '❌ ' + (data.error || 'No se pudo guardar la noticia.');
+        btn.disabled = false;
+        return;
+      }
+
+      status.style.color = 'var(--teal)';
+      status.textContent = id ? '✅ Noticia actualizada.' : '✅ Noticia publicada.';
+      cancelarEdicionNoticia();
+      btn.disabled = false;
+      cargarListadoNoticias();
+    } catch (err) {
+      status.style.color = '#B33A3A';
+      status.textContent = 'Error de conexión. Inténtalo nuevamente.';
+      btn.disabled = false;
+      console.error(err);
+    }
+  });
+
+  async function eliminarNoticia(n) {
+    if (!confirm('¿Eliminar la noticia "' + n.titulo + '"? Esta acción no se puede deshacer.')) return;
+    try {
+      const res = await fetch('/api/noticias', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adminSecret, accion: 'eliminar', id: n.id })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert('❌ ' + (data.error || 'No se pudo eliminar la noticia.'));
+        return;
+      }
+      cargarListadoNoticias();
+    } catch (err) {
+      alert('Error de conexión. Inténtalo nuevamente.');
+      console.error(err);
+    }
+  }
+
+  function renderListadoNoticias(lista) {
+    const cont = document.getElementById('listadoNoticias');
+    if (!lista.length) {
+      cont.innerHTML = '<p class="hint" style="margin:0;">Aún no hay ninguna noticia cargada.</p>';
+      return;
+    }
+    cont.innerHTML = '';
+    lista.forEach((n) => {
+      const fechaTexto = new Date(n.fecha + 'T00:00:00').toLocaleDateString('es-CL', { year: 'numeric', month: 'long', day: 'numeric' });
+      const badge = n.publicado
+        ? '<span class="func-badge">Publicada</span>'
+        : '<span class="func-badge" style="background:#FBE8D6; color:#9A5B1E;">Borrador</span>';
+
+      const div = document.createElement('div');
+      div.className = 'func-item';
+      div.innerHTML =
+        '<div class="func-info">' +
+          '<h3>' + escapeHtml(n.titulo) + '</h3>' +
+          '<p>' + escapeHtml(n.categoria) + ' · ' + fechaTexto + '</p>' +
+          '<div class="func-badges">' + badge + '</div>' +
+        '</div>' +
+        '<div style="display:flex; gap:8px; flex-wrap:wrap;">' +
+          '<button type="button" class="func-editar noticia-editar-btn">✏️ Editar</button>' +
+          '<button type="button" class="func-editar noticia-eliminar-btn" style="background:#B33A3A;">🗑️ Eliminar</button>' +
+        '</div>';
+      div.querySelector('.noticia-editar-btn').addEventListener('click', () => cargarParaEditarNoticia(n));
+      div.querySelector('.noticia-eliminar-btn').addEventListener('click', () => eliminarNoticia(n));
+      cont.appendChild(div);
+    });
+  }
+
+  async function cargarListadoNoticias() {
+    const cont = document.getElementById('listadoNoticias');
+    try {
+      const res = await fetch('/api/noticias', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adminSecret, accion: 'listar_todas' })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      renderListadoNoticias(data.noticias || []);
+    } catch (err) {
+      console.error('No se pudo cargar el listado de noticias:', err);
+      cont.innerHTML = '<p class="hint" style="margin:0; color:#B33A3A;">No se pudo cargar el listado.</p>';
+    }
+  }
+</script>
+
+</body>
+</html>
