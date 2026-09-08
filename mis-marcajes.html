@@ -169,7 +169,7 @@
       const diasUnicos = new Set(marcajes.map(m => m.fecha_hora.slice(0, 10)));
       document.getElementById('resDias').textContent = diasUnicos.size;
       document.getElementById('resUltimo').textContent = marcajes.length
-        ? new Date(marcajes[0].fecha_hora).toLocaleString('es-CL', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
+        ? new Date(marcajes[0].fecha_hora).toLocaleString('es-CL', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false })
         : '—';
 
       if (!marcajes.length) {
@@ -180,7 +180,7 @@
       cuerpo.innerHTML = marcajes.map((m) => {
         const fecha = new Date(m.fecha_hora);
         const fechaTexto = fecha.toLocaleDateString('es-CL', { weekday: 'short', day: '2-digit', month: 'short' });
-        const horaTexto = fecha.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        const horaTexto = fecha.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
         const est = etiquetaEstado(m.estado);
         return `<tr><td>${fechaTexto}</td><td>${horaTexto}</td><td><span class="badge ${est.clase}">${est.texto}</span></td></tr>`;
       }).join('');
