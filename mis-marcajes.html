@@ -59,10 +59,7 @@
   thead th{text-align:left; padding:14px 16px; color:var(--gray); font-weight:700; font-size:.78rem; text-transform:uppercase; letter-spacing:.04em; border-bottom:1px solid var(--line);}
   tbody td{padding:12px 16px; border-bottom:1px solid var(--line); color:var(--ink);}
   tbody tr:last-child td{border-bottom:none;}
-  .badge{display:inline-block; padding:3px 10px; border-radius:999px; font-size:.78rem; font-weight:700;}
-  .badge-entrada{background:#E3F6EA; color:#1F7A46;}
-  .badge-salida{background:#FDECEA; color:#B33A3A;}
-  .badge-otro{background:var(--teal-light); color:var(--teal-deep);}
+  tbody td.fecha-celda{font-weight:700; color:var(--teal-deep); white-space:nowrap;}
   .vacio{padding:40px 16px; text-align:center; color:var(--gray);}
 
   .acciones{display:flex; justify-content:flex-end; margin-bottom:16px;}
@@ -122,7 +119,7 @@
     <div class="tabla-card">
       <table>
         <thead>
-          <tr><th>Fecha</th><th>Hora</th><th>Tipo</th></tr>
+          <tr><th>Fecha</th><th>Hora entrada</th><th>Hora salida</th></tr>
         </thead>
         <tbody id="cuerpoTabla">
           <tr><td colspan="3" class="vacio">Cargando...</td></tr>
@@ -143,13 +140,49 @@
 
   function pad2(n) { return String(n).padStart(2, '0'); }
 
-  // El estado que manda el reloj (columna "estado" del marcaje) suele ser
-  // 0 = entrada, 1 = salida, aunque puede variar según cómo se configuró el
-  // equipo. Si en tu caso viene al revés, solo hay que cambiar este mapeo.
-  function etiquetaEstado(estado) {
-    if (estado === '0') return { texto: 'Entrada', clase: 'badge-entrada' };
-    if (estado === '1') return { texto: 'Salida', clase: 'badge-salida' };
-    return { texto: estado || '—', clase: 'badge-otro' };
+  // Agrupa una lista de marcajes (ordenados de más antiguo a más reciente)
+  // en "turnos" por día: cada turno junta una Entrada con la Salida que le
+  // sigue, para poder mostrarlas en la misma fila (Fecha | Hora entrada |
+  // Hora salida) tal como se ve físicamente en el reloj de control.
+  // El estado que manda el reloj suele ser 0 = entrada, 1 = salida.
+  function agruparEnTurnos(marcajesAscendentes) {
+    const dias = []; // [{ fechaISO, turnos: [{ entrada, salida }] }]
+    let diaActual = null;
+
+    marcajesAscendentes.forEach((m) => {
+      const fechaISO = m.fecha_hora.slice(0, 10);
+      const horaTexto = new Date(m.fecha_hora).toLocaleTimeString('es-CL', {
+        hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+      });
+
+      if (!diaActual || diaActual.fechaISO !== fechaISO) {
+        diaActual = { fechaISO, turnos: [] };
+        dias.push(diaActual);
+      }
+
+      if (m.estado === '1') {
+        // Salida: cierra el turno abierto más reciente de este día, o si no
+        // había ninguno abierto (dato suelto), crea una fila solo con salida.
+        const ultimo = diaActual.turnos[diaActual.turnos.length - 1];
+        if (ultimo && !ultimo.salida) {
+          ultimo.salida = horaTexto;
+        } else {
+          diaActual.turnos.push({ entrada: null, salida: horaTexto });
+        }
+      } else {
+        // Entrada (estado === '0') u otro valor no reconocido: abre turno nuevo.
+        diaActual.turnos.push({ entrada: horaTexto, salida: null });
+      }
+    });
+
+    return dias;
+  }
+
+  function fechaTextoDesdeISO(fechaISO, incluirAnio) {
+    const fecha = new Date(fechaISO + 'T00:00:00');
+    return fecha.toLocaleDateString('es-CL', incluirAnio
+      ? { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' }
+      : { weekday: 'short', day: '2-digit', month: 'short' });
   }
 
   async function cargarMarcajesDelMes() {
@@ -194,13 +227,17 @@
         return;
       }
 
-      cuerpo.innerHTML = marcajes.map((m) => {
-        const fecha = new Date(m.fecha_hora);
-        const fechaTexto = fecha.toLocaleDateString('es-CL', { weekday: 'short', day: '2-digit', month: 'short' });
-        const horaTexto = fecha.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
-        const est = etiquetaEstado(m.estado);
-        return `<tr><td>${fechaTexto}</td><td>${horaTexto}</td><td><span class="badge ${est.clase}">${est.texto}</span></td></tr>`;
-      }).join('');
+      const ascendente = marcajes.slice().reverse();
+      const dias = agruparEnTurnos(ascendente);
+      let filasHtml = '';
+      dias.forEach((dia) => {
+        const fechaTexto = fechaTextoDesdeISO(dia.fechaISO, false);
+        dia.turnos.forEach((turno, idx) => {
+          const fechaCelda = idx === 0 ? fechaTexto : '';
+          filasHtml += `<tr><td class="fecha-celda">${fechaCelda}</td><td>${turno.entrada || '—'}</td><td>${turno.salida || '—'}</td></tr>`;
+        });
+      });
+      cuerpo.innerHTML = filasHtml;
     } catch (err) {
       console.error('No se pudieron cargar los marcajes:', err);
       cuerpo.innerHTML = '<tr><td colspan="3" class="vacio">No se pudieron cargar tus marcajes en este momento.</td></tr>';
@@ -256,19 +293,21 @@
       doc.text('Funcionario: ' + nombre, margen, 134);
       doc.text('RUT: ' + rut, margen, 150);
 
-      // Orden cronológico (más antiguo primero) para que el reporte se lea
-      // como una bitácora del mes, aunque en pantalla se muestre al revés.
-      const filas = marcajesActuales.slice().reverse().map((m) => {
-        const fecha = new Date(m.fecha_hora);
-        const fechaTexto = fecha.toLocaleDateString('es-CL', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' });
-        const horaTexto = fecha.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
-        const est = etiquetaEstado(m.estado);
-        return [fechaTexto, horaTexto, est.texto];
+      // Mismo agrupamiento por turnos que se ve en pantalla: Fecha | Hora
+      // entrada | Hora salida, en orden cronológico (más antiguo primero).
+      const ascendente = marcajesActuales.slice().reverse();
+      const diasPdf = agruparEnTurnos(ascendente);
+      const filas = [];
+      diasPdf.forEach((dia) => {
+        const fechaTexto = fechaTextoDesdeISO(dia.fechaISO, true);
+        dia.turnos.forEach((turno, idx) => {
+          filas.push([idx === 0 ? fechaTexto : '', turno.entrada || '—', turno.salida || '—']);
+        });
       });
 
       doc.autoTable({
         startY: 170,
-        head: [['Fecha', 'Hora', 'Tipo']],
+        head: [['Fecha', 'Hora entrada', 'Hora salida']],
         body: filas,
         margin: { left: margen, right: margen },
         styles: { font: 'helvetica', fontSize: 9, cellPadding: 5 },
