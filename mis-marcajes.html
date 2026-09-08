@@ -8,6 +8,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <script src="assets/supabase-config.js"></script>
 <style>
   :root{
@@ -62,6 +64,15 @@
   .badge-salida{background:#FDECEA; color:#B33A3A;}
   .badge-otro{background:var(--teal-light); color:var(--teal-deep);}
   .vacio{padding:40px 16px; text-align:center; color:var(--gray);}
+
+  .acciones{display:flex; justify-content:flex-end; margin-bottom:16px;}
+  .btn-pdf{
+    display:inline-flex; align-items:center; gap:8px; background:var(--teal-deep); color:#fff;
+    border:none; border-radius:10px; padding:10px 18px; font-family:var(--font-body); font-weight:700;
+    font-size:.88rem; cursor:pointer; box-shadow:0 8px 20px rgba(10,61,115,.18);
+  }
+  .btn-pdf:hover{background:var(--teal);}
+  .btn-pdf:disabled{opacity:.5; cursor:not-allowed;}
 </style>
 </head>
 <body>
@@ -104,6 +115,10 @@
       <div class="resumen-card"><div class="num" id="resUltimo">–</div><div class="lbl">Último marcaje</div></div>
     </div>
 
+    <div class="acciones">
+      <button id="btnDescargarPDF" class="btn-pdf">📄 Descargar reporte del mes (PDF)</button>
+    </div>
+
     <div class="tabla-card">
       <table>
         <thead>
@@ -124,6 +139,7 @@
   const hoy = new Date();
   let anioActual = hoy.getFullYear();
   let mesActual = hoy.getMonth(); // 0-11
+  let marcajesActuales = []; // los marcajes del mes que se está viendo, para el PDF
 
   function pad2(n) { return String(n).padStart(2, '0'); }
 
@@ -163,6 +179,7 @@
       });
       if (!res.ok) throw new Error('No se pudo cargar');
       const marcajes = await res.json();
+      marcajesActuales = marcajes;
 
       // Resumen
       document.getElementById('resTotal').textContent = marcajes.length;
@@ -189,6 +206,124 @@
       cuerpo.innerHTML = '<tr><td colspan="3" class="vacio">No se pudieron cargar tus marcajes en este momento.</td></tr>';
     }
   }
+
+  // ===== Reporte mensual en PDF =====
+  // Genera un PDF con el detalle de marcajes del mes que se está viendo,
+  // y dos líneas de firma al final: una para el funcionario (con su nombre
+  // ya impreso) y otra en blanco para el jefe directo.
+  async function descargarReportePDF() {
+    if (!marcajesActuales.length) {
+      alert('No hay marcajes registrados este mes para incluir en el reporte.');
+      return;
+    }
+
+    const boton = document.getElementById('btnDescargarPDF');
+    boton.disabled = true;
+    const textoOriginalBoton = boton.textContent;
+    boton.textContent = 'Generando...';
+
+    try {
+      const supabase = getSupabaseClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const nombre = (session.user.user_metadata && session.user.user_metadata.nombre)
+        ? session.user.user_metadata.nombre
+        : session.user.email;
+      const rutCrudo = session.user.email.split('@')[0];
+      const rut = typeof formatearRut === 'function' ? formatearRut(rutCrudo) : rutCrudo;
+
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const margen = 40;
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(14);
+      doc.text('CESFAM Peralillo', margen, 50);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.text("Servicio de Salud O'Higgins", margen, 66);
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(13);
+      doc.text('Reporte mensual de asistencia', margen, 96);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.text('Mes: ' + MESES[mesActual] + ' ' + anioActual, margen, 118);
+      doc.text('Funcionario: ' + nombre, margen, 134);
+      doc.text('RUT: ' + rut, margen, 150);
+
+      // Orden cronológico (más antiguo primero) para que el reporte se lea
+      // como una bitácora del mes, aunque en pantalla se muestre al revés.
+      const filas = marcajesActuales.slice().reverse().map((m) => {
+        const fecha = new Date(m.fecha_hora);
+        const fechaTexto = fecha.toLocaleDateString('es-CL', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' });
+        const horaTexto = fecha.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+        const est = etiquetaEstado(m.estado);
+        return [fechaTexto, horaTexto, est.texto];
+      });
+
+      doc.autoTable({
+        startY: 170,
+        head: [['Fecha', 'Hora', 'Tipo']],
+        body: filas,
+        margin: { left: margen, right: margen },
+        styles: { font: 'helvetica', fontSize: 9, cellPadding: 5 },
+        headStyles: { fillColor: [10, 61, 115], textColor: 255 },
+        theme: 'grid'
+      });
+
+      const totalMarcajes = marcajesActuales.length;
+      const diasUnicos = new Set(marcajesActuales.map((m) => m.fecha_hora.slice(0, 10))).size;
+
+      let y = doc.lastAutoTable.finalY + 22;
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.text('Total de marcajes: ' + totalMarcajes + '     Días con marcaje: ' + diasUnicos, margen, y);
+
+      // ---- Bloque de firmas ----
+      // Se reserva un espacio fijo cerca del final de la página; si el
+      // resumen quedó muy abajo (mes con muchos marcajes), se pasa a una
+      // página nueva para que las firmas no queden apretadas.
+      const alturaBloqueFirmas = 90;
+      let firmaY = pageHeight - 70;
+      if (y + 20 > firmaY - alturaBloqueFirmas) {
+        doc.addPage();
+        firmaY = pageHeight - 70;
+      }
+
+      const espacioEntreColumnas = 40;
+      const anchoColumna = (pageWidth - margen * 2 - espacioEntreColumnas) / 2;
+      const xIzquierda = margen;
+      const xDerecha = margen + anchoColumna + espacioEntreColumnas;
+
+      doc.setLineWidth(0.6);
+      doc.line(xIzquierda, firmaY, xIzquierda + anchoColumna, firmaY);
+      doc.line(xDerecha, firmaY, xDerecha + anchoColumna, firmaY);
+
+      doc.setFontSize(10);
+      doc.text('Firma del funcionario', xIzquierda, firmaY + 16);
+      doc.setFont('helvetica', 'bold');
+      doc.text(nombre, xIzquierda, firmaY + 32);
+
+      doc.setFont('helvetica', 'normal');
+      doc.text('Firma del jefe directo', xDerecha, firmaY + 16);
+
+      const nombreArchivo = 'reporte-asistencia-' + MESES[mesActual] + '-' + anioActual + '.pdf';
+      doc.save(nombreArchivo);
+    } catch (err) {
+      console.error('No se pudo generar el PDF:', err);
+      alert('No se pudo generar el reporte en PDF. Intenta de nuevo.');
+    } finally {
+      boton.disabled = false;
+      boton.textContent = textoOriginalBoton;
+    }
+  }
+
+  document.getElementById('btnDescargarPDF').addEventListener('click', descargarReportePDF);
 
   document.getElementById('mesAnterior').addEventListener('click', () => {
     mesActual--;
