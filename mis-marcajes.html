@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mis marcajes — CESFAM Peralillo</title>
+<link rel="icon" type="image/jpeg" href="assets/logo-cesfam.jpeg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/supabase-config.js"></script>
+<style>
+  :root{
+    --teal-deep:#0A3D73; --teal:#1B7FC2; --teal-light:#E7F2FB; --sky:#F4FAFE;
+    --gold:#12A6D6; --ink:#1C2B36; --gray:#5A6B78; --line:#DCE7F0; --radius:16px;
+    --font-head:'Poppins', sans-serif; --font-body:'Atkinson Hyperlegible', system-ui, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; font-family:var(--font-body); color:var(--ink); background:var(--teal-light); line-height:1.6; font-size:17px; min-height:100vh;}
+  h1{font-family:var(--font-head); color:var(--teal-deep); margin:0 0 6px;}
+  p{margin:0 0 1em; color:var(--gray);}
+  a{color:var(--teal-deep);}
+  .container{max-width:900px; margin:0 auto; padding:0 24px;}
+
+  header.site-header{background:#fff; border-bottom:1px solid var(--line);}
+  .site-header .container{display:flex; align-items:center; justify-content:space-between; padding:16px 24px; max-width:1180px;}
+  .brand{display:flex; align-items:center; gap:12px; text-decoration:none;}
+  .brand-logo{width:48px; height:48px; border-radius:50%; object-fit:cover; border:1.5px solid var(--line);}
+  .brand-text .eyebrow{display:block; font-size:.7rem; letter-spacing:.07em; text-transform:uppercase; color:var(--teal); font-weight:700;}
+  .brand-text .name{font-family:var(--font-head); font-weight:700; font-size:1.1rem; color:var(--teal-deep);}
+  .header-right{display:flex; align-items:center; gap:16px; font-size:.85rem; color:var(--gray);}
+  .header-right a{color:var(--teal-deep); text-decoration:none; font-weight:700;}
+  .header-right a:hover{text-decoration:underline;}
+
+  main{padding:56px 0 80px;}
+  .page-head{margin-bottom:28px;}
+  .page-head .eyebrow{color:var(--gold); font-weight:700; text-transform:uppercase; letter-spacing:.07em; font-size:.8rem;}
+  .page-head h1{font-size:1.6rem;}
+  .back-link{display:inline-block; margin-bottom:18px; font-size:.88rem; font-weight:700; text-decoration:none;}
+
+  .mes-nav{display:flex; align-items:center; justify-content:center; gap:16px; margin-bottom:24px;}
+  .mes-nav button{
+    background:#fff; border:1px solid var(--line); border-radius:10px; width:36px; height:36px;
+    font-size:1.1rem; cursor:pointer; color:var(--teal-deep); box-shadow:0 4px 10px rgba(10,61,115,.06);
+  }
+  .mes-nav button:hover{background:var(--teal-light);}
+  .mes-nav h2{font-family:var(--font-head); color:var(--teal-deep); font-size:1.15rem; margin:0; text-transform:capitalize; min-width:200px; text-align:center;}
+
+  .resumen-grid{display:grid; grid-template-columns:repeat(3, 1fr); gap:16px; margin-bottom:28px;}
+  @media (max-width:640px){ .resumen-grid{grid-template-columns:1fr;} }
+  .resumen-card{background:#fff; border:1px solid var(--line); border-radius:var(--radius); padding:20px; text-align:center; box-shadow:0 12px 30px rgba(10,61,115,.06);}
+  .resumen-card .num{font-family:var(--font-head); font-size:1.7rem; font-weight:700; color:var(--teal-deep);}
+  .resumen-card .lbl{font-size:.82rem; color:var(--gray);}
+
+  .tabla-card{background:#fff; border:1px solid var(--line); border-radius:var(--radius); padding:8px; box-shadow:0 12px 30px rgba(10,61,115,.06); overflow-x:auto;}
+  table{width:100%; border-collapse:collapse; font-size:.92rem;}
+  thead th{text-align:left; padding:14px 16px; color:var(--gray); font-weight:700; font-size:.78rem; text-transform:uppercase; letter-spacing:.04em; border-bottom:1px solid var(--line);}
+  tbody td{padding:12px 16px; border-bottom:1px solid var(--line); color:var(--ink);}
+  tbody tr:last-child td{border-bottom:none;}
+  .badge{display:inline-block; padding:3px 10px; border-radius:999px; font-size:.78rem; font-weight:700;}
+  .badge-entrada{background:#E3F6EA; color:#1F7A46;}
+  .badge-salida{background:#FDECEA; color:#B33A3A;}
+  .badge-otro{background:var(--teal-light); color:var(--teal-deep);}
+  .vacio{padding:40px 16px; text-align:center; color:var(--gray);}
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="container">
+    <a href="index.html" class="brand">
+      <img class="brand-logo" src="assets/logo-cesfam.jpeg" alt="Logo CESFAM Peralillo">
+      <span class="brand-text">
+        <span class="eyebrow">Servicio de Salud O'Higgins</span>
+        <span class="name">CESFAM Peralillo</span>
+      </span>
+    </a>
+    <div class="header-right">
+      <span>👤 <span id="auth-user-name"></span></span>
+      <a href="index.html">Sitio público</a>
+      <a href="#" onclick="cerrarSesion(); return false;">Cerrar sesión</a>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="container">
+    <a href="dashboard.html" class="back-link">← Volver al portal</a>
+    <div class="page-head">
+      <span class="eyebrow">Asistencia</span>
+      <h1>Mis marcajes</h1>
+      <p>Marcajes registrados por el reloj biométrico, asociados a tu RUT.</p>
+    </div>
+
+    <div class="mes-nav">
+      <button id="mesAnterior" aria-label="Mes anterior">←</button>
+      <h2 id="mesTitulo">–</h2>
+      <button id="mesSiguiente" aria-label="Mes siguiente">→</button>
+    </div>
+
+    <div class="resumen-grid">
+      <div class="resumen-card"><div class="num" id="resTotal">–</div><div class="lbl">Marcajes este mes</div></div>
+      <div class="resumen-card"><div class="num" id="resDias">–</div><div class="lbl">Días con marcaje</div></div>
+      <div class="resumen-card"><div class="num" id="resUltimo">–</div><div class="lbl">Último marcaje</div></div>
+    </div>
+
+    <div class="tabla-card">
+      <table>
+        <thead>
+          <tr><th>Fecha</th><th>Hora</th><th>Tipo</th></tr>
+        </thead>
+        <tbody id="cuerpoTabla">
+          <tr><td colspan="3" class="vacio">Cargando...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</main>
+
+<script src="assets/auth-guard.js"></script>
+<script>
+  const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+
+  const hoy = new Date();
+  let anioActual = hoy.getFullYear();
+  let mesActual = hoy.getMonth(); // 0-11
+
+  function pad2(n) { return String(n).padStart(2, '0'); }
+
+  // El estado que manda el reloj (columna "estado" del marcaje) suele ser
+  // 0 = entrada, 1 = salida, aunque puede variar según cómo se configuró el
+  // equipo. Si en tu caso viene al revés, solo hay que cambiar este mapeo.
+  function etiquetaEstado(estado) {
+    if (estado === '0') return { texto: 'Entrada', clase: 'badge-entrada' };
+    if (estado === '1') return { texto: 'Salida', clase: 'badge-salida' };
+    return { texto: estado || '—', clase: 'badge-otro' };
+  }
+
+  async function cargarMarcajesDelMes() {
+    const cuerpo = document.getElementById('cuerpoTabla');
+    document.getElementById('mesTitulo').textContent = MESES[mesActual] + ' ' + anioActual;
+    cuerpo.innerHTML = '<tr><td colspan="3" class="vacio">Cargando...</td></tr>';
+
+    try {
+      const supabase = getSupabaseClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const inicio = `${anioActual}-${pad2(mesActual + 1)}-01`;
+      const finMesDate = new Date(anioActual, mesActual + 1, 1);
+      const fin = `${finMesDate.getFullYear()}-${pad2(finMesDate.getMonth() + 1)}-01`;
+
+      const url = SUPABASE_URL + '/rest/v1/marcajes?select=*'
+        + '&fecha_hora=gte.' + inicio
+        + '&fecha_hora=lt.' + fin
+        + '&order=fecha_hora.desc';
+
+      const res = await fetch(url, {
+        headers: {
+          apikey: SUPABASE_ANON_KEY,
+          Authorization: 'Bearer ' + session.access_token
+        }
+      });
+      if (!res.ok) throw new Error('No se pudo cargar');
+      const marcajes = await res.json();
+
+      // Resumen
+      document.getElementById('resTotal').textContent = marcajes.length;
+      const diasUnicos = new Set(marcajes.map(m => m.fecha_hora.slice(0, 10)));
+      document.getElementById('resDias').textContent = diasUnicos.size;
+      document.getElementById('resUltimo').textContent = marcajes.length
+        ? new Date(marcajes[0].fecha_hora).toLocaleString('es-CL', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
+        : '—';
+
+      if (!marcajes.length) {
+        cuerpo.innerHTML = '<tr><td colspan="3" class="vacio">No hay marcajes registrados este mes.</td></tr>';
+        return;
+      }
+
+      cuerpo.innerHTML = marcajes.map((m) => {
+        const fecha = new Date(m.fecha_hora);
+        const fechaTexto = fecha.toLocaleDateString('es-CL', { weekday: 'short', day: '2-digit', month: 'short' });
+        const horaTexto = fecha.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        const est = etiquetaEstado(m.estado);
+        return `<tr><td>${fechaTexto}</td><td>${horaTexto}</td><td><span class="badge ${est.clase}">${est.texto}</span></td></tr>`;
+      }).join('');
+    } catch (err) {
+      console.error('No se pudieron cargar los marcajes:', err);
+      cuerpo.innerHTML = '<tr><td colspan="3" class="vacio">No se pudieron cargar tus marcajes en este momento.</td></tr>';
+    }
+  }
+
+  document.getElementById('mesAnterior').addEventListener('click', () => {
+    mesActual--;
+    if (mesActual < 0) { mesActual = 11; anioActual--; }
+    cargarMarcajesDelMes();
+  });
+  document.getElementById('mesSiguiente').addEventListener('click', () => {
+    mesActual++;
+    if (mesActual > 11) { mesActual = 0; anioActual++; }
+    cargarMarcajesDelMes();
+  });
+
+  window.addEventListener('DOMContentLoaded', cargarMarcajesDelMes);
+</script>
+
+</body>
+</html>
