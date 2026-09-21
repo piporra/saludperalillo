@@ -61,9 +61,12 @@
       <input type="text" id="reg-rut" required placeholder="12.345.678-9">
       <label for="reg-tipo">Tipo de registro</label>
       <select id="reg-tipo" required>
-        <option value="permiso_administrativo">Permiso administrativo</option>
+        <option value="permiso_administrativo">Permiso administrativo (día completo)</option>
+        <option value="medio_dia_administrativo_manana">Medio día administrativo — mañana</option>
+        <option value="medio_dia_administrativo_tarde">Medio día administrativo — tarde</option>
         <option value="cometido_funcionario">Cometido funcionario</option>
       </select>
+      <p class="hint" style="margin-top:-12px;">Si es medio día, el sistema deja igual la marcación real del reloj de la otra mitad de la jornada (la que sí se trabajó) — no la reemplaza.</p>
       <label>Fecha</label>
       <div class="fila-fechas">
         <div>
@@ -101,7 +104,9 @@
 
   const ETIQUETAS = {
     permiso_administrativo: 'Permiso administrativo',
-    cometido_funcionario: 'Cometido funcionario'
+    cometido_funcionario: 'Cometido funcionario',
+    medio_dia_administrativo_manana: 'Medio día administrativo (mañana)',
+    medio_dia_administrativo_tarde: 'Medio día administrativo (tarde)'
   };
 
   document.getElementById('reg-rut').addEventListener('blur', (e) => {
