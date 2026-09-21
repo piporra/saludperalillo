@@ -1,17 +1,22 @@
 // api/admin.js
-// Función serverless de Vercel. Combina en un solo endpoint las 6
-// operaciones del panel de administrador (antes eran 6 archivos separados:
-// crear-funcionario.js, actualizar-rol.js, cambiar-clave.js, resetear-mfa.js,
-// listar-funcionarios.js, listar-jefes.js) — se unieron para no superar el
-// límite de 12 funciones serverless del plan gratuito de Vercel.
+// Función serverless de Vercel. Combina en un solo endpoint las operaciones
+// del panel de administrador (antes eran archivos separados: crear-funcionario.js,
+// actualizar-rol.js, cambiar-clave.js, resetear-mfa.js, listar-funcionarios.js,
+// listar-jefes.js) — se unieron para no superar el límite de 12 funciones
+// serverless del plan gratuito de Vercel.
 //
 // Todas las peticiones son POST, con un campo "accion" que indica qué hacer:
-//   accion: "crear_funcionario"   → { adminSecret, nombre, rut, password, esJefeDirecto, esDirector, esJefePersonal, esJefeDepartamento, jefeRut, subrogante }
-//   accion: "actualizar_rol"      → { adminSecret, rut, nombre, esJefeDirecto, esDirector, esJefePersonal, esJefeDepartamento, jefeRut, subrogante }
-//   accion: "cambiar_clave"       → { adminSecret, rut, newPassword }
-//   accion: "resetear_mfa"        → { adminSecret, rut }
-//   accion: "listar_funcionarios" → { adminSecret }
-//   accion: "listar_jefes"        → { adminSecret }
+//   accion: "crear_funcionario"       → { adminSecret, nombre, rut, password, esJefeDirecto, esDirector, esJefePersonal, esJefeDepartamento, jefeRut, subrogante }
+//   accion: "actualizar_rol"          → { adminSecret, rut, nombre, esJefeDirecto, esDirector, esJefePersonal, esJefeDepartamento, jefeRut, subrogante }
+//   accion: "cambiar_clave"           → { adminSecret, rut, newPassword }
+//   accion: "resetear_mfa"            → { adminSecret, rut }
+//   accion: "listar_funcionarios"     → { adminSecret }
+//   accion: "listar_jefes"            → { adminSecret }
+//   accion: "registrar_marcaje_manual" → { adminSecret, rut, tipo, fechaInicio, fechaFin, detalle }
+//     (usado por registro-manual.html para agregar permisos administrativos o
+//      cometidos funcionarios directamente al historial de "Mis marcajes")
+//   accion: "listar_marcajes_manual"  → { adminSecret }
+//   accion: "eliminar_marcaje_manual" → { adminSecret, id }
 
 const USERNAME_DOMAIN = "cesfamperalillo.internal";
 
@@ -35,6 +40,33 @@ function validarRut(rut) {
   const resto = 11 - (suma % 11);
   const dvEsperado = resto === 11 ? "0" : resto === 10 ? "K" : String(resto);
   return dv === dvEsperado;
+}
+
+// ===== Helpers de fecha/hora para los registros manuales de marcajes =====
+// (misma lógica que ya usa adms-server.js y mis-marcajes.html, para que los
+// registros manuales queden en la misma zona horaria que los del reloj)
+function offsetChileParaFecha(y, mo, d, h, mi, s) {
+  const fechaAprox = new Date(Date.UTC(y, mo - 1, d, h, mi, s));
+  const partes = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Santiago",
+    timeZoneName: "longOffset"
+  }).formatToParts(fechaAprox);
+  const tz = partes.find((p) => p.type === "timeZoneName");
+  const match = tz && tz.value.match(/GMT([+-]\d{2}:\d{2})/);
+  return match ? match[1] : "-03:00";
+}
+
+function construirFechaHoraISO(fechaYMD) {
+  const [y, mo, d] = fechaYMD.split("-").map(Number);
+  const offset = offsetChileParaFecha(y, mo, d, 12, 0, 0);
+  return `${fechaYMD}T12:00:00${offset}`;
+}
+
+function sumarDias(fechaYMD, dias) {
+  const [y, mo, d] = fechaYMD.split("-").map(Number);
+  const dt = new Date(Date.UTC(y, mo - 1, d));
+  dt.setUTCDate(dt.getUTCDate() + dias);
+  return dt.toISOString().slice(0, 10);
 }
 
 async function listarUsuariosSupabase() {
@@ -261,6 +293,119 @@ export default async function handler(req, res) {
         .sort((a, b) => a.nombre.localeCompare(b.nombre));
 
       return res.status(200).json({ ok: true, jefes });
+    }
+
+    // ===== Registrar manualmente un permiso administrativo o cometido =====
+    // Inserta una fila en "marcajes" por cada día del rango (metodo="manual",
+    // estado="permiso_administrativo" o "cometido_funcionario"), para que
+    // aparezca junto a los marcajes reales del reloj en "Mis marcajes" y en
+    // el reporte PDF del funcionario, en vez de verse como un día sin marcar.
+    if (accion === "registrar_marcaje_manual") {
+      const { rut, tipo, fechaInicio, fechaFin, detalle } = body;
+
+      if (!rut || !tipo || !fechaInicio) {
+        return res.status(400).json({ error: "Faltan datos (rut, tipo o fecha)" });
+      }
+      if (!validarRut(rut)) {
+        return res.status(400).json({ error: "El RUT ingresado no es válido" });
+      }
+      if (!["permiso_administrativo", "cometido_funcionario"].includes(tipo)) {
+        return res.status(400).json({ error: "Tipo de registro no reconocido" });
+      }
+
+      const finReal = fechaFin && fechaFin.trim() ? fechaFin.trim() : fechaInicio;
+      if (finReal < fechaInicio) {
+        return res.status(400).json({ error: "La fecha de término no puede ser anterior a la de inicio" });
+      }
+
+      const rutSinDv = normalizarRut(rut).slice(0, -1);
+      const detalleLimpio = detalle && detalle.trim() ? detalle.trim() : null;
+
+      const registros = [];
+      let cursor = fechaInicio;
+      let guard = 0;
+      while (cursor <= finReal && guard < 62) {
+        registros.push({
+          rut_sin_dv: rutSinDv,
+          fecha_hora: construirFechaHoraISO(cursor),
+          estado: tipo,
+          metodo: "manual",
+          detalle: detalleLimpio
+        });
+        cursor = sumarDias(cursor, 1);
+        guard++;
+      }
+      if (guard >= 62) {
+        return res.status(400).json({ error: "El rango de fechas es demasiado amplio (máximo 60 días)" });
+      }
+
+      const insertRes = await fetch(
+        `${process.env.SUPABASE_URL}/rest/v1/marcajes?on_conflict=rut_sin_dv,fecha_hora`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "apikey": process.env.SUPABASE_SERVICE_ROLE_KEY,
+            "Authorization": `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
+            "Prefer": "resolution=merge-duplicates,return=minimal"
+          },
+          body: JSON.stringify(registros)
+        }
+      );
+      if (!insertRes.ok) {
+        const detalleError = await insertRes.text();
+        return res.status(insertRes.status).json({ error: "No se pudo guardar: " + detalleError.slice(0, 200) });
+      }
+      return res.status(200).json({ ok: true, dias: registros.length });
+    }
+
+    // ===== Listar los registros manuales (permisos/cometidos) ya ingresados =====
+    if (accion === "listar_marcajes_manual") {
+      const listRes = await fetch(
+        `${process.env.SUPABASE_URL}/rest/v1/marcajes?metodo=eq.manual&order=fecha_hora.desc&limit=200&select=id,rut_sin_dv,fecha_hora,estado,detalle`,
+        {
+          headers: {
+            "apikey": process.env.SUPABASE_SERVICE_ROLE_KEY,
+            "Authorization": `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`
+          }
+        }
+      );
+      if (!listRes.ok) return res.status(500).json({ error: "No se pudo obtener el listado" });
+      const registros = await listRes.json();
+
+      const users = await listarUsuariosSupabase();
+      const nombreMap = {};
+      (users || []).forEach((u) => {
+        const rutMeta = u.user_metadata && u.user_metadata.rut;
+        if (rutMeta) nombreMap[normalizarRut(rutMeta).slice(0, -1)] = u.user_metadata.nombre || "(sin nombre)";
+      });
+
+      const conNombre = registros.map((r) => ({
+        ...r,
+        nombre: nombreMap[r.rut_sin_dv] || ("RUT " + r.rut_sin_dv + " (sin cuenta en el sitio)")
+      }));
+      return res.status(200).json({ ok: true, registros: conNombre });
+    }
+
+    // ===== Eliminar un registro manual (por si se ingresó por error) =====
+    // Restringido a metodo=manual: este endpoint nunca puede borrar un
+    // marcaje real que haya llegado desde el reloj biométrico.
+    if (accion === "eliminar_marcaje_manual") {
+      const { id } = body;
+      if (!id) return res.status(400).json({ error: "Falta el id del registro" });
+
+      const delRes = await fetch(
+        `${process.env.SUPABASE_URL}/rest/v1/marcajes?id=eq.${encodeURIComponent(id)}&metodo=eq.manual`,
+        {
+          method: "DELETE",
+          headers: {
+            "apikey": process.env.SUPABASE_SERVICE_ROLE_KEY,
+            "Authorization": `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`
+          }
+        }
+      );
+      if (!delRes.ok) return res.status(delRes.status).json({ error: "No se pudo eliminar el registro" });
+      return res.status(200).json({ ok: true });
     }
 
     // ===== Reparar cuenta con token demasiado grande =====
