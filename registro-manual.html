@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Registro manual de permisos y cometidos — CESFAM Peralillo</title>
+<link rel="icon" type="image/jpeg" href="assets/logo-cesfam.jpeg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --teal-deep:#0A3D73; --teal:#1B7FC2; --teal-light:#E7F2FB;
+    --gold:#12A6D6; --ink:#1C2B36; --gray:#5A6B78; --line:#DCE7F0; --radius:16px;
+    --font-head:'Poppins', sans-serif; --font-body:'Atkinson Hyperlegible', system-ui, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; background:var(--teal-light); font-family:var(--font-body); color:var(--ink); min-height:100vh;}
+  .container{max-width:560px; margin:0 auto; padding:50px 24px;}
+  .card{background:#fff; border-radius:var(--radius); box-shadow:0 20px 50px rgba(10,61,115,.1); padding:30px; margin-bottom:20px;}
+  h1{font-family:var(--font-head); color:var(--teal-deep); font-size:1.3rem; margin:0 0 6px;}
+  p.sub{color:var(--gray); font-size:.9rem; margin:0 0 20px;}
+  label{display:block; font-weight:700; font-size:.9rem; margin-bottom:6px; color:var(--teal-deep);}
+  .hint{font-size:.82rem; color:var(--gray); margin:-10px 0 16px;}
+  input, textarea, select{width:100%; padding:12px 14px; border:1.5px solid var(--line); border-radius:10px; margin-bottom:16px; font-family:var(--font-body); font-size:.95rem;}
+  textarea{resize:vertical; min-height:70px;}
+  .fila-fechas{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
+  button{width:100%; background:var(--gold); color:#fff; border:none; padding:14px; border-radius:999px; font-weight:700; font-size:1rem; cursor:pointer; font-family:var(--font-body);}
+  button:hover{background:#0E86AC;}
+  button:disabled{opacity:.6; cursor:not-allowed;}
+  #status, #admin-auth-status{font-size:.88rem; margin-top:12px; text-align:center;}
+  .back{display:block; text-align:center; margin-top:6px; font-size:.85rem; color:var(--teal-deep); text-decoration:none;}
+
+  .reg-item{display:flex; align-items:flex-start; justify-content:space-between; gap:12px; padding:12px 14px; border:1px solid var(--line); border-radius:10px; margin-bottom:8px; flex-wrap:wrap;}
+  .reg-info h3{margin:0 0 2px; font-size:.95rem; color:var(--teal-deep); font-family:var(--font-head);}
+  .reg-info p{margin:0; font-size:.8rem; color:var(--gray);}
+  .reg-badge{display:inline-block; font-size:.7rem; font-weight:700; padding:3px 9px; border-radius:999px; background:var(--teal-light); color:var(--teal-deep); margin-top:4px;}
+  .reg-eliminar{background:#B33A3A; color:#fff; border:none; padding:8px 14px; border-radius:999px; font-weight:700; font-size:.82rem; cursor:pointer; font-family:var(--font-body); white-space:nowrap;}
+  .reg-eliminar:hover{background:#8F2E2E;}
+  #listado-buscador{margin-bottom:16px;}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="card">
+    <h1>🔐 Clave de administrador</h1>
+    <p class="sub">Ingresa la clave maestra para registrar permisos administrativos o cometidos funcionarios.</p>
+    <form id="adminAuthForm">
+      <label for="admin-secret">Clave de administrador</label>
+      <input type="password" id="admin-secret" required>
+      <button type="submit" id="adminAuthBtn">Desbloquear</button>
+      <p id="admin-auth-status"></p>
+    </form>
+  </div>
+
+  <div class="card" id="formCard" style="display:none;">
+    <h1>📝 Registrar permiso o cometido</h1>
+    <p class="sub">Se agrega junto a los marcajes reales del reloj en "Mis marcajes" del funcionario (y en su reporte PDF mensual), para que ese día no se vea como si no hubiera asistido.</p>
+    <form id="regForm">
+      <label for="reg-rut">RUT del funcionario</label>
+      <input type="text" id="reg-rut" required placeholder="12.345.678-9">
+      <label for="reg-tipo">Tipo de registro</label>
+      <select id="reg-tipo" required>
+        <option value="permiso_administrativo">Permiso administrativo</option>
+        <option value="cometido_funcionario">Cometido funcionario</option>
+      </select>
+      <label>Fecha</label>
+      <div class="fila-fechas">
+        <div>
+          <input type="date" id="reg-fecha-inicio" required>
+          <p class="hint" style="margin-top:-12px;">Desde</p>
+        </div>
+        <div>
+          <input type="date" id="reg-fecha-fin">
+          <p class="hint" style="margin-top:-12px;">Hasta (opcional, si dura varios días)</p>
+        </div>
+      </div>
+      <label for="reg-detalle">Observación (opcional)</label>
+      <textarea id="reg-detalle" placeholder="Ej: Trámite médico, capacitación en Rancagua..."></textarea>
+      <button type="submit" id="regBtn">Guardar registro</button>
+      <p id="status"></p>
+    </form>
+  </div>
+
+  <div class="card" id="listadoCard" style="display:none;">
+    <h1>📋 Registros manuales ingresados</h1>
+    <p class="sub">Los últimos 200 permisos/cometidos ingresados aquí. Esto no incluye los marcajes reales del reloj.</p>
+    <input type="text" id="listado-buscador" placeholder="🔎 Buscar por nombre o RUT...">
+    <div id="listadoRegistros">
+      <p class="hint" style="margin:0;">Cargando...</p>
+    </div>
+  </div>
+
+  <a class="back" href="dashboard.html">← Volver al portal</a>
+</div>
+
+<script src="assets/supabase-config.js"></script>
+<script>
+  let adminSecret = '';
+  let todosLosRegistros = [];
+
+  const ETIQUETAS = {
+    permiso_administrativo: 'Permiso administrativo',
+    cometido_funcionario: 'Cometido funcionario'
+  };
+
+  document.getElementById('reg-rut').addEventListener('blur', (e) => {
+    if (e.target.value.trim()) e.target.value = formatearRut(e.target.value);
+  });
+
+  document.getElementById('adminAuthForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const status = document.getElementById('admin-auth-status');
+    const btn = document.getElementById('adminAuthBtn');
+    const claveIngresada = document.getElementById('admin-secret').value;
+
+    btn.disabled = true;
+    status.style.color = 'var(--gray)';
+    status.textContent = 'Verificando...';
+
+    try {
+      const res = await fetch('/api/admin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adminSecret: claveIngresada, accion: 'verificar_clave' })
+      });
+
+      if (!res.ok) {
+        status.style.color = '#B33A3A';
+        status.textContent = '❌ Clave incorrecta.';
+        btn.disabled = false;
+        return;
+      }
+
+      adminSecret = claveIngresada;
+      document.getElementById('formCard').style.display = 'block';
+      document.getElementById('listadoCard').style.display = 'block';
+      document.getElementById('adminAuthForm').closest('.card').style.display = 'none';
+      cargarListado();
+    } catch (err) {
+      status.style.color = '#B33A3A';
+      status.textContent = 'Error de conexión. Inténtalo nuevamente.';
+      btn.disabled = false;
+      console.error(err);
+    }
+  });
+
+  document.getElementById('regForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const status = document.getElementById('status');
+    const btn = document.getElementById('regBtn');
+
+    const rut = document.getElementById('reg-rut').value.trim();
+    const tipo = document.getElementById('reg-tipo').value;
+    const fechaInicio = document.getElementById('reg-fecha-inicio').value;
+    const fechaFin = document.getElementById('reg-fecha-fin').value;
+    const detalle = document.getElementById('reg-detalle').value.trim();
+
+    if (!validarRut(rut)) {
+      status.style.color = '#B33A3A';
+      status.textContent = '❌ El RUT ingresado no es válido. Revisa el dígito verificador.';
+      return;
+    }
+
+    btn.disabled = true;
+    status.style.color = 'var(--gray)';
+    status.textContent = 'Guardando...';
+
+    try {
+      const res = await fetch('/api/admin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adminSecret, accion: 'registrar_marcaje_manual', rut, tipo, fechaInicio, fechaFin, detalle })
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        status.style.color = '#B33A3A';
+        status.textContent = '❌ ' + (data.error || 'No se pudo guardar el registro.');
+        btn.disabled = false;
+        return;
+      }
+
+      status.style.color = 'var(--teal)';
+      status.textContent = '✅ Registrado (' + data.dias + (data.dias === 1 ? ' día' : ' días') + ').';
+      document.getElementById('regForm').reset();
+      btn.disabled = false;
+      cargarListado();
+    } catch (err) {
+      status.style.color = '#B33A3A';
+      status.textContent = 'Error de conexión. Inténtalo nuevamente.';
+      btn.disabled = false;
+      console.error(err);
+    }
+  });
+
+  function escapeHtml(str) {
+    return String(str == null ? '' : str).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+
+  function renderListado(filtro) {
+    const cont = document.getElementById('listadoRegistros');
+    const f = (filtro || '').trim().toLowerCase();
+    const filtrados = todosLosRegistros.filter((r) =>
+      !f || r.nombre.toLowerCase().includes(f) || r.rut_sin_dv.toLowerCase().includes(f)
+    );
+
+    if (filtrados.length === 0) {
+      cont.innerHTML = '<p class="hint" style="margin:0;">No hay registros manuales todavía.</p>';
+      return;
+    }
+
+    cont.innerHTML = '';
+    filtrados.forEach((r) => {
+      const fechaTexto = new Date(r.fecha_hora).toLocaleDateString('es-CL', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' });
+      const div = document.createElement('div');
+      div.className = 'reg-item';
+      div.innerHTML =
+        '<div class="reg-info">' +
+          '<h3>' + escapeHtml(r.nombre) + '</h3>' +
+          '<p>RUT (sin DV): ' + escapeHtml(r.rut_sin_dv) + ' · ' + fechaTexto + '</p>' +
+          (r.detalle ? '<p>' + escapeHtml(r.detalle) + '</p>' : '') +
+          '<span class="reg-badge">' + (ETIQUETAS[r.estado] || escapeHtml(r.estado)) + '</span>' +
+        '</div>' +
+        '<button type="button" class="reg-eliminar">🗑️ Eliminar</button>';
+      div.querySelector('.reg-eliminar').addEventListener('click', () => eliminarRegistro(r));
+      cont.appendChild(div);
+    });
+  }
+
+  async function eliminarRegistro(r) {
+    if (!confirm('¿Eliminar este registro (' + (ETIQUETAS[r.estado] || r.estado) + ') de ' + r.nombre + '?')) return;
+    try {
+      const res = await fetch('/api/admin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adminSecret, accion: 'eliminar_marcaje_manual', id: r.id })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert('❌ ' + (data.error || 'No se pudo eliminar el registro.'));
+        return;
+      }
+      cargarListado();
+    } catch (err) {
+      alert('Error de conexión. Inténtalo nuevamente.');
+      console.error(err);
+    }
+  }
+
+  async function cargarListado() {
+    const cont = document.getElementById('listadoRegistros');
+    try {
+      const res = await fetch('/api/admin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adminSecret, accion: 'listar_marcajes_manual' })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      todosLosRegistros = data.registros || [];
+      renderListado('');
+    } catch (err) {
+      console.error('No se pudo cargar el listado:', err);
+      cont.innerHTML = '<p class="hint" style="margin:0; color:#B33A3A;">No se pudo cargar el listado.</p>';
+    }
+  }
+
+  document.getElementById('listado-buscador').addEventListener('input', (e) => renderListado(e.target.value));
+</script>
+
+</body>
+</html>
