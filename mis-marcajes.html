@@ -140,13 +140,27 @@
 
   function pad2(n) { return String(n).padStart(2, '0'); }
 
+  function escapeHtml(str) {
+    return String(str == null ? '' : str).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+
+  // Registros que no vienen del reloj sino que se ingresaron a mano desde
+  // registro-manual.html (permisos administrativos / cometidos), para que el
+  // día no se vea como si el funcionario no hubiera ido a trabajar.
+  const ETIQUETAS_MANUALES = {
+    permiso_administrativo: 'Permiso administrativo',
+    cometido_funcionario: 'Cometido funcionario'
+  };
+
   // Agrupa una lista de marcajes (ordenados de más antiguo a más reciente)
   // en "turnos" por día: cada turno junta una Entrada con la Salida que le
   // sigue, para poder mostrarlas en la misma fila (Fecha | Hora entrada |
-  // Hora salida) tal como se ve físicamente en el reloj de control.
+  // Hora salida) tal como se ve físicamente en el reloj de control. Un
+  // registro manual (permiso/cometido) se muestra como una fila propia con
+  // el motivo, en vez de intentar emparejarlo con una hora de salida.
   // El estado que manda el reloj suele ser 0 = entrada, 1 = salida.
   function agruparEnTurnos(marcajesAscendentes) {
-    const dias = []; // [{ fechaISO, turnos: [{ entrada, salida }] }]
+    const dias = []; // [{ fechaISO, turnos: [{ entrada, salida } | { etiqueta, detalle }] }]
     let diaActual = null;
 
     marcajesAscendentes.forEach((m) => {
@@ -160,11 +174,14 @@
         dias.push(diaActual);
       }
 
-      if (m.estado === '1') {
+      if (ETIQUETAS_MANUALES[m.estado]) {
+        // Permiso administrativo o cometido funcionario ingresado a mano.
+        diaActual.turnos.push({ etiqueta: ETIQUETAS_MANUALES[m.estado], detalle: m.detalle || null });
+      } else if (m.estado === '1') {
         // Salida: cierra el turno abierto más reciente de este día, o si no
         // había ninguno abierto (dato suelto), crea una fila solo con salida.
         const ultimo = diaActual.turnos[diaActual.turnos.length - 1];
-        if (ultimo && !ultimo.salida) {
+        if (ultimo && !ultimo.salida && !ultimo.etiqueta) {
           ultimo.salida = horaTexto;
         } else {
           diaActual.turnos.push({ entrada: null, salida: horaTexto });
@@ -234,7 +251,12 @@
         const fechaTexto = fechaTextoDesdeISO(dia.fechaISO, false);
         dia.turnos.forEach((turno, idx) => {
           const fechaCelda = idx === 0 ? fechaTexto : '';
-          filasHtml += `<tr><td class="fecha-celda">${fechaCelda}</td><td>${turno.entrada || '—'}</td><td>${turno.salida || '—'}</td></tr>`;
+          if (turno.etiqueta) {
+            const texto = turno.detalle ? turno.etiqueta + ' — ' + escapeHtml(turno.detalle) : turno.etiqueta;
+            filasHtml += `<tr><td class="fecha-celda">${fechaCelda}</td><td colspan="2" style="font-weight:700; color:var(--teal-deep);">${texto}</td></tr>`;
+          } else {
+            filasHtml += `<tr><td class="fecha-celda">${fechaCelda}</td><td>${turno.entrada || '—'}</td><td>${turno.salida || '—'}</td></tr>`;
+          }
         });
       });
       cuerpo.innerHTML = filasHtml;
@@ -301,7 +323,13 @@
       diasPdf.forEach((dia) => {
         const fechaTexto = fechaTextoDesdeISO(dia.fechaISO, true);
         dia.turnos.forEach((turno, idx) => {
-          filas.push([idx === 0 ? fechaTexto : '', turno.entrada || '—', turno.salida || '—']);
+          const fechaCelda = idx === 0 ? fechaTexto : '';
+          if (turno.etiqueta) {
+            const texto = turno.detalle ? turno.etiqueta + ' — ' + turno.detalle : turno.etiqueta;
+            filas.push([fechaCelda, { content: texto, colSpan: 2, styles: { fontStyle: 'bold' } }]);
+          } else {
+            filas.push([fechaCelda, turno.entrada || '—', turno.salida || '—']);
+          }
         });
       });
 
