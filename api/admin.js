@@ -56,11 +56,27 @@ function offsetChileParaFecha(y, mo, d, h, mi, s) {
   return match ? match[1] : "-03:00";
 }
 
-function construirFechaHoraISO(fechaYMD) {
-  const [y, mo, d] = fechaYMD.split("-").map(Number);
-  const offset = offsetChileParaFecha(y, mo, d, 12, 0, 0);
-  return `${fechaYMD}T12:00:00${offset}`;
+function pad2(n) {
+  return String(n).padStart(2, "0");
 }
+
+function construirFechaHoraISO(fechaYMD, hora) {
+  const [y, mo, d] = fechaYMD.split("-").map(Number);
+  const offset = offsetChileParaFecha(y, mo, d, hora, 0, 0);
+  return `${fechaYMD}T${pad2(hora)}:00:00${offset}`;
+}
+
+// Hora "ancla" para cada tipo de registro manual, para que quede ordenado de
+// forma razonable junto a los marcajes reales del reloj ese mismo día: un
+// permiso/cometido de día completo va al mediodía, uno de medio día en la
+// mañana queda antes de que empiece la jornada de la tarde, y uno de medio
+// día en la tarde queda después de que termina la jornada de la mañana.
+const HORA_ANCLA_POR_TIPO = {
+  permiso_administrativo: 12,
+  cometido_funcionario: 12,
+  medio_dia_administrativo_manana: 7,
+  medio_dia_administrativo_tarde: 13
+};
 
 function sumarDias(fechaYMD, dias) {
   const [y, mo, d] = fechaYMD.split("-").map(Number);
@@ -297,9 +313,13 @@ export default async function handler(req, res) {
 
     // ===== Registrar manualmente un permiso administrativo o cometido =====
     // Inserta una fila en "marcajes" por cada día del rango (metodo="manual",
-    // estado="permiso_administrativo" o "cometido_funcionario"), para que
-    // aparezca junto a los marcajes reales del reloj en "Mis marcajes" y en
-    // el reporte PDF del funcionario, en vez de verse como un día sin marcar.
+    // estado = uno de HORA_ANCLA_POR_TIPO: "permiso_administrativo" (día
+    // completo), "medio_dia_administrativo_manana", "medio_dia_administrativo_tarde"
+    // o "cometido_funcionario"), para que aparezca junto a los marcajes reales
+    // del reloj en "Mis marcajes" y en el reporte PDF del funcionario, en vez
+    // de verse como un día sin marcar. Si es medio día, la marcación real del
+    // reloj de la otra mitad de la jornada se sigue mostrando igual — esta
+    // fila manual no la reemplaza, solo se agrega junto a ella.
     if (accion === "registrar_marcaje_manual") {
       const { rut, tipo, fechaInicio, fechaFin, detalle } = body;
 
@@ -309,7 +329,7 @@ export default async function handler(req, res) {
       if (!validarRut(rut)) {
         return res.status(400).json({ error: "El RUT ingresado no es válido" });
       }
-      if (!["permiso_administrativo", "cometido_funcionario"].includes(tipo)) {
+      if (!HORA_ANCLA_POR_TIPO.hasOwnProperty(tipo)) {
         return res.status(400).json({ error: "Tipo de registro no reconocido" });
       }
 
@@ -327,7 +347,7 @@ export default async function handler(req, res) {
       while (cursor <= finReal && guard < 62) {
         registros.push({
           rut_sin_dv: rutSinDv,
-          fecha_hora: construirFechaHoraISO(cursor),
+          fecha_hora: construirFechaHoraISO(cursor, HORA_ANCLA_POR_TIPO[tipo]),
           estado: tipo,
           metodo: "manual",
           detalle: detalleLimpio
