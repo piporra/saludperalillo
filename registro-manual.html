@@ -3,10 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Registro manual de permisos y cometidos — CESFAM Peralillo</title>
+<title>Panel de RRHH — Marcajes — CESFAM Peralillo</title>
 <link rel="icon" type="image/jpeg" href="assets/logo-cesfam.jpeg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <style>
   :root{
     --teal-deep:#0A3D73; --teal:#1B7FC2; --teal-light:#E7F2FB;
@@ -15,8 +17,9 @@
   }
   *{box-sizing:border-box;}
   body{margin:0; background:var(--teal-light); font-family:var(--font-body); color:var(--ink); min-height:100vh;}
-  .container{max-width:560px; margin:0 auto; padding:50px 24px;}
+  .container{max-width:920px; margin:0 auto; padding:50px 24px;}
   .card{background:#fff; border-radius:var(--radius); box-shadow:0 20px 50px rgba(10,61,115,.1); padding:30px; margin-bottom:20px;}
+  .card-angosta{max-width:560px; margin-left:auto; margin-right:auto;}
   h1{font-family:var(--font-head); color:var(--teal-deep); font-size:1.3rem; margin:0 0 6px;}
   p.sub{color:var(--gray); font-size:.9rem; margin:0 0 20px;}
   label{display:block; font-weight:700; font-size:.9rem; margin-bottom:6px; color:var(--teal-deep);}
@@ -34,17 +37,52 @@
   .reg-info h3{margin:0 0 2px; font-size:.95rem; color:var(--teal-deep); font-family:var(--font-head);}
   .reg-info p{margin:0; font-size:.8rem; color:var(--gray);}
   .reg-badge{display:inline-block; font-size:.7rem; font-weight:700; padding:3px 9px; border-radius:999px; background:var(--teal-light); color:var(--teal-deep); margin-top:4px;}
-  .reg-eliminar{background:#B33A3A; color:#fff; border:none; padding:8px 14px; border-radius:999px; font-weight:700; font-size:.82rem; cursor:pointer; font-family:var(--font-body); white-space:nowrap;}
+  .reg-eliminar{background:#B33A3A; color:#fff; border:none; padding:8px 14px; border-radius:999px; font-weight:700; font-size:.82rem; cursor:pointer; font-family:var(--font-body); white-space:nowrap; width:auto;}
   .reg-eliminar:hover{background:#8F2E2E;}
   #listado-buscador{margin-bottom:16px;}
+
+  .funcionario-actual{background:var(--teal-light); border-radius:10px; padding:10px 14px; font-size:.9rem; color:var(--teal-deep); font-weight:700; margin:-4px 0 16px;}
+
+  .mes-nav{display:flex; align-items:center; justify-content:center; gap:16px; margin-bottom:24px;}
+  .mes-nav button{
+    width:36px; height:36px; padding:0; background:#fff; border:1px solid var(--line); border-radius:10px;
+    font-size:1.1rem; cursor:pointer; color:var(--teal-deep); box-shadow:0 4px 10px rgba(10,61,115,.06);
+  }
+  .mes-nav button:hover{background:var(--teal-light);}
+  .mes-nav h2{font-family:var(--font-head); color:var(--teal-deep); font-size:1.05rem; margin:0; text-transform:capitalize; min-width:180px; text-align:center;}
+
+  .resumen-grid{display:grid; grid-template-columns:repeat(3, 1fr); gap:16px; margin-bottom:24px;}
+  @media (max-width:640px){ .resumen-grid{grid-template-columns:1fr;} }
+  .resumen-card{background:var(--teal-light); border-radius:12px; padding:16px; text-align:center;}
+  .resumen-card .num{font-family:var(--font-head); font-size:1.5rem; font-weight:700; color:var(--teal-deep);}
+  .resumen-card .lbl{font-size:.78rem; color:var(--gray);}
+
+  .acciones{display:flex; justify-content:flex-end; margin-bottom:16px;}
+  .btn-pdf{
+    width:auto; display:inline-flex; align-items:center; gap:8px; background:var(--teal-deep); color:#fff;
+    border:none; border-radius:10px; padding:10px 18px; font-family:var(--font-body); font-weight:700;
+    font-size:.85rem; cursor:pointer; box-shadow:0 8px 20px rgba(10,61,115,.18);
+  }
+  .btn-pdf:hover{background:var(--teal);}
+  .btn-pdf:disabled{opacity:.5; cursor:not-allowed;}
+
+  .tabla-card{border:1px solid var(--line); border-radius:var(--radius); padding:8px; overflow-x:auto;}
+  table{width:100%; border-collapse:collapse; font-size:.9rem;}
+  thead th{text-align:left; padding:12px 14px; color:var(--gray); font-weight:700; font-size:.75rem; text-transform:uppercase; letter-spacing:.04em; border-bottom:1px solid var(--line);}
+  tbody td{padding:11px 14px; border-bottom:1px solid var(--line); color:var(--ink);}
+  tbody tr:last-child td{border-bottom:none;}
+  tbody td.fecha-celda{font-weight:700; color:var(--teal-deep); white-space:nowrap;}
+  .vacio{padding:36px 16px; text-align:center; color:var(--gray);}
+  .mini-eliminar{width:auto; background:none; border:none; color:#B33A3A; cursor:pointer; font-size:.82rem; padding:0 0 0 8px; display:inline;}
+  .mini-eliminar:hover{text-decoration:underline;}
 </style>
 </head>
 <body>
 
 <div class="container">
-  <div class="card">
+  <div class="card card-angosta">
     <h1>🔐 Clave de administrador</h1>
-    <p class="sub">Ingresa la clave maestra para registrar permisos administrativos o cometidos funcionarios.</p>
+    <p class="sub">Ingresa la clave maestra para ver y registrar marcajes de los funcionarios.</p>
     <form id="adminAuthForm">
       <label for="admin-secret">Clave de administrador</label>
       <input type="password" id="admin-secret" required>
@@ -53,12 +91,22 @@
     </form>
   </div>
 
+  <div class="card" id="funcionarioCard" style="display:none;">
+    <h1>👤 Funcionario</h1>
+    <p class="sub">Elige un funcionario para ver sus marcajes y/o registrarle un permiso o cometido. Todo lo que hagas abajo se aplica a la persona seleccionada aquí.</p>
+    <label for="buscadorFuncionario">Buscar por nombre o RUT</label>
+    <input type="text" id="buscadorFuncionario" placeholder="🔎 Escribe para filtrar la lista...">
+    <label for="funcionarioSelect">Funcionario</label>
+    <select id="funcionarioSelect">
+      <option value="">— Selecciona un funcionario —</option>
+    </select>
+  </div>
+
   <div class="card" id="formCard" style="display:none;">
     <h1>📝 Registrar permiso o cometido</h1>
     <p class="sub">Se agrega junto a los marcajes reales del reloj en "Mis marcajes" del funcionario (y en su reporte PDF mensual), para que ese día no se vea como si no hubiera asistido.</p>
+    <p class="funcionario-actual">Funcionario: <span id="regFuncionarioNombre">— ninguno seleccionado —</span></p>
     <form id="regForm">
-      <label for="reg-rut">RUT del funcionario</label>
-      <input type="text" id="reg-rut" required placeholder="12.345.678-9">
       <label for="reg-tipo">Tipo de registro</label>
       <select id="reg-tipo" required>
         <option value="permiso_administrativo">Permiso administrativo (día completo)</option>
@@ -80,14 +128,46 @@
       </div>
       <label for="reg-detalle">Observación (opcional)</label>
       <textarea id="reg-detalle" placeholder="Ej: Trámite médico, capacitación en Rancagua..."></textarea>
-      <button type="submit" id="regBtn">Guardar registro</button>
+      <button type="submit" id="regBtn" disabled>Guardar registro</button>
       <p id="status"></p>
     </form>
   </div>
 
+  <div class="card" id="marcajesCard" style="display:none;">
+    <h1>📅 Marcajes de <span id="marcajesFuncionarioNombre">—</span></h1>
+    <p class="sub">Marcajes reales del reloj biométrico y registros manuales de este funcionario.</p>
+
+    <div class="mes-nav">
+      <button type="button" id="mesAnteriorM" aria-label="Mes anterior">←</button>
+      <h2 id="mesTituloM">–</h2>
+      <button type="button" id="mesSiguienteM" aria-label="Mes siguiente">→</button>
+    </div>
+
+    <div class="resumen-grid">
+      <div class="resumen-card"><div class="num" id="resTotalM">–</div><div class="lbl">Marcajes este mes</div></div>
+      <div class="resumen-card"><div class="num" id="resDiasM">–</div><div class="lbl">Días con marcaje</div></div>
+      <div class="resumen-card"><div class="num" id="resUltimoM">–</div><div class="lbl">Último marcaje</div></div>
+    </div>
+
+    <div class="acciones">
+      <button type="button" id="btnDescargarPDFM" class="btn-pdf">📄 Descargar reporte del mes (PDF)</button>
+    </div>
+
+    <div class="tabla-card">
+      <table>
+        <thead>
+          <tr><th>Fecha</th><th>Hora entrada</th><th>Hora salida</th></tr>
+        </thead>
+        <tbody id="cuerpoTablaM">
+          <tr><td colspan="3" class="vacio">Selecciona un funcionario arriba.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
   <div class="card" id="listadoCard" style="display:none;">
-    <h1>📋 Registros manuales ingresados</h1>
-    <p class="sub">Los últimos 200 permisos/cometidos ingresados aquí. Esto no incluye los marcajes reales del reloj.</p>
+    <h1>📋 Todos los registros manuales</h1>
+    <p class="sub">Los últimos 200 permisos/cometidos ingresados aquí, de cualquier funcionario. Esto no incluye los marcajes reales del reloj.</p>
     <input type="text" id="listado-buscador" placeholder="🔎 Buscar por nombre o RUT...">
     <div id="listadoRegistros">
       <p class="hint" style="margin:0;">Cargando...</p>
@@ -99,8 +179,17 @@
 
 <script src="assets/supabase-config.js"></script>
 <script>
+  const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+
   let adminSecret = '';
   let todosLosRegistros = [];
+  let funcionarios = [];
+  let funcionarioSeleccionado = null; // { rut, nombre, ... }
+
+  const hoy = new Date();
+  let anioActual = hoy.getFullYear();
+  let mesActual = hoy.getMonth(); // 0-11
+  let marcajesActuales = [];
 
   const ETIQUETAS = {
     permiso_administrativo: 'Permiso administrativo',
@@ -109,10 +198,11 @@
     medio_dia_administrativo_tarde: 'Medio día administrativo (tarde)'
   };
 
-  document.getElementById('reg-rut').addEventListener('blur', (e) => {
-    if (e.target.value.trim()) e.target.value = formatearRut(e.target.value);
-  });
+  function escapeHtml(str) {
+    return String(str == null ? '' : str).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
 
+  // ===== Desbloqueo con la clave de administrador =====
   document.getElementById('adminAuthForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const status = document.getElementById('admin-auth-status');
@@ -138,9 +228,11 @@
       }
 
       adminSecret = claveIngresada;
+      document.getElementById('funcionarioCard').style.display = 'block';
       document.getElementById('formCard').style.display = 'block';
       document.getElementById('listadoCard').style.display = 'block';
       document.getElementById('adminAuthForm').closest('.card').style.display = 'none';
+      cargarFuncionarios();
       cargarListado();
     } catch (err) {
       status.style.color = '#B33A3A';
@@ -150,20 +242,86 @@
     }
   });
 
+  // ===== Selector de funcionario (compartido por todo el panel) =====
+  async function cargarFuncionarios() {
+    const sel = document.getElementById('funcionarioSelect');
+    try {
+      const res = await fetch('/api/admin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adminSecret, accion: 'listar_funcionarios' })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      funcionarios = data.funcionarios || [];
+      renderFuncionarioSelect('');
+    } catch (err) {
+      console.error('No se pudo cargar la lista de funcionarios:', err);
+      sel.innerHTML = '<option value="">No se pudo cargar la lista de funcionarios</option>';
+    }
+  }
+
+  function renderFuncionarioSelect(filtro) {
+    const sel = document.getElementById('funcionarioSelect');
+    const f = (filtro || '').trim().toLowerCase();
+    const filtrados = funcionarios.filter((x) =>
+      !f || x.nombre.toLowerCase().includes(f) || x.rut.toLowerCase().includes(f)
+    );
+    const valorPrevio = funcionarioSeleccionado ? funcionarioSeleccionado.rut : '';
+
+    sel.innerHTML = '<option value="">— Selecciona un funcionario —</option>' +
+      filtrados.map((x) =>
+        `<option value="${escapeHtml(x.rut)}"${x.rut === valorPrevio ? ' selected' : ''}>${escapeHtml(x.nombre)} — ${escapeHtml(formatearRut(x.rut))}</option>`
+      ).join('');
+  }
+
+  document.getElementById('buscadorFuncionario').addEventListener('input', (e) => renderFuncionarioSelect(e.target.value));
+
+  document.getElementById('funcionarioSelect').addEventListener('change', (e) => {
+    const rut = e.target.value;
+    funcionarioSeleccionado = funcionarios.find((x) => x.rut === rut) || null;
+    actualizarFuncionarioUI();
+  });
+
+  function actualizarFuncionarioUI() {
+    const regBtn = document.getElementById('regBtn');
+    const nombreReg = document.getElementById('regFuncionarioNombre');
+    const marcajesCard = document.getElementById('marcajesCard');
+
+    if (funcionarioSeleccionado) {
+      const rutTexto = formatearRut(funcionarioSeleccionado.rut);
+      nombreReg.textContent = funcionarioSeleccionado.nombre + ' (' + rutTexto + ')';
+      regBtn.disabled = false;
+      document.getElementById('marcajesFuncionarioNombre').textContent = funcionarioSeleccionado.nombre;
+      marcajesCard.style.display = 'block';
+      cargarMarcajesFuncionarioDelMes();
+    } else {
+      nombreReg.textContent = '— ninguno seleccionado —';
+      regBtn.disabled = true;
+      marcajesCard.style.display = 'none';
+    }
+  }
+
+  // ===== Registrar permiso o cometido para el funcionario seleccionado =====
   document.getElementById('regForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const status = document.getElementById('status');
     const btn = document.getElementById('regBtn');
 
-    const rut = document.getElementById('reg-rut').value.trim();
+    if (!funcionarioSeleccionado) {
+      status.style.color = '#B33A3A';
+      status.textContent = '❌ Primero selecciona un funcionario arriba.';
+      return;
+    }
+
     const tipo = document.getElementById('reg-tipo').value;
     const fechaInicio = document.getElementById('reg-fecha-inicio').value;
     const fechaFin = document.getElementById('reg-fecha-fin').value;
     const detalle = document.getElementById('reg-detalle').value.trim();
 
-    if (!validarRut(rut)) {
+    if (!fechaInicio) {
       status.style.color = '#B33A3A';
-      status.textContent = '❌ El RUT ingresado no es válido. Revisa el dígito verificador.';
+      status.textContent = '❌ Ingresa la fecha del permiso o cometido.';
       return;
     }
 
@@ -175,7 +333,7 @@
       const res = await fetch('/api/admin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ adminSecret, accion: 'registrar_marcaje_manual', rut, tipo, fechaInicio, fechaFin, detalle })
+        body: JSON.stringify({ adminSecret, accion: 'registrar_marcaje_manual', rut: funcionarioSeleccionado.rut, tipo, fechaInicio, fechaFin, detalle })
       });
       const data = await res.json();
 
@@ -188,9 +346,13 @@
 
       status.style.color = 'var(--teal)';
       status.textContent = '✅ Registrado (' + data.dias + (data.dias === 1 ? ' día' : ' días') + ').';
-      document.getElementById('regForm').reset();
+      document.getElementById('reg-tipo').selectedIndex = 0;
+      document.getElementById('reg-fecha-inicio').value = '';
+      document.getElementById('reg-fecha-fin').value = '';
+      document.getElementById('reg-detalle').value = '';
       btn.disabled = false;
       cargarListado();
+      cargarMarcajesFuncionarioDelMes();
     } catch (err) {
       status.style.color = '#B33A3A';
       status.textContent = 'Error de conexión. Inténtalo nuevamente.';
@@ -199,10 +361,245 @@
     }
   });
 
-  function escapeHtml(str) {
-    return String(str == null ? '' : str).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  // ===== Marcajes del funcionario seleccionado (reales + manuales) =====
+  // Misma lógica de agrupamiento por turnos que usa "Mis marcajes", pero
+  // consultada a través de /api/admin (clave service_role) para poder ver a
+  // cualquier funcionario, no solo el propio.
+  function agruparEnTurnos(marcajesAscendentes) {
+    const dias = [];
+    let diaActual = null;
+
+    marcajesAscendentes.forEach((m) => {
+      const fechaISO = m.fecha_hora.slice(0, 10);
+      const horaTexto = new Date(m.fecha_hora).toLocaleTimeString('es-CL', {
+        hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+      });
+
+      if (!diaActual || diaActual.fechaISO !== fechaISO) {
+        diaActual = { fechaISO, turnos: [] };
+        dias.push(diaActual);
+      }
+
+      if (ETIQUETAS[m.estado]) {
+        diaActual.turnos.push({ etiqueta: ETIQUETAS[m.estado], detalle: m.detalle || null, id: m.id });
+      } else if (m.estado === '1') {
+        const ultimo = diaActual.turnos[diaActual.turnos.length - 1];
+        if (ultimo && !ultimo.salida && !ultimo.etiqueta) {
+          ultimo.salida = horaTexto;
+        } else {
+          diaActual.turnos.push({ entrada: null, salida: horaTexto });
+        }
+      } else {
+        diaActual.turnos.push({ entrada: horaTexto, salida: null });
+      }
+    });
+
+    return dias;
   }
 
+  function fechaTextoDesdeISO(fechaISO, incluirAnio) {
+    const fecha = new Date(fechaISO + 'T00:00:00');
+    return fecha.toLocaleDateString('es-CL', incluirAnio
+      ? { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' }
+      : { weekday: 'short', day: '2-digit', month: 'short' });
+  }
+
+  async function cargarMarcajesFuncionarioDelMes() {
+    if (!funcionarioSeleccionado) return;
+    const cuerpo = document.getElementById('cuerpoTablaM');
+    document.getElementById('mesTituloM').textContent = MESES[mesActual] + ' ' + anioActual;
+    cuerpo.innerHTML = '<tr><td colspan="3" class="vacio">Cargando...</td></tr>';
+
+    try {
+      const res = await fetch('/api/admin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adminSecret, accion: 'listar_marcajes_funcionario', rut: funcionarioSeleccionado.rut, anio: anioActual, mes: mesActual + 1 })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'No se pudo cargar');
+      const marcajes = data.marcajes || [];
+      marcajesActuales = marcajes;
+
+      document.getElementById('resTotalM').textContent = marcajes.length;
+      const diasUnicos = new Set(marcajes.map((m) => m.fecha_hora.slice(0, 10)));
+      document.getElementById('resDiasM').textContent = diasUnicos.size;
+      document.getElementById('resUltimoM').textContent = marcajes.length
+        ? new Date(marcajes[0].fecha_hora).toLocaleString('es-CL', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false })
+        : '—';
+
+      if (!marcajes.length) {
+        cuerpo.innerHTML = '<tr><td colspan="3" class="vacio">No hay marcajes registrados este mes.</td></tr>';
+        return;
+      }
+
+      const ascendente = marcajes.slice().reverse();
+      const dias = agruparEnTurnos(ascendente);
+      let filasHtml = '';
+      dias.forEach((dia) => {
+        const fechaTexto = fechaTextoDesdeISO(dia.fechaISO, false);
+        dia.turnos.forEach((turno, idx) => {
+          const fechaCelda = idx === 0 ? fechaTexto : '';
+          if (turno.etiqueta) {
+            const texto = turno.detalle ? turno.etiqueta + ' — ' + escapeHtml(turno.detalle) : turno.etiqueta;
+            const boton = turno.id ? `<button type="button" class="mini-eliminar" onclick="eliminarMarcajeDesdeTabla('${turno.id}')" title="Eliminar este registro">🗑 eliminar</button>` : '';
+            filasHtml += `<tr><td class="fecha-celda">${fechaCelda}</td><td colspan="2" style="font-weight:700; color:var(--teal-deep);">${texto}${boton}</td></tr>`;
+          } else {
+            filasHtml += `<tr><td class="fecha-celda">${fechaCelda}</td><td>${turno.entrada || '—'}</td><td>${turno.salida || '—'}</td></tr>`;
+          }
+        });
+      });
+      cuerpo.innerHTML = filasHtml;
+    } catch (err) {
+      console.error('No se pudieron cargar los marcajes:', err);
+      cuerpo.innerHTML = '<tr><td colspan="3" class="vacio">No se pudieron cargar los marcajes.</td></tr>';
+    }
+  }
+
+  async function eliminarMarcajeDesdeTabla(id) {
+    if (!confirm('¿Eliminar este registro manual?')) return;
+    try {
+      const res = await fetch('/api/admin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adminSecret, accion: 'eliminar_marcaje_manual', id })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert('❌ ' + (data.error || 'No se pudo eliminar el registro.'));
+        return;
+      }
+      cargarMarcajesFuncionarioDelMes();
+      cargarListado();
+    } catch (err) {
+      alert('Error de conexión. Inténtalo nuevamente.');
+      console.error(err);
+    }
+  }
+
+  document.getElementById('mesAnteriorM').addEventListener('click', () => {
+    mesActual--;
+    if (mesActual < 0) { mesActual = 11; anioActual--; }
+    cargarMarcajesFuncionarioDelMes();
+  });
+  document.getElementById('mesSiguienteM').addEventListener('click', () => {
+    mesActual++;
+    if (mesActual > 11) { mesActual = 0; anioActual++; }
+    cargarMarcajesFuncionarioDelMes();
+  });
+
+  // ===== Reporte mensual en PDF del funcionario seleccionado =====
+  async function descargarReportePDFAdmin() {
+    if (!funcionarioSeleccionado) return;
+    if (!marcajesActuales.length) {
+      alert('No hay marcajes registrados este mes para incluir en el reporte.');
+      return;
+    }
+
+    const boton = document.getElementById('btnDescargarPDFM');
+    boton.disabled = true;
+    const textoOriginalBoton = boton.textContent;
+    boton.textContent = 'Generando...';
+
+    try {
+      const nombre = funcionarioSeleccionado.nombre;
+      const rut = formatearRut(funcionarioSeleccionado.rut);
+
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const margen = 40;
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(14);
+      doc.text('CESFAM Peralillo', margen, 50);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.text("Servicio de Salud O'Higgins", margen, 66);
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(13);
+      doc.text('Reporte mensual de asistencia', margen, 96);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.text('Mes: ' + MESES[mesActual] + ' ' + anioActual, margen, 118);
+      doc.text('Funcionario: ' + nombre, margen, 134);
+      doc.text('RUT: ' + rut, margen, 150);
+
+      const ascendente = marcajesActuales.slice().reverse();
+      const diasPdf = agruparEnTurnos(ascendente);
+      const filas = [];
+      diasPdf.forEach((dia) => {
+        const fechaTexto = fechaTextoDesdeISO(dia.fechaISO, true);
+        dia.turnos.forEach((turno, idx) => {
+          const fechaCelda = idx === 0 ? fechaTexto : '';
+          if (turno.etiqueta) {
+            const texto = turno.detalle ? turno.etiqueta + ' — ' + turno.detalle : turno.etiqueta;
+            filas.push([fechaCelda, { content: texto, colSpan: 2, styles: { fontStyle: 'bold' } }]);
+          } else {
+            filas.push([fechaCelda, turno.entrada || '—', turno.salida || '—']);
+          }
+        });
+      });
+
+      doc.autoTable({
+        startY: 170,
+        head: [['Fecha', 'Hora entrada', 'Hora salida']],
+        body: filas,
+        margin: { left: margen, right: margen },
+        styles: { font: 'helvetica', fontSize: 9, cellPadding: 5 },
+        headStyles: { fillColor: [10, 61, 115], textColor: 255 },
+        theme: 'grid'
+      });
+
+      const totalMarcajes = marcajesActuales.length;
+      const diasUnicos = new Set(marcajesActuales.map((m) => m.fecha_hora.slice(0, 10))).size;
+
+      let y = doc.lastAutoTable.finalY + 22;
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.text('Total de marcajes: ' + totalMarcajes + '     Días con marcaje: ' + diasUnicos, margen, y);
+
+      const alturaBloqueFirmas = 90;
+      let firmaY = pageHeight - 70;
+      if (y + 20 > firmaY - alturaBloqueFirmas) {
+        doc.addPage();
+        firmaY = pageHeight - 70;
+      }
+
+      const espacioEntreColumnas = 40;
+      const anchoColumna = (pageWidth - margen * 2 - espacioEntreColumnas) / 2;
+      const xIzquierda = margen;
+      const xDerecha = margen + anchoColumna + espacioEntreColumnas;
+
+      doc.setLineWidth(0.6);
+      doc.line(xIzquierda, firmaY, xIzquierda + anchoColumna, firmaY);
+      doc.line(xDerecha, firmaY, xDerecha + anchoColumna, firmaY);
+
+      doc.setFontSize(10);
+      doc.text('Firma del funcionario', xIzquierda, firmaY + 16);
+      doc.setFont('helvetica', 'bold');
+      doc.text(nombre, xIzquierda, firmaY + 32);
+
+      doc.setFont('helvetica', 'normal');
+      doc.text('Firma del jefe directo', xDerecha, firmaY + 16);
+
+      const nombreArchivo = 'reporte-asistencia-' + nombre.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-' + MESES[mesActual] + '-' + anioActual + '.pdf';
+      doc.save(nombreArchivo);
+    } catch (err) {
+      console.error('No se pudo generar el PDF:', err);
+      alert('No se pudo generar el reporte en PDF. Intenta de nuevo.');
+    } finally {
+      boton.disabled = false;
+      boton.textContent = textoOriginalBoton;
+    }
+  }
+
+  document.getElementById('btnDescargarPDFM').addEventListener('click', descargarReportePDFAdmin);
+
+  // ===== Historial de todos los registros manuales (todos los funcionarios) =====
   function renderListado(filtro) {
     const cont = document.getElementById('listadoRegistros');
     const f = (filtro || '').trim().toLowerCase();
@@ -247,6 +644,7 @@
         return;
       }
       cargarListado();
+      cargarMarcajesFuncionarioDelMes();
     } catch (err) {
       alert('Error de conexión. Inténtalo nuevamente.');
       console.error(err);
@@ -264,7 +662,7 @@
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       todosLosRegistros = data.registros || [];
-      renderListado('');
+      renderListado(document.getElementById('listado-buscador').value);
     } catch (err) {
       console.error('No se pudo cargar el listado:', err);
       cont.innerHTML = '<p class="hint" style="margin:0; color:#B33A3A;">No se pudo cargar el listado.</p>';
