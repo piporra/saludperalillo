@@ -17,6 +17,12 @@
 //      cometidos funcionarios directamente al historial de "Mis marcajes")
 //   accion: "listar_marcajes_manual"  → { adminSecret }
 //   accion: "eliminar_marcaje_manual" → { adminSecret, id }
+//   accion: "listar_marcajes_funcionario" → { adminSecret, rut, anio, mes }
+//     (usado por registro-manual.html para que la encargada de RRHH pueda ver,
+//      en la misma pestaña, los marcajes de CUALQUIER funcionario — reales del
+//      reloj y manuales — sin depender de que ese funcionario inicie sesión;
+//      usa la clave service_role porque la política de seguridad (RLS) solo
+//      deja a cada funcionario ver sus propios marcajes)
 
 const USERNAME_DOMAIN = "cesfamperalillo.internal";
 
@@ -405,6 +411,43 @@ export default async function handler(req, res) {
         nombre: nombreMap[r.rut_sin_dv] || ("RUT " + r.rut_sin_dv + " (sin cuenta en el sitio)")
       }));
       return res.status(200).json({ ok: true, registros: conNombre });
+    }
+
+    // ===== Listar los marcajes (reales + manuales) de UN funcionario en un mes =====
+    // Para el panel de RRHH (registro-manual.html): permite ver la asistencia
+    // de cualquier funcionario sin que él tenga que iniciar sesión, saltándose
+    // la política de RLS con la clave service_role (que ya usa el resto de
+    // este archivo).
+    if (accion === "listar_marcajes_funcionario") {
+      const { rut, anio, mes } = body;
+      if (!rut || !anio || !mes) {
+        return res.status(400).json({ error: "Faltan datos (rut, año o mes)" });
+      }
+      const anioNum = Number(anio);
+      const mesNum = Number(mes); // 1-12
+      if (!Number.isInteger(anioNum) || !Number.isInteger(mesNum) || mesNum < 1 || mesNum > 12) {
+        return res.status(400).json({ error: "Año o mes inválido" });
+      }
+
+      const rutSinDv = normalizarRut(rut).slice(0, -1);
+      const inicio = `${anioNum}-${pad2(mesNum)}-01`;
+      const fin = new Date(Date.UTC(anioNum, mesNum, 1)).toISOString().slice(0, 10);
+
+      const url = `${process.env.SUPABASE_URL}/rest/v1/marcajes?select=*`
+        + `&rut_sin_dv=eq.${encodeURIComponent(rutSinDv)}`
+        + `&fecha_hora=gte.${inicio}`
+        + `&fecha_hora=lt.${fin}`
+        + `&order=fecha_hora.desc`;
+
+      const listRes = await fetch(url, {
+        headers: {
+          "apikey": process.env.SUPABASE_SERVICE_ROLE_KEY,
+          "Authorization": `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`
+        }
+      });
+      if (!listRes.ok) return res.status(500).json({ error: "No se pudieron cargar los marcajes" });
+      const marcajes = await listRes.json();
+      return res.status(200).json({ ok: true, marcajes });
     }
 
     // ===== Eliminar un registro manual (por si se ingresó por error) =====
