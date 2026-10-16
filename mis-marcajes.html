@@ -39,6 +39,7 @@
   .page-head .eyebrow{color:var(--gold); font-weight:700; text-transform:uppercase; letter-spacing:.07em; font-size:.8rem;}
   .page-head h1{font-size:1.6rem;}
   .back-link{display:inline-block; margin-bottom:18px; font-size:.88rem; font-weight:700; text-decoration:none;}
+  .funcionario-actual{display:inline-block; background:var(--teal-light); border-radius:10px; padding:10px 16px; font-size:.92rem; color:var(--teal-deep); font-weight:700; margin:4px 0 0;}
 
   .mes-nav{display:flex; align-items:center; justify-content:center; gap:16px; margin-bottom:24px;}
   .mes-nav button{
@@ -98,6 +99,7 @@
       <span class="eyebrow">Asistencia</span>
       <h1>Mis marcajes</h1>
       <p>Marcajes registrados por el reloj biométrico, asociados a tu RUT.</p>
+      <p class="funcionario-actual" id="funcionarioActualTexto">👤 Cargando...</p>
     </div>
 
     <div class="mes-nav">
@@ -195,6 +197,29 @@
     });
 
     return dias;
+  }
+
+  // Muestra de quién son los marcajes que se están viendo, bien visible en
+  // el cuerpo de la página (no solo en la esquina del encabezado) — para que
+  // quede claro de inmediato sin importar con qué perfil/navegador se abrió
+  // la página, ya que varios funcionarios pueden compartir el mismo equipo.
+  async function mostrarNombreFuncionario() {
+    const el = document.getElementById('funcionarioActualTexto');
+    if (!el) return;
+    try {
+      const supabase = getSupabaseClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      const nombre = (session.user.user_metadata && session.user.user_metadata.nombre)
+        ? session.user.user_metadata.nombre
+        : session.user.email;
+      const rutCrudo = session.user.email.split('@')[0];
+      const rut = typeof formatearRut === 'function' ? formatearRut(rutCrudo) : rutCrudo;
+      el.textContent = '👤 ' + nombre + ' — ' + rut;
+    } catch (err) {
+      console.error('No se pudo mostrar el nombre del funcionario:', err);
+      el.textContent = '👤';
+    }
   }
 
   function fechaTextoDesdeISO(fechaISO, incluirAnio) {
@@ -405,7 +430,10 @@
     cargarMarcajesDelMes();
   });
 
-  window.addEventListener('DOMContentLoaded', cargarMarcajesDelMes);
+  window.addEventListener('DOMContentLoaded', () => {
+    mostrarNombreFuncionario();
+    cargarMarcajesDelMes();
+  });
 </script>
 
 </body>
