@@ -399,6 +399,20 @@
     return dias;
   }
 
+  // Devuelve TODOS los días del mes (1 hasta el último), aunque no tengan
+  // ningún marcaje ni registro manual ese día — fines de semana incluidos —
+  // para que el mes se vea completo tanto en pantalla como en el PDF.
+  function completarDiasDelMes(dias, anio, mesIndice0) {
+    const porFecha = new Map(dias.map((d) => [d.fechaISO, d]));
+    const ultimoDia = new Date(anio, mesIndice0 + 1, 0).getDate();
+    const completos = [];
+    for (let d = 1; d <= ultimoDia; d++) {
+      const fechaISO = `${anio}-${String(mesIndice0 + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+      completos.push(porFecha.get(fechaISO) || { fechaISO, turnos: [{ entrada: null, salida: null }] });
+    }
+    return completos;
+  }
+
   function fechaTextoDesdeISO(fechaISO, incluirAnio) {
     const fecha = new Date(fechaISO + 'T00:00:00');
     return fecha.toLocaleDateString('es-CL', incluirAnio
@@ -430,13 +444,8 @@
         ? new Date(marcajes[0].fecha_hora).toLocaleString('es-CL', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false })
         : '—';
 
-      if (!marcajes.length) {
-        cuerpo.innerHTML = '<tr><td colspan="3" class="vacio">No hay marcajes registrados este mes.</td></tr>';
-        return;
-      }
-
       const ascendente = marcajes.slice().reverse();
-      const dias = agruparEnTurnos(ascendente);
+      const dias = completarDiasDelMes(agruparEnTurnos(ascendente), anioActual, mesActual);
       let filasHtml = '';
       dias.forEach((dia) => {
         const fechaTexto = fechaTextoDesdeISO(dia.fechaISO, false);
@@ -493,10 +502,6 @@
   // ===== Reporte mensual en PDF del funcionario seleccionado =====
   async function descargarReportePDFAdmin() {
     if (!funcionarioSeleccionado) return;
-    if (!marcajesActuales.length) {
-      alert('No hay marcajes registrados este mes para incluir en el reporte.');
-      return;
-    }
 
     const boton = document.getElementById('btnDescargarPDFM');
     boton.disabled = true;
@@ -531,7 +536,7 @@
       doc.text('RUT: ' + rut, margen, 150);
 
       const ascendente = marcajesActuales.slice().reverse();
-      const diasPdf = agruparEnTurnos(ascendente);
+      const diasPdf = completarDiasDelMes(agruparEnTurnos(ascendente), anioActual, mesActual);
       const filas = [];
       diasPdf.forEach((dia) => {
         const fechaTexto = fechaTextoDesdeISO(dia.fechaISO, true);

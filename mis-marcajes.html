@@ -200,6 +200,23 @@
     return dias;
   }
 
+  // Devuelve TODOS los días del mes (1 hasta el último), aunque no tengan
+  // ningún marcaje ni registro manual ese día — fines de semana incluidos.
+  // Los días que sí tienen algo (de "dias", el resultado de agruparEnTurnos)
+  // se dejan tal cual; a los que no les corresponde nada se les agrega una
+  // fila vacía (— / —) para que el mes se vea completo tanto en pantalla
+  // como en el PDF.
+  function completarDiasDelMes(dias, anio, mesIndice0) {
+    const porFecha = new Map(dias.map((d) => [d.fechaISO, d]));
+    const ultimoDia = new Date(anio, mesIndice0 + 1, 0).getDate();
+    const completos = [];
+    for (let d = 1; d <= ultimoDia; d++) {
+      const fechaISO = `${anio}-${String(mesIndice0 + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+      completos.push(porFecha.get(fechaISO) || { fechaISO, turnos: [{ entrada: null, salida: null }] });
+    }
+    return completos;
+  }
+
   // Muestra de quién son los marcajes que se están viendo, bien visible en
   // el cuerpo de la página (no solo en la esquina del encabezado) — para que
   // quede claro de inmediato sin importar con qué perfil/navegador se abrió
@@ -267,13 +284,8 @@
         ? new Date(marcajes[0].fecha_hora).toLocaleString('es-CL', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false })
         : '—';
 
-      if (!marcajes.length) {
-        cuerpo.innerHTML = '<tr><td colspan="3" class="vacio">No hay marcajes registrados este mes.</td></tr>';
-        return;
-      }
-
       const ascendente = marcajes.slice().reverse();
-      const dias = agruparEnTurnos(ascendente);
+      const dias = completarDiasDelMes(agruparEnTurnos(ascendente), anioActual, mesActual);
       let filasHtml = '';
       dias.forEach((dia) => {
         const fechaTexto = fechaTextoDesdeISO(dia.fechaISO, false);
@@ -299,11 +311,6 @@
   // y dos líneas de firma al final: una para el funcionario (con su nombre
   // ya impreso) y otra en blanco para el jefe directo.
   async function descargarReportePDF() {
-    if (!marcajesActuales.length) {
-      alert('No hay marcajes registrados este mes para incluir en el reporte.');
-      return;
-    }
-
     const boton = document.getElementById('btnDescargarPDF');
     boton.disabled = true;
     const textoOriginalBoton = boton.textContent;
@@ -346,7 +353,7 @@
       // Mismo agrupamiento por turnos que se ve en pantalla: Fecha | Hora
       // entrada | Hora salida, en orden cronológico (más antiguo primero).
       const ascendente = marcajesActuales.slice().reverse();
-      const diasPdf = agruparEnTurnos(ascendente);
+      const diasPdf = completarDiasDelMes(agruparEnTurnos(ascendente), anioActual, mesActual);
       const filas = [];
       diasPdf.forEach((dia) => {
         const fechaTexto = fechaTextoDesdeISO(dia.fechaISO, true);
