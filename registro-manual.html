@@ -113,8 +113,9 @@
         <option value="medio_dia_administrativo_manana">Medio día administrativo — mañana</option>
         <option value="medio_dia_administrativo_tarde">Medio día administrativo — tarde</option>
         <option value="cometido_funcionario">Cometido funcionario</option>
+        <option value="feriado_legal">Feriado legal (vacaciones)</option>
       </select>
-      <p class="hint" style="margin-top:-12px;">Si es medio día, el sistema deja igual la marcación real del reloj de la otra mitad de la jornada (la que sí se trabajó) — no la reemplaza.</p>
+      <p class="hint" style="margin-top:-12px;">Si es medio día, el sistema deja igual la marcación real del reloj de la otra mitad de la jornada (la que sí se trabajó) — no la reemplaza. Si eliges Feriado legal, se registran solo los días de lunes a viernes del rango — los fines de semana no cuentan como días de vacaciones.</p>
       <label>Fecha</label>
       <div class="fila-fechas">
         <div>
@@ -195,7 +196,8 @@
     permiso_administrativo: 'Permiso administrativo',
     cometido_funcionario: 'Cometido funcionario',
     medio_dia_administrativo_manana: 'Medio día administrativo (mañana)',
-    medio_dia_administrativo_tarde: 'Medio día administrativo (tarde)'
+    medio_dia_administrativo_tarde: 'Medio día administrativo (tarde)',
+    feriado_legal: 'Feriado legal'
   };
 
   function escapeHtml(str) {
