@@ -14,10 +14,13 @@
 //   accion: "listar_jefes"            → { adminSecret }
 //   accion: "registrar_marcaje_manual" → { adminSecret, rut, tipo, fechaInicio, fechaFin, detalle }
 //     (usado por registro-manual.html para agregar permisos administrativos,
-//      cometidos funcionarios o feriados legales directamente al historial de
-//      "Mis marcajes". Para tipo="feriado_legal", el rango fechaInicio..fechaFin
-//      solo genera registros de lunes a viernes — los fines de semana no
-//      cuentan como días de feriado legal, como indica el Código del Trabajo)
+//      cometidos funcionarios, feriados legales o licencias médicas directamente
+//      al historial de "Mis marcajes". Para tipo="feriado_legal", el rango
+//      fechaInicio..fechaFin solo genera registros de lunes a viernes — los
+//      fines de semana y feriados no cuentan como días de feriado legal, como
+//      indica el Código del Trabajo. Para tipo="licencia_medica" es al revés:
+//      se generan TODOS los días corridos del rango, feriados y fines de
+//      semana incluidos, porque la licencia médica se cuenta por días corridos)
 //   accion: "listar_marcajes_manual"  → { adminSecret }
 //   accion: "eliminar_marcaje_manual" → { adminSecret, id }
 //   accion: "listar_marcajes_funcionario" → { adminSecret, rut, anio, mes }
@@ -85,7 +88,8 @@ const HORA_ANCLA_POR_TIPO = {
   cometido_funcionario: 12,
   medio_dia_administrativo_manana: 7,
   medio_dia_administrativo_tarde: 13,
-  feriado_legal: 12
+  feriado_legal: 12,
+  licencia_medica: 12
 };
 
 // Tipos de registro cuyo rango de fechas solo debe generar filas en días
@@ -95,6 +99,9 @@ const HORA_ANCLA_POR_TIPO = {
 // Dirección del Trabajo (ORD. 2802/145, entre otros) también se excluyen
 // los domingos y cualquier día que la ley haya declarado feriado — esos
 // días no "gastan" feriado legal del funcionario.
+// La licencia médica NO va en este conjunto a propósito: se cuenta en días
+// corridos (continuos), así que fines de semana y feriados SÍ cuentan como
+// días de licencia — por eso licencia_medica no está en TIPOS_SOLO_DIAS_HABILES.
 const TIPOS_SOLO_DIAS_HABILES = new Set(["feriado_legal"]);
 
 // Feriados legales nacionales de Chile. ⚠️ Esta lista hay que revisarla y

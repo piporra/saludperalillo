@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mis marcajes — CESFAM Peralillo</title>
+<link rel="icon" type="image/jpeg" href="assets/logo-cesfam.jpeg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script src="assets/supabase-config.js"></script>
+<style>
+  :root{
+    --teal-deep:#0A3D73; --teal:#1B7FC2; --teal-light:#E7F2FB; --sky:#F4FAFE;
+    --gold:#12A6D6; --ink:#1C2B36; --gray:#5A6B78; --line:#DCE7F0; --radius:16px;
+    --font-head:'Poppins', sans-serif; --font-body:'Atkinson Hyperlegible', system-ui, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; font-family:var(--font-body); color:var(--ink); background:var(--teal-light); line-height:1.6; font-size:17px; min-height:100vh;}
+  h1{font-family:var(--font-head); color:var(--teal-deep); margin:0 0 6px;}
+  p{margin:0 0 1em; color:var(--gray);}
+  a{color:var(--teal-deep);}
+  .container{max-width:900px; margin:0 auto; padding:0 24px;}
+
+  header.site-header{background:#fff; border-bottom:1px solid var(--line);}
+  .site-header .container{display:flex; align-items:center; justify-content:space-between; padding:16px 24px; max-width:1180px;}
+  .brand{display:flex; align-items:center; gap:12px; text-decoration:none;}
+  .brand-logo{width:48px; height:48px; border-radius:50%; object-fit:cover; border:1.5px solid var(--line);}
+  .brand-text .eyebrow{display:block; font-size:.7rem; letter-spacing:.07em; text-transform:uppercase; color:var(--teal); font-weight:700;}
+  .brand-text .name{font-family:var(--font-head); font-weight:700; font-size:1.1rem; color:var(--teal-deep);}
+  .header-right{display:flex; align-items:center; gap:16px; font-size:.85rem; color:var(--gray);}
+  .header-right a{color:var(--teal-deep); text-decoration:none; font-weight:700;}
+  .header-right a:hover{text-decoration:underline;}
+
+  main{padding:56px 0 80px;}
+  .page-head{margin-bottom:28px;}
+  .page-head .eyebrow{color:var(--gold); font-weight:700; text-transform:uppercase; letter-spacing:.07em; font-size:.8rem;}
+  .page-head h1{font-size:1.6rem;}
+  .back-link{display:inline-block; margin-bottom:18px; font-size:.88rem; font-weight:700; text-decoration:none;}
+  .funcionario-actual{display:inline-block; background:var(--teal-light); border-radius:10px; padding:10px 16px; font-size:.92rem; color:var(--teal-deep); font-weight:700; margin:4px 0 0;}
+
+  .mes-nav{display:flex; align-items:center; justify-content:center; gap:16px; margin-bottom:24px;}
+  .mes-nav button{
+    background:#fff; border:1px solid var(--line); border-radius:10px; width:36px; height:36px;
+    font-size:1.1rem; cursor:pointer; color:var(--teal-deep); box-shadow:0 4px 10px rgba(10,61,115,.06);
+  }
+  .mes-nav button:hover{background:var(--teal-light);}
+  .mes-nav h2{font-family:var(--font-head); color:var(--teal-deep); font-size:1.15rem; margin:0; text-transform:capitalize; min-width:200px; text-align:center;}
+
+  .resumen-grid{display:grid; grid-template-columns:repeat(3, 1fr); gap:16px; margin-bottom:28px;}
+  @media (max-width:640px){ .resumen-grid{grid-template-columns:1fr;} }
+  .resumen-card{background:#fff; border:1px solid var(--line); border-radius:var(--radius); padding:20px; text-align:center; box-shadow:0 12px 30px rgba(10,61,115,.06);}
+  .resumen-card .num{font-family:var(--font-head); font-size:1.7rem; font-weight:700; color:var(--teal-deep);}
+  .resumen-card .lbl{font-size:.82rem; color:var(--gray);}
+
+  .tabla-card{background:#fff; border:1px solid var(--line); border-radius:var(--radius); padding:8px; box-shadow:0 12px 30px rgba(10,61,115,.06); overflow-x:auto;}
+  table{width:100%; border-collapse:collapse; font-size:.92rem;}
+  thead th{text-align:left; padding:14px 16px; color:var(--gray); font-weight:700; font-size:.78rem; text-transform:uppercase; letter-spacing:.04em; border-bottom:1px solid var(--line);}
+  tbody td{padding:12px 16px; border-bottom:1px solid var(--line); color:var(--ink);}
+  tbody tr:last-child td{border-bottom:none;}
+  tbody td.fecha-celda{font-weight:700; color:var(--teal-deep); white-space:nowrap;}
+  .vacio{padding:40px 16px; text-align:center; color:var(--gray);}
+
+  .acciones{display:flex; justify-content:flex-end; margin-bottom:16px;}
+  .btn-pdf{
+    display:inline-flex; align-items:center; gap:8px; background:var(--teal-deep); color:#fff;
+    border:none; border-radius:10px; padding:10px 18px; font-family:var(--font-body); font-weight:700;
+    font-size:.88rem; cursor:pointer; box-shadow:0 8px 20px rgba(10,61,115,.18);
+  }
+  .btn-pdf:hover{background:var(--teal);}
+  .btn-pdf:disabled{opacity:.5; cursor:not-allowed;}
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="container">
+    <a href="index.html" class="brand">
+      <img class="brand-logo" src="assets/logo-cesfam.jpeg" alt="Logo CESFAM Peralillo">
+      <span class="brand-text">
+        <span class="eyebrow">Servicio de Salud O'Higgins</span>
+        <span class="name">CESFAM Peralillo</span>
+      </span>
+    </a>
+    <div class="header-right">
+      <span>👤 <span id="auth-user-name"></span></span>
+      <a href="index.html">Sitio público</a>
+      <a href="#" onclick="cerrarSesion(); return false;">Cerrar sesión</a>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="container">
+    <a href="dashboard.html" class="back-link">← Volver al portal</a>
+    <div class="page-head">
+      <span class="eyebrow">Asistencia</span>
+      <h1>Mis marcajes</h1>
+      <p>Marcajes registrados por el reloj biométrico, asociados a tu RUT.</p>
+      <p class="funcionario-actual" id="funcionarioActualTexto">👤 Cargando...</p>
+    </div>
+
+    <div class="mes-nav">
+      <button id="mesAnterior" aria-label="Mes anterior">←</button>
+      <h2 id="mesTitulo">–</h2>
+      <button id="mesSiguiente" aria-label="Mes siguiente">→</button>
+    </div>
+
+    <div class="resumen-grid">
+      <div class="resumen-card"><div class="num" id="resTotal">–</div><div class="lbl">Marcajes este mes</div></div>
+      <div class="resumen-card"><div class="num" id="resDias">–</div><div class="lbl">Días con marcaje</div></div>
+      <div class="resumen-card"><div class="num" id="resUltimo">–</div><div class="lbl">Último marcaje</div></div>
+    </div>
+
+    <div class="acciones">
+      <button id="btnDescargarPDF" class="btn-pdf">📄 Descargar reporte del mes (PDF)</button>
+    </div>
+
+    <div class="tabla-card">
+      <table>
+        <thead>
+          <tr><th>Fecha</th><th>Hora entrada</th><th>Hora salida</th></tr>
+        </thead>
+        <tbody id="cuerpoTabla">
+          <tr><td colspan="3" class="vacio">Cargando...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</main>
+
+<script src="assets/auth-guard.js"></script>
+<script>
+  const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+
+  const hoy = new Date();
+  let anioActual = hoy.getFullYear();
+  let mesActual = hoy.getMonth(); // 0-11
+  let marcajesActuales = []; // los marcajes del mes que se está viendo, para el PDF
+
+  function pad2(n) { return String(n).padStart(2, '0'); }
+
+  function escapeHtml(str) {
+    return String(str == null ? '' : str).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+
+  // Registros que no vienen del reloj sino que se ingresaron a mano desde
+  // registro-manual.html (permisos administrativos / cometidos), para que el
+  // día no se vea como si el funcionario no hubiera ido a trabajar.
+  const ETIQUETAS_MANUALES = {
+    permiso_administrativo: 'Permiso administrativo',
+    cometido_funcionario: 'Cometido funcionario',
+    medio_dia_administrativo_manana: 'Medio día administrativo (mañana)',
+    medio_dia_administrativo_tarde: 'Medio día administrativo (tarde)',
+    feriado_legal: 'Feriado legal',
+    licencia_medica: 'Licencia médica'
+  };
+
+  // Agrupa una lista de marcajes (ordenados de más antiguo a más reciente)
+  // en "turnos" por día: cada turno junta una Entrada con la Salida que le
+  // sigue, para poder mostrarlas en la misma fila (Fecha | Hora entrada |
+  // Hora salida) tal como se ve físicamente en el reloj de control. Un
+  // registro manual (permiso/cometido) se muestra como una fila propia con
+  // el motivo, en vez de intentar emparejarlo con una hora de salida.
+  // El estado que manda el reloj suele ser 0 = entrada, 1 = salida.
+  function agruparEnTurnos(marcajesAscendentes) {
+    const dias = []; // [{ fechaISO, turnos: [{ entrada, salida } | { etiqueta, detalle }] }]
+    let diaActual = null;
+
+    marcajesAscendentes.forEach((m) => {
+      const fechaISO = m.fecha_hora.slice(0, 10);
+      const horaTexto = new Date(m.fecha_hora).toLocaleTimeString('es-CL', {
+        hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+      });
+
+      if (!diaActual || diaActual.fechaISO !== fechaISO) {
+        diaActual = { fechaISO, turnos: [] };
+        dias.push(diaActual);
+      }
+
+      if (ETIQUETAS_MANUALES[m.estado]) {
+        // Permiso administrativo o cometido funcionario ingresado a mano.
+        diaActual.turnos.push({ etiqueta: ETIQUETAS_MANUALES[m.estado], detalle: m.detalle || null });
+      } else if (m.estado === '1') {
+        // Salida: cierra el turno abierto más reciente de este día, o si no
+        // había ninguno abierto (dato suelto), crea una fila solo con salida.
+        const ultimo = diaActual.turnos[diaActual.turnos.length - 1];
+        if (ultimo && !ultimo.salida && !ultimo.etiqueta) {
+          ultimo.salida = horaTexto;
+        } else {
+          diaActual.turnos.push({ entrada: null, salida: horaTexto });
+        }
+      } else {
+        // Entrada (estado === '0') u otro valor no reconocido: abre turno nuevo.
+        diaActual.turnos.push({ entrada: horaTexto, salida: null });
+      }
+    });
+
+    return dias;
+  }
+
+  // Devuelve TODOS los días del mes (1 hasta el último), aunque no tengan
+  // ningún marcaje ni registro manual ese día — fines de semana incluidos.
+  // Los días que sí tienen algo (de "dias", el resultado de agruparEnTurnos)
+  // se dejan tal cual; a los que no les corresponde nada se les agrega una
+  // fila vacía (— / —) para que el mes se vea completo tanto en pantalla
+  // como en el PDF.
+  function completarDiasDelMes(dias, anio, mesIndice0) {
+    const porFecha = new Map(dias.map((d) => [d.fechaISO, d]));
+    const ultimoDia = new Date(anio, mesIndice0 + 1, 0).getDate();
+    const completos = [];
+    for (let d = 1; d <= ultimoDia; d++) {
+      const fechaISO = `${anio}-${String(mesIndice0 + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+      completos.push(porFecha.get(fechaISO) || { fechaISO, turnos: [{ entrada: null, salida: null }] });
+    }
+    return completos;
+  }
+
+  // Muestra de quién son los marcajes que se están viendo, bien visible en
+  // el cuerpo de la página (no solo en la esquina del encabezado) — para que
+  // quede claro de inmediato sin importar con qué perfil/navegador se abrió
+  // la página, ya que varios funcionarios pueden compartir el mismo equipo.
+  async function mostrarNombreFuncionario() {
+    const el = document.getElementById('funcionarioActualTexto');
+    if (!el) return;
+    try {
+      const supabase = getSupabaseClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      const nombre = (session.user.user_metadata && session.user.user_metadata.nombre)
+        ? session.user.user_metadata.nombre
+        : session.user.email;
+      const rutCrudo = session.user.email.split('@')[0];
+      const rut = typeof formatearRut === 'function' ? formatearRut(rutCrudo) : rutCrudo;
+      el.textContent = '👤 ' + nombre + ' — ' + rut;
+    } catch (err) {
+      console.error('No se pudo mostrar el nombre del funcionario:', err);
+      el.textContent = '👤';
+    }
+  }
+
+  function fechaTextoDesdeISO(fechaISO, incluirAnio) {
+    const fecha = new Date(fechaISO + 'T00:00:00');
+    return fecha.toLocaleDateString('es-CL', incluirAnio
+      ? { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' }
+      : { weekday: 'short', day: '2-digit', month: 'short' });
+  }
+
+  async function cargarMarcajesDelMes() {
+    const cuerpo = document.getElementById('cuerpoTabla');
+    document.getElementById('mesTitulo').textContent = MESES[mesActual] + ' ' + anioActual;
+    cuerpo.innerHTML = '<tr><td colspan="3" class="vacio">Cargando...</td></tr>';
+
+    try {
+      const supabase = getSupabaseClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const inicio = `${anioActual}-${pad2(mesActual + 1)}-01`;
+      const finMesDate = new Date(anioActual, mesActual + 1, 1);
+      const fin = `${finMesDate.getFullYear()}-${pad2(finMesDate.getMonth() + 1)}-01`;
+
+      const url = SUPABASE_URL + '/rest/v1/marcajes?select=*'
+        + '&fecha_hora=gte.' + inicio
+        + '&fecha_hora=lt.' + fin
+        + '&order=fecha_hora.desc';
+
+      const res = await fetch(url, {
+        headers: {
+          apikey: SUPABASE_ANON_KEY,
+          Authorization: 'Bearer ' + session.access_token
+        }
+      });
+      if (!res.ok) throw new Error('No se pudo cargar');
+      const marcajes = await res.json();
+      marcajesActuales = marcajes;
+
+      // Resumen
+      document.getElementById('resTotal').textContent = marcajes.length;
+      const diasUnicos = new Set(marcajes.map(m => m.fecha_hora.slice(0, 10)));
+      document.getElementById('resDias').textContent = diasUnicos.size;
+      document.getElementById('resUltimo').textContent = marcajes.length
+        ? new Date(marcajes[0].fecha_hora).toLocaleString('es-CL', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false })
+        : '—';
+
+      const ascendente = marcajes.slice().reverse();
+      const dias = completarDiasDelMes(agruparEnTurnos(ascendente), anioActual, mesActual);
+      let filasHtml = '';
+      dias.forEach((dia) => {
+        const fechaTexto = fechaTextoDesdeISO(dia.fechaISO, false);
+        dia.turnos.forEach((turno, idx) => {
+          const fechaCelda = idx === 0 ? fechaTexto : '';
+          if (turno.etiqueta) {
+            const texto = turno.detalle ? turno.etiqueta + ' — ' + escapeHtml(turno.detalle) : turno.etiqueta;
+            filasHtml += `<tr><td class="fecha-celda">${fechaCelda}</td><td colspan="2" style="font-weight:700; color:var(--teal-deep);">${texto}</td></tr>`;
+          } else {
+            filasHtml += `<tr><td class="fecha-celda">${fechaCelda}</td><td>${turno.entrada || '—'}</td><td>${turno.salida || '—'}</td></tr>`;
+          }
+        });
+      });
+      cuerpo.innerHTML = filasHtml;
+    } catch (err) {
+      console.error('No se pudieron cargar los marcajes:', err);
+      cuerpo.innerHTML = '<tr><td colspan="3" class="vacio">No se pudieron cargar tus marcajes en este momento.</td></tr>';
+    }
+  }
+
+  // ===== Reporte mensual en PDF =====
+  // Genera un PDF con el detalle de marcajes del mes que se está viendo,
+  // y dos líneas de firma al final: una para el funcionario (con su nombre
+  // ya impreso) y otra en blanco para el jefe directo.
+  async function descargarReportePDF() {
+    const boton = document.getElementById('btnDescargarPDF');
+    boton.disabled = true;
+    const textoOriginalBoton = boton.textContent;
+    boton.textContent = 'Generando...';
+
+    try {
+      const supabase = getSupabaseClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const nombre = (session.user.user_metadata && session.user.user_metadata.nombre)
+        ? session.user.user_metadata.nombre
+        : session.user.email;
+      const rutCrudo = session.user.email.split('@')[0];
+      const rut = typeof formatearRut === 'function' ? formatearRut(rutCrudo) : rutCrudo;
+
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const margen = 40;
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(14);
+      doc.text('CESFAM Peralillo', margen, 50);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.text("Servicio de Salud O'Higgins", margen, 66);
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(13);
+      doc.text('Reporte mensual de asistencia', margen, 96);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.text('Mes: ' + MESES[mesActual] + ' ' + anioActual, margen, 118);
+      doc.text('Funcionario: ' + nombre, margen, 134);
+      doc.text('RUT: ' + rut, margen, 150);
+
+      // Mismo agrupamiento por turnos que se ve en pantalla: Fecha | Hora
+      // entrada | Hora salida, en orden cronológico (más antiguo primero).
+      const ascendente = marcajesActuales.slice().reverse();
+      const diasPdf = completarDiasDelMes(agruparEnTurnos(ascendente), anioActual, mesActual);
+      const filas = [];
+      diasPdf.forEach((dia) => {
+        const fechaTexto = fechaTextoDesdeISO(dia.fechaISO, true);
+        dia.turnos.forEach((turno, idx) => {
+          const fechaCelda = idx === 0 ? fechaTexto : '';
+          if (turno.etiqueta) {
+            const texto = turno.detalle ? turno.etiqueta + ' — ' + turno.detalle : turno.etiqueta;
+            filas.push([fechaCelda, { content: texto, colSpan: 2, styles: { fontStyle: 'bold' } }]);
+          } else {
+            filas.push([fechaCelda, turno.entrada || '—', turno.salida || '—']);
+          }
+        });
+      });
+
+      doc.autoTable({
+        startY: 170,
+        head: [['Fecha', 'Hora entrada', 'Hora salida']],
+        body: filas,
+        margin: { left: margen, right: margen },
+        styles: { font: 'helvetica', fontSize: 9, cellPadding: 5 },
+        headStyles: { fillColor: [10, 61, 115], textColor: 255 },
+        theme: 'grid'
+      });
+
+      const totalMarcajes = marcajesActuales.length;
+      const diasUnicos = new Set(marcajesActuales.map((m) => m.fecha_hora.slice(0, 10))).size;
+
+      let y = doc.lastAutoTable.finalY + 22;
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.text('Total de marcajes: ' + totalMarcajes + '     Días con marcaje: ' + diasUnicos, margen, y);
+
+      // ---- Bloque de firmas ----
+      // Se reserva un espacio fijo cerca del final de la página; si el
+      // resumen quedó muy abajo (mes con muchos marcajes), se pasa a una
+      // página nueva para que las firmas no queden apretadas.
+      const alturaBloqueFirmas = 90;
+      let firmaY = pageHeight - 70;
+      if (y + 20 > firmaY - alturaBloqueFirmas) {
+        doc.addPage();
+        firmaY = pageHeight - 70;
+      }
+
+      const espacioEntreColumnas = 40;
+      const anchoColumna = (pageWidth - margen * 2 - espacioEntreColumnas) / 2;
+      const xIzquierda = margen;
+      const xDerecha = margen + anchoColumna + espacioEntreColumnas;
+
+      doc.setLineWidth(0.6);
+      doc.line(xIzquierda, firmaY, xIzquierda + anchoColumna, firmaY);
+      doc.line(xDerecha, firmaY, xDerecha + anchoColumna, firmaY);
+
+      doc.setFontSize(10);
+      doc.text('Firma del funcionario', xIzquierda, firmaY + 16);
+      doc.setFont('helvetica', 'bold');
+      doc.text(nombre, xIzquierda, firmaY + 32);
+
+      doc.setFont('helvetica', 'normal');
+      doc.text('Firma del jefe directo', xDerecha, firmaY + 16);
+
+      const nombreArchivo = 'reporte-asistencia-' + MESES[mesActual] + '-' + anioActual + '.pdf';
+      doc.save(nombreArchivo);
+    } catch (err) {
+      console.error('No se pudo generar el PDF:', err);
+      alert('No se pudo generar el reporte en PDF. Intenta de nuevo.');
+    } finally {
+      boton.disabled = false;
+      boton.textContent = textoOriginalBoton;
+    }
+  }
+
+  document.getElementById('btnDescargarPDF').addEventListener('click', descargarReportePDF);
+
+  document.getElementById('mesAnterior').addEventListener('click', () => {
+    mesActual--;
+    if (mesActual < 0) { mesActual = 11; anioActual--; }
+    cargarMarcajesDelMes();
+  });
+  document.getElementById('mesSiguiente').addEventListener('click', () => {
+    mesActual++;
+    if (mesActual > 11) { mesActual = 0; anioActual++; }
+    cargarMarcajesDelMes();
+  });
+
+  window.addEventListener('DOMContentLoaded', () => {
+    mostrarNombreFuncionario();
+    cargarMarcajesDelMes();
+  });
+</script>
+
+</body>
+</html>
