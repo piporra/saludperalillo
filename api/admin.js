@@ -89,11 +89,37 @@ const HORA_ANCLA_POR_TIPO = {
 };
 
 // Tipos de registro cuyo rango de fechas solo debe generar filas en días
-// hábiles (lunes a viernes). El feriado legal (vacaciones) en Chile se
-// cuenta así: el sábado se considera siempre inhábil para estos efectos
-// (Código del Trabajo), así que un rango que incluya fines de semana no
-// debe "gastar" días de feriado en ellos.
+// hábiles (lunes a viernes, sin feriados). El feriado legal (vacaciones) en
+// Chile se cuenta así: el sábado se considera siempre inhábil para estos
+// efectos (artículo 69 del Código del Trabajo), y según la doctrina de la
+// Dirección del Trabajo (ORD. 2802/145, entre otros) también se excluyen
+// los domingos y cualquier día que la ley haya declarado feriado — esos
+// días no "gastan" feriado legal del funcionario.
 const TIPOS_SOLO_DIAS_HABILES = new Set(["feriado_legal"]);
+
+// Feriados legales nacionales de Chile. ⚠️ Esta lista hay que revisarla y
+// actualizarla cada año (varias fechas, como Viernes Santo, cambian según
+// el calendario de Semana Santa) — ver el calendario oficial en
+// https://www.feriados.cl o la Dirección del Trabajo.
+const FERIADOS_CHILE = new Set([
+  // 2026
+  "2026-01-01", // Año Nuevo
+  "2026-04-03", // Viernes Santo
+  "2026-04-04", // Sábado Santo
+  "2026-05-01", // Día del Trabajo
+  "2026-05-21", // Día de las Glorias Navales
+  "2026-06-21", // Día Nacional de los Pueblos Indígenas
+  "2026-06-29", // San Pedro y San Pablo
+  "2026-07-16", // Virgen del Carmen
+  "2026-08-15", // Asunción de la Virgen
+  "2026-09-18", // Independencia Nacional
+  "2026-09-19", // Día de las Glorias del Ejército
+  "2026-10-12", // Encuentro de Dos Mundos
+  "2026-10-31", // Día de las Iglesias Evangélicas y Protestantes
+  "2026-11-01", // Día de Todos los Santos
+  "2026-12-08", // Inmaculada Concepción
+  "2026-12-25"  // Navidad
+]);
 
 function sumarDias(fechaYMD, dias) {
   const [y, mo, d] = fechaYMD.split("-").map(Number);
@@ -102,11 +128,11 @@ function sumarDias(fechaYMD, dias) {
   return dt.toISOString().slice(0, 10);
 }
 
-// true si fechaYMD ("YYYY-MM-DD") cae sábado o domingo.
-function esFinDeSemana(fechaYMD) {
+// true si fechaYMD ("YYYY-MM-DD") cae sábado, domingo, o es un feriado legal.
+function esDiaInhabilParaFeriadoLegal(fechaYMD) {
   const [y, mo, d] = fechaYMD.split("-").map(Number);
   const diaSemana = new Date(Date.UTC(y, mo - 1, d)).getUTCDay(); // 0=domingo, 6=sábado
-  return diaSemana === 0 || diaSemana === 6;
+  return diaSemana === 0 || diaSemana === 6 || FERIADOS_CHILE.has(fechaYMD);
 }
 
 async function listarUsuariosSupabase() {
@@ -370,7 +396,7 @@ export default async function handler(req, res) {
       let cursor = fechaInicio;
       let guard = 0;
       while (cursor <= finReal && guard < 62) {
-        if (!soloDiasHabiles || !esFinDeSemana(cursor)) {
+        if (!soloDiasHabiles || !esDiaInhabilParaFeriadoLegal(cursor)) {
           registros.push({
             rut_sin_dv: rutSinDv,
             fecha_hora: construirFechaHoraISO(cursor, HORA_ANCLA_POR_TIPO[tipo]),
@@ -386,7 +412,7 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: "El rango de fechas es demasiado amplio (máximo 60 días)" });
       }
       if (!registros.length) {
-        return res.status(400).json({ error: "El rango ingresado no tiene ningún día hábil (lunes a viernes)" });
+        return res.status(400).json({ error: "El rango ingresado no tiene ningún día hábil (lunes a viernes, sin contar feriados)" });
       }
 
       const insertRes = await fetch(
