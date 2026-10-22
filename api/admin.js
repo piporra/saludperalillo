@@ -13,8 +13,11 @@
 //   accion: "listar_funcionarios"     → { adminSecret }
 //   accion: "listar_jefes"            → { adminSecret }
 //   accion: "registrar_marcaje_manual" → { adminSecret, rut, tipo, fechaInicio, fechaFin, detalle }
-//     (usado por registro-manual.html para agregar permisos administrativos o
-//      cometidos funcionarios directamente al historial de "Mis marcajes")
+//     (usado por registro-manual.html para agregar permisos administrativos,
+//      cometidos funcionarios o feriados legales directamente al historial de
+//      "Mis marcajes". Para tipo="feriado_legal", el rango fechaInicio..fechaFin
+//      solo genera registros de lunes a viernes — los fines de semana no
+//      cuentan como días de feriado legal, como indica el Código del Trabajo)
 //   accion: "listar_marcajes_manual"  → { adminSecret }
 //   accion: "eliminar_marcaje_manual" → { adminSecret, id }
 //   accion: "listar_marcajes_funcionario" → { adminSecret, rut, anio, mes }
@@ -81,14 +84,29 @@ const HORA_ANCLA_POR_TIPO = {
   permiso_administrativo: 12,
   cometido_funcionario: 12,
   medio_dia_administrativo_manana: 7,
-  medio_dia_administrativo_tarde: 13
+  medio_dia_administrativo_tarde: 13,
+  feriado_legal: 12
 };
+
+// Tipos de registro cuyo rango de fechas solo debe generar filas en días
+// hábiles (lunes a viernes). El feriado legal (vacaciones) en Chile se
+// cuenta así: el sábado se considera siempre inhábil para estos efectos
+// (Código del Trabajo), así que un rango que incluya fines de semana no
+// debe "gastar" días de feriado en ellos.
+const TIPOS_SOLO_DIAS_HABILES = new Set(["feriado_legal"]);
 
 function sumarDias(fechaYMD, dias) {
   const [y, mo, d] = fechaYMD.split("-").map(Number);
   const dt = new Date(Date.UTC(y, mo - 1, d));
   dt.setUTCDate(dt.getUTCDate() + dias);
   return dt.toISOString().slice(0, 10);
+}
+
+// true si fechaYMD ("YYYY-MM-DD") cae sábado o domingo.
+function esFinDeSemana(fechaYMD) {
+  const [y, mo, d] = fechaYMD.split("-").map(Number);
+  const diaSemana = new Date(Date.UTC(y, mo - 1, d)).getUTCDay(); // 0=domingo, 6=sábado
+  return diaSemana === 0 || diaSemana === 6;
 }
 
 async function listarUsuariosSupabase() {
@@ -347,22 +365,28 @@ export default async function handler(req, res) {
       const rutSinDv = normalizarRut(rut).slice(0, -1);
       const detalleLimpio = detalle && detalle.trim() ? detalle.trim() : null;
 
+      const soloDiasHabiles = TIPOS_SOLO_DIAS_HABILES.has(tipo);
       const registros = [];
       let cursor = fechaInicio;
       let guard = 0;
       while (cursor <= finReal && guard < 62) {
-        registros.push({
-          rut_sin_dv: rutSinDv,
-          fecha_hora: construirFechaHoraISO(cursor, HORA_ANCLA_POR_TIPO[tipo]),
-          estado: tipo,
-          metodo: "manual",
-          detalle: detalleLimpio
-        });
+        if (!soloDiasHabiles || !esFinDeSemana(cursor)) {
+          registros.push({
+            rut_sin_dv: rutSinDv,
+            fecha_hora: construirFechaHoraISO(cursor, HORA_ANCLA_POR_TIPO[tipo]),
+            estado: tipo,
+            metodo: "manual",
+            detalle: detalleLimpio
+          });
+        }
         cursor = sumarDias(cursor, 1);
         guard++;
       }
       if (guard >= 62) {
         return res.status(400).json({ error: "El rango de fechas es demasiado amplio (máximo 60 días)" });
+      }
+      if (!registros.length) {
+        return res.status(400).json({ error: "El rango ingresado no tiene ningún día hábil (lunes a viernes)" });
       }
 
       const insertRes = await fetch(
