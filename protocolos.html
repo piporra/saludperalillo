@@ -55,7 +55,16 @@
   .proto-cat-header .count{font-size:.78rem; font-weight:600; color:var(--gray); background:var(--teal-light); padding:3px 10px; border-radius:999px; margin-left:8px;}
   .proto-cat-header .chevron{transition:transform .2s; color:var(--gold); flex-shrink:0; margin-left:auto;}
   .proto-category.open .chevron{transform:rotate(180deg);}
-  .proto-cat-body{max-height:0; overflow:hidden; transition:max-height .25s ease;}
+  /* Antes esto usaba max-height animado igual que las subcategorías, pero al anidar
+     un acordeón dentro de otro aparecía una condición de carrera: al abrir una
+     subcategoría dentro de una categoría ya abierta, la categoría padre recalculaba
+     su altura máxima ANTES de que terminara de medirse la subcategoría recién abierta,
+     así que le quedaba una altura insuficiente y el contenido nuevo se veía recortado
+     (invisible). Por eso el nivel de categoría ahora se muestra/oculta directo (sin
+     animación de alto), y la animación suave se deja solo en las subcategorías, que no
+     tienen este problema porque no anidan otro acordeón adentro. */
+  .proto-cat-body{display:none;}
+  .proto-category.open .proto-cat-body{display:block;}
   .proto-cat-body-inner{padding:0 16px 16px;}
 
   .proto-subcat{border-top:1px solid var(--line); padding-top:6px; margin-top:6px;}
@@ -260,7 +269,6 @@
           e.stopPropagation();
           const abierta = subWrap.classList.toggle('open');
           subBody.style.maxHeight = abierta ? subBody.scrollHeight + 'px' : null;
-          if (wrap.classList.contains('open')) body.style.maxHeight = body.scrollHeight + 'px';
         });
 
         if (hayFiltro) subBody.style.maxHeight = subBody.scrollHeight + 'px';
@@ -272,13 +280,8 @@
       list.appendChild(wrap);
 
       header.addEventListener('click', () => {
-        const abierta = wrap.classList.toggle('open');
-        body.style.maxHeight = abierta ? body.scrollHeight + 'px' : null;
+        wrap.classList.toggle('open');
       });
-
-      if (hayFiltro) {
-        body.style.maxHeight = body.scrollHeight + 'px';
-      }
     });
   }
 
