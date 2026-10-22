@@ -50,8 +50,11 @@
     display:flex; flex-direction:column; justify-content:center;
   }
   .cumple-card h2{font-family:var(--font-head); color:#7A5B0E; font-size:1.05rem; margin:0 0 4px; display:flex; align-items:center; gap:8px;}
-  .cumple-card .cumple-lista{display:flex; flex-direction:column; gap:6px; margin-top:8px;}
-  .cumple-card .cumple-nombre{font-family:var(--font-head); font-weight:700; color:#7A5B0E; font-size:1.05rem;}
+  .cumple-card .cumple-lista{display:flex; flex-direction:column; gap:6px; margin-top:8px; max-height:180px; overflow-y:auto;}
+  .cumple-card .cumple-nombre{font-family:var(--font-head); font-weight:700; color:#7A5B0E; font-size:.98rem; display:flex; align-items:baseline; gap:6px; flex-wrap:wrap;}
+  .cumple-card .cumple-dia{font-family:var(--font-body); font-weight:400; color:#8A7647; font-size:.85rem;}
+  .cumple-card .cumple-nombre.cumple-hoy{color:#B3700E;}
+  .cumple-card .cumple-tag{background:#B3700E; color:#fff; font-size:.7rem; font-weight:700; padding:1px 7px; border-radius:999px; letter-spacing:.02em;}
   .cumple-card .cumple-vacio{color:#8A7647; font-size:.9rem; margin:0;}
 
   .cal-card{background:#fff; border:1px solid var(--line); border-radius:var(--radius); padding:22px; box-shadow:0 12px 30px rgba(10,61,115,.06);}
@@ -127,7 +130,7 @@
 
     <div class="top-row">
       <div class="cumple-card" id="cumpleCard">
-        <h2>🎂 Cumpleaños de hoy</h2>
+        <h2 id="cumpleTitulo">🎂 Cumpleaños del mes</h2>
         <div class="cumple-lista" id="cumpleLista">
           <p class="cumple-vacio">Cargando...</p>
         </div>
@@ -388,12 +391,14 @@
     }
   }
 
-  // ===== Cumpleaños de hoy (leído en vivo desde Google Sheets) =====
+  // ===== Cumpleaños del mes (leído en vivo desde Google Sheets) =====
   // 1. Crea una Google Sheet con las columnas: Nombre | Fecha de cumpleaños
   //    (la fecha puede ser DD/MM o DD/MM/AAAA, cualquiera de los dos funciona).
   // 2. Publícala como CSV (Archivo → Compartir → Publicar en la Web → CSV).
   // 3. Pega aquí el link que te entrega Google (termina en output=csv).
   const CUMPLEANOS_CSV_URL = "PEGA_AQUI_TU_URL_CSV_PUBLICADA";
+
+  const MESES_CUMPLE = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
 
   function parseCSVSimple(text) {
     return text.trim().split(/\r?\n/).map(line => {
@@ -421,6 +426,13 @@
   async function cargarCumpleanos() {
     const lista = document.getElementById('cumpleLista');
 
+    const hoy = new Date();
+    const diaHoy = hoy.getDate();
+    const mesHoy = hoy.getMonth() + 1;
+
+    const titulo = document.getElementById('cumpleTitulo');
+    if (titulo) titulo.textContent = '🎂 Cumpleaños de ' + MESES_CUMPLE[mesHoy - 1];
+
     if (CUMPLEANOS_CSV_URL.includes('PEGA_AQUI')) {
       lista.innerHTML = '<p class="cumple-vacio">Aún no se ha conectado la planilla de cumpleaños.</p>';
       return;
@@ -431,22 +443,28 @@
       const text = await res.text();
       const rows = parseCSVSimple(text);
 
-      const hoy = new Date();
-      const diaHoy = hoy.getDate();
-      const mesHoy = hoy.getMonth() + 1;
-
+      // Ahora se muestran TODOS los cumpleaños del mes actual (antes solo los de hoy),
+      // ordenados por día y con el de hoy destacado con una etiqueta "¡Hoy!".
       const cumpleaneros = rows.slice(1)
         .filter(r => (r[0] || '').trim() !== '')
         .map(r => ({ nombre: r[0].trim(), fecha: extraerDiaMes(r[1]) }))
-        .filter(p => p.fecha && p.fecha.dia === diaHoy && p.fecha.mes === mesHoy);
+        .filter(p => p.fecha && p.fecha.mes === mesHoy)
+        .sort((a, b) => a.fecha.dia - b.fecha.dia);
 
       if (cumpleaneros.length === 0) {
-        lista.innerHTML = '<p class="cumple-vacio">Hoy no hay cumpleaños registrados.</p>';
+        lista.innerHTML = '<p class="cumple-vacio">Este mes no hay cumpleaños registrados.</p>';
         return;
       }
 
       lista.innerHTML = cumpleaneros
-        .map(p => '<span class="cumple-nombre">🎉 ' + p.nombre + '</span>')
+        .map(p => {
+          const esHoy = p.fecha.dia === diaHoy;
+          return '<span class="cumple-nombre' + (esHoy ? ' cumple-hoy' : '') + '">' +
+            '🎉 ' + p.nombre +
+            '<span class="cumple-dia">' + p.fecha.dia + ' de ' + MESES_CUMPLE[mesHoy - 1] + '</span>' +
+            (esHoy ? '<span class="cumple-tag">¡Hoy!</span>' : '') +
+            '</span>';
+        })
         .join('');
     } catch (err) {
       console.error('No se pudo cargar la planilla de cumpleaños:', err);
