@@ -85,7 +85,7 @@
     <div class="page-head">
       <span class="eyebrow">Área funcionarios</span>
       <h1>Cometido</h1>
-      <p>Completa los datos del cometido. Al generar el PDF, las secciones de informe, autorización y firmas quedan en blanco para completarse a mano.</p>
+      <p>Completa los datos del cometido. El PDF que se genera replica el formulario oficial de "Cometido" del Departamento de Salud Municipal (mismo logo, mismos campos y recuadros) — las secciones de informe, autorización y firmas quedan en blanco para completarse a mano.</p>
     </div>
 
     <form id="cometidoForm">
@@ -134,6 +134,12 @@
 <script>
   const { jsPDF } = window.jspdf;
 
+  // Logo oficial incrustado tal cual aparece en el formulario Word original
+  // "COMETIDO" del Departamento de Salud Municipal de Peralillo (mismo archivo
+  // de imagen que trae ese .docx) — se deja en base64 para que el PDF se arme
+  // sin depender de que termine de cargar un archivo externo.
+  const LOGO_COMETIDO_B64 = 'data:image/png;base64,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';
+
   document.getElementById('cometidoForm').addEventListener('submit', function (e) {
     e.preventDefault();
     const status = document.getElementById('status');
@@ -162,121 +168,168 @@
     status.textContent = 'Generando PDF...';
 
     try {
+      // ===== Reconstrucción fiel del formulario oficial "COMETIDO" (papel del
+      // Departamento de Salud Municipal de Peralillo, mismo logo y la misma
+      // tabla con bordes, filas y campos del documento Word original) =====
       const doc = new jsPDF({ unit: 'mm', format: 'letter' });
       const pageW = doc.internal.pageSize.getWidth();
       const marginL = 18, marginR = 18;
       const usableW = pageW - marginL - marginR;
-      let y = 18;
+      const colW = usableW / 2;
+      const xCol1 = marginL, xCol2 = marginL + colW;
+      const pad = 2.5;
+      let y = 14;
+      let h = 0;
 
+      // ---- Encabezado institucional (igual al documento original) ----
       doc.setFont('times', 'bold');
-      doc.setFontSize(11);
+      doc.setFontSize(8);
       doc.text('ILUSTRE MUNICIPALIDAD DE PERALILLO', marginL, y);
-      y += 6;
-      doc.text('DEPARTAMENTO DE SALUD MUNICIPAL', marginL, y);
-      y += 12;
-
-      doc.setFontSize(16);
-      doc.text('C O M E T I D O', pageW / 2, y, { align: 'center' });
-      y += 12;
-
-      doc.setFont('times', 'normal');
-      doc.setFontSize(11);
-
-      function campo(label, valor, x, yPos, labelW) {
-        doc.setFont('times', 'bold');
-        doc.text(label, x, yPos);
-        doc.setFont('times', 'normal');
-        doc.text(valor || '', x + labelW, yPos);
-      }
-
-      campo('FECHA:', new Date().toLocaleDateString('es-CL'), marginL, y, 18);
-      y += 8;
-      campo('NOMBRE:', d.nombre, marginL, y, 22);
-      y += 8;
-      campo('RUT:', d.rut, marginL, y, 22);
-      doc.setFont('times', 'bold');
-      doc.text('CARGO:', marginL + 90, y);
-      doc.setFont('times', 'normal');
-      doc.text(d.cargo || '', marginL + 90 + 20, y);
-      y += 10;
-
-      const parrafo = 'El Director designa al funcionario(a) para el día ' + d.dia + ' a contar de las ' + d.desde + ' Hrs., hasta las ' + d.hasta + ' hrs., para que cumpla con el siguiente cometido:';
-      const parrafoLines = doc.splitTextToSize(parrafo, usableW);
-      doc.text(parrafoLines, marginL, y);
-      y += parrafoLines.length * 5.5 + 4;
-
-      doc.setFont('times', 'bold');
-      doc.text('COMETIDO:', marginL, y);
-      y += 6;
-      doc.setFont('times', 'normal');
-      const detalleLines = doc.splitTextToSize(d.detalle, usableW);
-      doc.text(detalleLines, marginL, y);
-      y += detalleLines.length * 5.5 + 8;
-
-      doc.setFont('times', 'bold');
-      doc.text('REQUIERE:', marginL, y);
-      y += 7;
-      doc.setFont('times', 'normal');
-
-      function marca(activo) { return activo ? '[X]' : '[   ]'; }
-
-      const requiere = [
-        [marca(d.horas) + '  PAGO DE HORAS EXTRAS', marca(d.viatico) + '  PAGO DE VIÁTICO'],
-        [marca(d.colacion) + '  PAGO DE COLACIÓN', marca(d.pasajes) + '  PAGO DE PASAJES'],
-        [marca(d.vehiculo) + '  USO DE VEHÍCULO', marca(d.patente) + '  PATENTE' + (d.patenteNum ? ' (' + d.patenteNum + ')' : '')]
-      ];
-      requiere.forEach(fila => {
-        doc.text(fila[0], marginL + 4, y);
-        doc.text(fila[1], marginL + 95, y);
-        y += 7;
-      });
-      y += 6;
-
-      // ===== Secciones para completar a mano =====
-      doc.setFont('times', 'bold');
-      doc.text('INFORME DEL JEFE DIRECTO', marginL, y);
-      y += 6;
-      doc.setLineWidth(0.2);
-      for (let i = 0; i < 3; i++) {
-        doc.line(marginL, y, pageW - marginR, y);
-        y += 7;
-      }
       y += 4;
-      doc.line(marginL + 60, y, pageW - marginR, y);
-      doc.setFont('times', 'normal');
-      doc.setFontSize(9);
-      doc.text('FIRMA JEFE DIRECTO', (marginL + 60 + pageW - marginR) / 2, y + 4, { align: 'center' });
-      doc.setFontSize(11);
-      y += 14;
+      doc.text('DEPARTAMENTO DE SALUD MUNICIPAL', marginL, y);
 
-      doc.setFont('times', 'bold');
-      doc.text('INFORME JEFE PERSONAL — HORAS EXTRAORDINARIAS', marginL, y);
-      y += 7;
+      // Logo oficial, arriba a la derecha, igual posición/proporción que en el .docx
+      const logoW = 28, logoH = logoW * (293 / 597);
+      doc.addImage(LOGO_COMETIDO_B64, 'PNG', pageW - marginR - logoW, 8, logoW, logoH);
+
+      y += 10;
+      doc.setFontSize(15);
+      doc.text('C O M E T I D O', pageW / 2, y, { align: 'center' });
+      y += 8;
+
       doc.setFont('times', 'normal');
       doc.setFontSize(10);
-      doc.text('N° de horas: _______   Con 25% recargo: _______   Con 50% recargo: _______', marginL, y);
-      y += 6;
-      doc.text('Compensación tiempo: _______   Desde: ____/____/____   Hasta: ____/____/____   Pago: _______', marginL, y);
-      doc.setFontSize(11);
-      y += 10;
-      doc.line(marginL + 60, y, pageW - marginR, y);
-      doc.setFontSize(9);
-      doc.text('FIRMA JEFE PERSONAL', (marginL + 60 + pageW - marginR) / 2, y + 4, { align: 'center' });
-      doc.setFontSize(11);
-      y += 16;
 
+      // ---- helpers para dibujar la tabla con bordes como en el formulario original ----
+      function celda(x, w, hh) { doc.rect(x, y, w, hh); }
+      function etiquetaValor(label, valor, x, yy, labelW) {
+        doc.setFont('times', 'bold');
+        doc.text(label, x + pad, yy);
+        doc.setFont('times', 'normal');
+        doc.text(valor || '', x + pad + labelW, yy);
+      }
+      function lineaFirma(x, w, yTop, hTotal, etiqueta) {
+        const yLinea = yTop + hTotal - 7;
+        doc.setLineWidth(0.2);
+        doc.line(x + 8, yLinea, x + w - 8, yLinea);
+        doc.setFontSize(8);
+        doc.text(etiqueta, x + w / 2, yLinea + 4, { align: 'center' });
+        doc.setFontSize(10);
+      }
+
+      // Fila FECHA
+      h = 7;
+      celda(xCol1, colW, h);
+      celda(xCol2, colW, h);
+      etiquetaValor('FECHA:', new Date().toLocaleDateString('es-CL'), xCol2, y + 4.8, 16);
+      y += h;
+
+      // Fila NOMBRE (ocupa las dos columnas)
+      h = 7;
+      celda(xCol1, usableW, h);
+      etiquetaValor('NOMBRE:', d.nombre, xCol1, y + 4.8, 20);
+      y += h;
+
+      // Fila RUT | CARGO
+      h = 7;
+      celda(xCol1, colW, h);
+      celda(xCol2, colW, h);
+      etiquetaValor('RUT.:', d.rut, xCol1, y + 4.8, 14);
+      etiquetaValor('CARGO:', d.cargo, xCol2, y + 4.8, 18);
+      y += h;
+
+      // Párrafo de designación
+      const parrafo = 'El Director designa al funcionario(a) para el día ' + d.dia +
+        ' a contar de las ' + d.desde + ' Hrs, Hasta las ' + d.hasta +
+        ' hrs., para que cumpla con el siguiente cometido:';
+      const parrafoLines = doc.splitTextToSize(parrafo, usableW - pad * 2);
+      h = parrafoLines.length * 4.8 + pad * 2;
+      celda(xCol1, usableW, h);
+      doc.text(parrafoLines, xCol1 + pad, y + pad + 3.5);
+      y += h;
+
+      // Fila COMETIDO
+      const detalleLines = doc.splitTextToSize(d.detalle || '', usableW - pad * 2);
+      h = Math.max(22, 6 + detalleLines.length * 4.8 + pad * 2);
+      celda(xCol1, usableW, h);
+      doc.setFont('times', 'bold');
+      doc.text('COMETIDO:', xCol1 + pad, y + pad + 3);
       doc.setFont('times', 'normal');
-      doc.text('(    )  AUTORIZA          (    )  RECHAZA', marginL, y);
-      y += 10;
-      doc.line(marginL + 60, y, pageW - marginR, y);
-      doc.setFontSize(9);
-      doc.text('FIRMA DIRECTOR CESFAM', (marginL + 60 + pageW - marginR) / 2, y + 4, { align: 'center' });
-      doc.setFontSize(11);
-      y += 14;
+      doc.text(detalleLines, xCol1 + pad, y + pad + 9);
+      y += h;
 
-      doc.line(marginL + 60, y, pageW - marginR, y);
+      // Fila REQUIERE — mismos 6 ítems del formulario original, con SI/NO
+      // marcado automáticamente según lo que se tildó arriba en el formulario web
+      const requiere = [
+        ['PAGO DE HORAS EXTRAS', d.horas],
+        ['PAGO DE VIÁTICO', d.viatico],
+        ['PAGO DE COLACIÓN', d.colacion],
+        ['PAGO DE PASAJES', d.pasajes],
+        ['USO DE VEHÍCULO', d.vehiculo],
+        ['PATENTE' + (d.patenteNum ? ' (' + d.patenteNum + ')' : ''), d.patente]
+      ];
+      const filaReq = 5.6;
+      h = 6 + requiere.length * filaReq + pad;
+      celda(xCol1, usableW, h);
+      doc.setFont('times', 'bold');
+      doc.text('REQUIERE:', xCol1 + pad, y + pad + 3);
+      doc.setFont('times', 'normal');
+      let yReq = y + pad + 3 + filaReq;
+      requiere.forEach(([label, activo]) => {
+        doc.text(label, xCol1 + pad + 4, yReq);
+        doc.text('SI  (' + (activo ? 'X' : ' ') + ')', xCol1 + usableW - 48, yReq);
+        doc.text('NO  (' + (!activo ? 'X' : ' ') + ')', xCol1 + usableW - 22, yReq);
+        yReq += filaReq;
+      });
+      y += h;
+
+      // Fila INFORME DEL JEFE DIRECTO (izquierda) | firma (derecha) — en blanco, para llenar a mano
+      h = 30;
+      celda(xCol1, colW, h);
+      celda(xCol2, colW, h);
+      doc.setFont('times', 'bold');
+      doc.text('INFORME DEL JEFE DIRECTO', xCol1 + pad, y + pad + 3);
+      doc.setFont('times', 'normal');
+      doc.setLineWidth(0.15);
+      for (let i = 0; i < 3; i++) {
+        const yl = y + pad + 9 + i * 6;
+        doc.line(xCol1 + pad, yl, xCol1 + colW - pad, yl);
+      }
+      lineaFirma(xCol2, colW, y, h, 'FIRMA JEFE DIRECTO');
+      y += h;
+
+      // Fila INFORME JEFE PERSONAL — horas extraordinarias (izquierda) | firma (derecha)
+      h = 38;
+      celda(xCol1, colW, h);
+      celda(xCol2, colW, h);
+      doc.setFont('times', 'bold');
       doc.setFontSize(9);
-      doc.text('FIRMA FUNCIONARIO', (marginL + 60 + pageW - marginR) / 2, y + 4, { align: 'center' });
+      doc.text('INFORME JEFE PERSONAL', xCol1 + pad, y + pad + 3);
+      doc.text('HORAS EXTRAORDINARIAS', xCol1 + pad, y + pad + 8);
+      doc.setFont('times', 'normal');
+      doc.setFontSize(8.5);
+      const lineasHoras = [
+        'Nº de horas: _______',
+        'Con 25% recargo: _______      Con 50% recargo: _______',
+        'Compensación tiempo: _______',
+        'Desde: ____/____/____   Hasta: ____/____/____',
+        'Pago: _______'
+      ];
+      lineasHoras.forEach((linea, i) => {
+        doc.text(linea, xCol1 + pad, y + pad + 14 + i * 5);
+      });
+      doc.setFontSize(10);
+      lineaFirma(xCol2, colW, y, h, 'FIRMA JEFE PERSONAL');
+      y += h;
+
+      // Fila AUTORIZA/RECHAZA + firma director (izquierda) | firma funcionario (derecha)
+      h = 30;
+      celda(xCol1, colW, h);
+      celda(xCol2, colW, h);
+      doc.text('(    )  AUTORIZA          (    )  RECHAZA', xCol1 + pad, y + pad + 4);
+      lineaFirma(xCol1, colW, y, h, 'FIRMA DIRECTOR CESFAM');
+      lineaFirma(xCol2, colW, y, h, 'FIRMA FUNCIONARIO');
+      y += h;
 
       const nombreArchivo = 'Cometido_' + (d.nombre || 'funcionario').replace(/[^\w]+/g, '_') + '.pdf';
       doc.save(nombreArchivo);
