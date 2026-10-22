@@ -415,12 +415,37 @@
     });
   }
 
-  // Extrae día y mes de "15/03", "15/03/1990", "15-03-1990", etc.
+  // Nombres/abreviaturas de mes en español, para fechas tipo "01-oct" o "1 de octubre"
+  const MESES_TEXTO_A_NUM = {
+    ene:1, enero:1, feb:2, febrero:2, mar:3, marzo:3, abr:4, abril:4,
+    may:5, mayo:5, jun:6, junio:6, jul:7, julio:7, ago:8, agosto:8,
+    sep:9, set:9, sept:9, septiembre:9, setiembre:9,
+    oct:10, octubre:10, nov:11, noviembre:11, dic:12, diciembre:12
+  };
+
+  // Extrae día y mes admitiendo varios formatos: "15/03", "15/03/1990",
+  // "15-03-1990" (numérico), o "01-oct", "1 de octubre", "01 oct 1990" (mes en texto).
   function extraerDiaMes(valor) {
     if (!valor) return null;
-    const match = valor.match(/(\d{1,2})[\/\-](\d{1,2})/);
-    if (!match) return null;
-    return { dia: parseInt(match[1], 10), mes: parseInt(match[2], 10) };
+    const texto = valor.trim();
+
+    // Formato numérico: DD/MM o DD-MM (con o sin año)
+    const matchNum = texto.match(/(\d{1,2})[\/\-](\d{1,2})(?!\d)/);
+    if (matchNum) {
+      return { dia: parseInt(matchNum[1], 10), mes: parseInt(matchNum[2], 10) };
+    }
+
+    // Formato con el mes en texto: "01-oct", "1 de octubre", "01 oct 1990", etc.
+    const matchTexto = texto.match(/(\d{1,2})\s*(?:de)?[\s\-\/]+([a-záéíóúñ]+)/i);
+    if (matchTexto) {
+      const dia = parseInt(matchTexto[1], 10);
+      let mesTexto = matchTexto[2].toLowerCase()
+        .normalize('NFD').replace(/[̀-ͯ]/g, ''); // quita tildes
+      let mes = MESES_TEXTO_A_NUM[mesTexto] || MESES_TEXTO_A_NUM[mesTexto.slice(0, 3)];
+      if (mes) return { dia, mes };
+    }
+
+    return null;
   }
 
   async function cargarCumpleanos() {
