@@ -50,11 +50,14 @@
     display:flex; flex-direction:column; justify-content:center;
   }
   .cumple-card h2{font-family:var(--font-head); color:#7A5B0E; font-size:1.05rem; margin:0 0 4px; display:flex; align-items:center; gap:8px;}
-  .cumple-card .cumple-lista{display:flex; flex-direction:column; gap:6px; margin-top:8px; max-height:180px; overflow-y:auto;}
-  .cumple-card .cumple-nombre{font-family:var(--font-head); font-weight:700; color:#7A5B0E; font-size:.98rem; display:flex; align-items:baseline; gap:6px; flex-wrap:wrap;}
-  .cumple-card .cumple-dia{font-family:var(--font-body); font-weight:400; color:#8A7647; font-size:.85rem;}
+  .cumple-card .cumple-lista{display:flex; flex-direction:column; margin-top:8px; max-height:200px; overflow-y:auto;}
+  .cumple-card .cumple-item{display:flex; align-items:flex-start; justify-content:space-between; gap:10px; padding:7px 2px; border-bottom:1px solid rgba(122,91,14,.15);}
+  .cumple-card .cumple-item:last-child{border-bottom:none;}
+  .cumple-card .cumple-item.cumple-hoy{background:rgba(179,112,14,.12); border-radius:8px; padding-left:8px; padding-right:8px; margin:0 -8px;}
+  .cumple-card .cumple-nombre{font-family:var(--font-head); font-weight:700; color:#7A5B0E; font-size:.92rem; line-height:1.3;}
   .cumple-card .cumple-nombre.cumple-hoy{color:#B3700E;}
-  .cumple-card .cumple-tag{background:#B3700E; color:#fff; font-size:.7rem; font-weight:700; padding:1px 7px; border-radius:999px; letter-spacing:.02em;}
+  .cumple-card .cumple-dia{font-family:var(--font-body); font-weight:600; color:#8A7647; font-size:.82rem; white-space:nowrap; flex-shrink:0; padding-top:1px;}
+  .cumple-card .cumple-tag{display:block; margin-top:2px; background:#B3700E; color:#fff; font-size:.68rem; font-weight:700; padding:1px 7px; border-radius:999px; letter-spacing:.02em; text-align:center;}
   .cumple-card .cumple-vacio{color:#8A7647; font-size:.9rem; margin:0;}
 
   .cal-card{background:#fff; border:1px solid var(--line); border-radius:var(--radius); padding:22px; box-shadow:0 12px 30px rgba(10,61,115,.06);}
@@ -484,11 +487,12 @@
       lista.innerHTML = cumpleaneros
         .map(p => {
           const esHoy = p.fecha.dia === diaHoy;
-          return '<span class="cumple-nombre' + (esHoy ? ' cumple-hoy' : '') + '">' +
-            '🎉 ' + p.nombre +
-            '<span class="cumple-dia">' + p.fecha.dia + ' de ' + MESES_CUMPLE[mesHoy - 1] + '</span>' +
+          return '<div class="cumple-item' + (esHoy ? ' cumple-hoy' : '') + '">' +
+            '<span class="cumple-nombre' + (esHoy ? ' cumple-hoy' : '') + '">🎉 ' + p.nombre + '</span>' +
+            '<span class="cumple-dia">' + p.fecha.dia + ' de ' + MESES_CUMPLE[mesHoy - 1] +
             (esHoy ? '<span class="cumple-tag">¡Hoy!</span>' : '') +
-            '</span>';
+            '</span>' +
+            '</div>';
         })
         .join('');
     } catch (err) {
