@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Creación masiva de funcionarios — CESFAM Peralillo</title>
+<link rel="icon" type="image/jpeg" href="assets/logo-cesfam.jpeg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --teal-deep:#0A3D73; --teal:#1B7FC2; --teal-light:#E7F2FB;
+    --gold:#12A6D6; --ink:#1C2B36; --gray:#5A6B78; --line:#DCE7F0; --radius:16px;
+    --font-head:'Poppins', sans-serif; --font-body:'Atkinson Hyperlegible', system-ui, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; background:var(--teal-light); font-family:var(--font-body); color:var(--ink); min-height:100vh;}
+  .container{max-width:720px; margin:0 auto; padding:50px 24px;}
+  .card{background:#fff; border-radius:var(--radius); box-shadow:0 20px 50px rgba(10,61,115,.1); padding:30px; margin-bottom:20px;}
+  h1{font-family:var(--font-head); color:var(--teal-deep); font-size:1.3rem; margin:0 0 6px;}
+  p.sub{color:var(--gray); font-size:.9rem; margin:0 0 20px;}
+  label{display:block; font-weight:700; font-size:.9rem; margin-bottom:6px; color:var(--teal-deep);}
+  input{width:100%; padding:12px 14px; border:1.5px solid var(--line); border-radius:10px; margin-bottom:16px; font-family:var(--font-body); font-size:.95rem;}
+  button{width:100%; background:var(--gold); color:#fff; border:none; padding:14px; border-radius:999px; font-weight:700; font-size:1rem; cursor:pointer; font-family:var(--font-body);}
+  button:hover{background:#0E86AC;}
+  button:disabled{opacity:.6; cursor:not-allowed;}
+  button.secundario{background:var(--teal-deep);}
+  button.secundario:hover{background:#082E58;}
+  #admin-auth-status{font-size:.88rem; margin-top:12px; text-align:center;}
+  .back{display:block; text-align:center; margin-top:6px; font-size:.85rem; color:var(--teal-deep); text-decoration:none;}
+  .hint{font-size:.82rem; color:var(--gray); margin:-10px 0 16px;}
+
+  .resumen{display:flex; gap:12px; flex-wrap:wrap; margin-bottom:18px;}
+  .resumen .pastilla{flex:1; min-width:120px; background:var(--teal-light); border-radius:12px; padding:14px; text-align:center;}
+  .resumen .pastilla .num{font-family:var(--font-head); font-size:1.6rem; color:var(--teal-deep); font-weight:800; display:block;}
+  .resumen .pastilla .lbl{font-size:.78rem; color:var(--gray); font-weight:700;}
+  .resumen .pastilla.ok{background:#E3F3E8;}
+  .resumen .pastilla.ok .num{color:#1F7A42;}
+  .resumen .pastilla.pend{background:#FBE8D6;}
+  .resumen .pastilla.pend .lbl, .resumen .pastilla.pend .num{color:#9A5B1E;}
+  .resumen .pastilla.err{background:#FBE2E2;}
+  .resumen .pastilla.err .num{color:#B33A3A;}
+
+  table{width:100%; border-collapse:collapse; font-size:.86rem;}
+  th, td{text-align:left; padding:8px 6px; border-bottom:1px solid var(--line);}
+  th{color:var(--teal-deep); font-family:var(--font-head); font-size:.78rem; text-transform:uppercase; letter-spacing:.03em;}
+  td.rut{white-space:nowrap; font-variant-numeric:tabular-nums;}
+  .estado{display:inline-block; font-size:.72rem; font-weight:700; padding:3px 9px; border-radius:999px; white-space:nowrap;}
+  .estado.ya-existe{background:var(--teal-light); color:var(--teal-deep);}
+  .estado.pendiente{background:#FBE8D6; color:#9A5B1E;}
+  .estado.creando{background:#FFF3C4; color:#8A6D00;}
+  .estado.creada{background:#E3F3E8; color:#1F7A42;}
+  .estado.error{background:#FBE2E2; color:#B33A3A;}
+  .filtros{display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap;}
+  .filtros button{width:auto; flex:none; background:#fff; color:var(--teal-deep); border:1.5px solid var(--line); padding:8px 16px; font-size:.82rem;}
+  .filtros button.activo{background:var(--teal-deep); color:#fff; border-color:var(--teal-deep);}
+  #tablaWrap{max-height:520px; overflow-y:auto; border:1px solid var(--line); border-radius:10px; padding:4px 10px;}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="card">
+    <h1>🔐 Clave de administrador</h1>
+    <p class="sub">Ingresa la clave maestra para crear las cuentas de la nómina de octubre 2026.</p>
+    <form id="adminAuthForm">
+      <label for="admin-secret">Clave de administrador</label>
+      <input type="password" id="admin-secret" required>
+      <button type="submit" id="adminAuthBtn">Desbloquear panel</button>
+      <p id="admin-auth-status"></p>
+    </form>
+  </div>
+
+  <div class="card" id="panelCard" style="display:none;">
+    <h1>👥 Creación masiva — Nómina funcionarios octubre 2026</h1>
+    <p class="sub">Se comparan los <strong id="totalNomina"></strong> RUT de la nómina contra las cuentas que ya existen en el sistema. Las cuentas que ya existen <strong>no se tocan</strong>. Solo se crean las que faltan, con la contraseña genérica <strong>123456</strong>.</p>
+
+    <div class="resumen">
+      <div class="pastilla ok"><span class="num" id="numYaExiste">–</span><span class="lbl">Ya tienen cuenta</span></div>
+      <div class="pastilla pend"><span class="num" id="numPendiente">–</span><span class="lbl">Pendientes de crear</span></div>
+      <div class="pastilla err"><span class="num" id="numError">–</span><span class="lbl">Con error</span></div>
+    </div>
+
+    <button type="button" id="verificarBtn">🔎 Comparar nómina con cuentas existentes</button>
+    <button type="button" id="crearBtn" class="secundario" style="display:none; margin-top:10px;">➕ Crear las cuentas pendientes</button>
+    <p class="hint" id="panel-status" style="margin-top:12px;"></p>
+
+    <div class="filtros" id="filtros" style="display:none;">
+      <button type="button" data-filtro="todos" class="activo">Todos</button>
+      <button type="button" data-filtro="pendiente">Pendientes</button>
+      <button type="button" data-filtro="ya-existe">Ya existen</button>
+      <button type="button" data-filtro="creada">Recién creadas</button>
+      <button type="button" data-filtro="error">Con error</button>
+    </div>
+
+    <div id="tablaWrap" style="display:none;">
+      <table>
+        <thead>
+          <tr><th>Nombre</th><th>RUT</th><th>Estado</th></tr>
+        </thead>
+        <tbody id="tablaBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <a class="back" href="admin-funcionarios.html">← Volver a administración de funcionarios</a>
+</div>
+
+<script src="assets/supabase-config.js"></script>
+
+<script>
+  let adminSecret = '';
+
+  // Nómina de funcionarios — octubre 2026 (141 registros, ya deduplicados y
+  // con RUT validado). Esta lista es fija: refleja el archivo Excel entregado
+  // por el usuario para esta creación masiva puntual.
+  const NOMINA = [
+    { nombre: 'Pablo Andres Abarca Abarca', rut: '165193830' },
+    { nombre: 'Maria Loreto Abarca Lorca', rut: '155321075' },
+    { nombre: 'Yorka Pamela Acuña Olmedo', rut: '106677069' },
+    { nombre: 'Angela Beatriz Araya Valdes', rut: '16250486K' },
+    { nombre: 'Jennifer Paz Arevalo Osorio', rut: '106810141' },
+    { nombre: 'Katherine Andrea Ascencio Silva', rut: '162614398' },
+    { nombre: 'Lucia Emilia Barnechea Beile', rut: '143149838' },
+    { nombre: 'Francesca Ignacia Barrera Bravo', rut: '201243130' },
+    { nombre: 'Genesis Neicarly Barrios Barrios', rut: '263838165' },
+    { nombre: 'Belen Fernanda Bonilla Diaz', rut: '195009112' },
+    { nombre: 'Maria Cecilia Bravo Castro', rut: '104308503' },
+    { nombre: 'Jose Antonio Bravo Orellana', rut: '115297708' },
+    { nombre: 'Paulo Cesar Burgos Paredes', rut: '177157082' },
+    { nombre: 'Alejandro Javier Cabezas Pino', rut: '209812363' },
+    { nombre: 'Tatiana Marisol Caceres Cruz', rut: '16829073K' },
+    { nombre: 'Catherine Fabiola Caceres Perez', rut: '158028816' },
+    { nombre: 'Cristian Alfredo Cardenas Espinoza', rut: '155320761' },
+    { nombre: 'Antonieta Alejandra Caris Galarce', rut: '162613421' },
+    { nombre: 'Janette Alejandra Caris Pino', rut: '168287550' },
+    { nombre: 'Veronica Del Carmen Carreño Donoso', rut: '114547689' },
+    { nombre: 'Gemita De Maria Castro Cornejo', rut: '151145965' },
+    { nombre: 'Maria Ignacia Castro Figueroa', rut: '187507413' },
+    { nombre: 'Rosa Del Carmen Castro Miranda', rut: '135720402' },
+    { nombre: 'Tania Belen Castro Vargas', rut: '158033380' },
+    { nombre: 'Jose Tomas Cayul Osorio', rut: '189316887' },
+    { nombre: 'Natalia Margarita Ceron Cruz', rut: '140139076' },
+    { nombre: 'Paula Viviana Ceron Leiva', rut: '142625245' },
+    { nombre: 'Catherine Jeannet Contreras Pino', rut: '140139165' },
+    { nombre: 'Juan Francisco Contreras Sandoval', rut: '189306741' },
+    { nombre: 'Catalina Magdalena Cornejo Barraza', rut: '169443378' },
+    { nombre: 'Virgita De Jesus Cornejo Caceres', rut: '95510744' },
+    { nombre: 'Camila Ignacia Cornejo Farias', rut: '19551576K' },
+    { nombre: 'Maria Ines Cornejo Guerrero', rut: '21671752K' },
+    { nombre: 'Maria Carolina Cornejo Zamorano', rut: '137791595' },
+    { nombre: 'Jeniffer Karina Correa Vargas', rut: '180004254' },
+    { nombre: 'Nataly Evelyn Cortes Farfal', rut: '162140264' },
+    { nombre: 'Katherine Pamela Daza Caro', rut: '133328017' },
+    { nombre: 'Marcela Alejandra Diaz Lizana', rut: '189303823' },
+    { nombre: 'Emilio Abel Diaz Moraga', rut: '140135348' },
+    { nombre: 'Javiera Ignacia Diaz Parraguez', rut: '203923457' },
+    { nombre: 'Claudia Andrea Diaz Pino', rut: '180006281' },
+    { nombre: 'Danitza Alejandra Diaz Sandoval', rut: '185765598' },
+    { nombre: 'Guisell Estefania Duque Gonzalez', rut: '195512132' },
+    { nombre: 'Nicole Alejandra Duran Duran', rut: '177161322' },
+    { nombre: 'Carolina Andrea Echeverria Cornejo', rut: '139137159' },
+    { nombre: 'Karen Ximena Espinoza Hernandez', rut: '151049672' },
+    { nombre: 'Manuel Jesus Estrada Rojas', rut: '169435413' },
+    { nombre: 'Karina Andrea Figueroa Hernandez', rut: '174270368' },
+    { nombre: 'Rocio Antonia Fuentes Muñoz', rut: '195511632' },
+    { nombre: 'Valentina Paz Gaete Cordova', rut: '195506825' },
+    { nombre: 'Sandra Lorena Galaz Salas', rut: '145349508' },
+    { nombre: 'Maria Jimena Gallardo Osorio', rut: '155320133' },
+    { nombre: 'Pia Bernardita Galvez Leyton', rut: '127809917' },
+    { nombre: 'Rosa Isabel Garrido Caceres', rut: '171337186' },
+    { nombre: 'Maria Cristina Gonzalez Cornejo', rut: '133461663' },
+    { nombre: 'Valentina Isabel Gonzalez Duran', rut: '200275632' },
+    { nombre: 'Daniela Cristina Gonzalez Muñoz', rut: '187507138' },
+    { nombre: 'Ines Antonia Guajardo Castro', rut: '203934351' },
+    { nombre: 'Leonardo Ignacio Guajardo Galvez', rut: '124148480' },
+    { nombre: 'Sandy Belen Guajardo Padilla', rut: '187507936' },
+    { nombre: 'Katalina Almendra Guerrero Rivera', rut: '190422593' },
+    { nombre: 'Daniela Paz Guerrero Zuñiga', rut: '203932375' },
+    { nombre: 'Nicole De Los Angeles Guitierrez Riquelme', rut: '17051890K' },
+    { nombre: 'Araceli Alejandra Gutierrez Riquelme', rut: '196320652' },
+    { nombre: 'Leonor Macarena Guzman Alcaino', rut: '104893104' },
+    { nombre: 'Erika De Los Angeles Hermosilla Galaz', rut: '180732020' },
+    { nombre: 'Victoria Margarita Herrera Catalan', rut: '143027082' },
+    { nombre: 'Catalina Ignacia Jimenez Duarte', rut: '193092284' },
+    { nombre: 'Marco Antonio Jimenez Oyarce', rut: '15624130K' },
+    { nombre: 'Claudio Rodrigo Landaeta Baeza', rut: '179740869' },
+    { nombre: 'Elizabeth Del Carmen Lecaros Rodriguez', rut: '15976527K' },
+    { nombre: 'Mauricio Esteban Leon Leon', rut: '140138541' },
+    { nombre: 'Denise Francisca Leon Perez', rut: '163494302' },
+    { nombre: 'Esteban Alejandro Leon Rojas', rut: '169435863' },
+    { nombre: 'Jorge Andres Lopez Melendes', rut: '201436842' },
+    { nombre: 'Paula Cecilia Lorca Tobar', rut: '143068781' },
+    { nombre: 'Eligio Jose Machado Ruiz', rut: '257216268' },
+    { nombre: 'Hector Jesus Machuca Zuñiga', rut: '173353898' },
+    { nombre: 'Matias Ignacio Miranda Lizana', rut: '197431504' },
+    { nombre: 'Rafael Andres Monsalves Rivera', rut: '188512518' },
+    { nombre: 'Vanessa Alejandra Mora Lucero', rut: '166219914' },
+    { nombre: 'Francisca Andrea Moraga Guerrero', rut: '184284189' },
+    { nombre: 'Laura Carolina Morales Moreno', rut: '195513937' },
+    { nombre: 'Matias Antonio Morales Pereira', rut: '173354738' },
+    { nombre: 'Sebastian Andres Moya Blanco', rut: '186163680' },
+    { nombre: 'Yoany Del Carmen Muñoz Alarcon', rut: '140500887' },
+    { nombre: 'Macarena Muñoz Peña', rut: '189307829' },
+    { nombre: 'Abraham Arturo Muñoz Venegas', rut: '16858542K' },
+    { nombre: 'Sylvana Soledad Navarro Aguilera', rut: '166210526' },
+    { nombre: 'Jose Francisco Nuñez Orellana', rut: '17335567K' },
+    { nombre: 'Ana Carolina Ogaz Pavez', rut: '133434666' },
+    { nombre: 'Camila Antonia Osorio Arellano', rut: '195934681' },
+    { nombre: 'Elizabeth Natalia Osorio Perez', rut: '171283698' },
+    { nombre: 'Nicole Alejandra Osorio Perez', rut: '195504571' },
+    { nombre: 'Victor Rene Osorio Pino', rut: '195504679' },
+    { nombre: 'Camila Andrea Oyarzun Cornejo', rut: '194990138' },
+    { nombre: 'Carmen Filomena Paredes Leon', rut: '111272743' },
+    { nombre: 'Maria Esmeralda Parraguez Cornejo', rut: '173356978' },
+    { nombre: 'Alexis Israel Peña Perez', rut: '181816694' },
+    { nombre: 'Nely Irene Pereira Gaete', rut: '195513422' },
+    { nombre: 'Carmen Gloria Perez Brito', rut: '102832973' },
+    { nombre: 'Danilo Ernesto Perez Gonzalez', rut: '98812016' },
+    { nombre: 'Alejandra Del Carmen Pino Gaete', rut: '183223038' },
+    { nombre: 'Lorena Del Carmen Piña Diaz', rut: '137796201' },
+    { nombre: 'Belen De Los Angeles Polloni Leiva', rut: '179304988' },
+    { nombre: 'Katerine Fernanda Quitral Urzua', rut: '185420566' },
+    { nombre: 'Mariela Malvina Ravelo Figueroa', rut: '14560415K' },
+    { nombre: 'Natalia Andrea Ravelo Reyes', rut: '16261553K' },
+    { nombre: 'Constanza Veronica Rebolledo Sainz', rut: '172678696' },
+    { nombre: 'Carol Elizabeth Rios Sanhueza', rut: '178378198' },
+    { nombre: 'Cristian Rolle Tamayo', rut: '282276623' },
+    { nombre: 'Marcelo Amable Romero Saavedra', rut: '154978038' },
+    { nombre: 'Catalina Andrea Saavedra Farias', rut: '195512019' },
+    { nombre: 'Natalia Andrea San Martin Padilla', rut: '99822953' },
+    { nombre: 'Beatriz Andrea San Martin Rodriguez', rut: '140641782' },
+    { nombre: 'Daniela Eunice Saravia Neira', rut: '172915094' },
+    { nombre: 'Maria Angelica Serrano Gonzalez', rut: '97296049' },
+    { nombre: 'Maria Jose Solis Letelier', rut: '164327574' },
+    { nombre: 'Grissel Militza Soto Castro', rut: '180476105' },
+    { nombre: 'Catherine Belen Soto Farias', rut: '177752851' },
+    { nombre: 'Constanza Isidora Tapia Lorca', rut: '207450650' },
+    { nombre: 'Marcos Antonio Tobar Arraño', rut: '111728658' },
+    { nombre: 'Maria Jose Tobar Cornejo', rut: '158029480' },
+    { nombre: 'Monica Edit Tobar Muñoz', rut: '189314612' },
+    { nombre: 'Rusela Vallecilla Arroyo', rut: '243960495' },
+    { nombre: 'Gisella Aline Vargas Cortes', rut: '202010040' },
+    { nombre: 'Katherine Alejandra Vargas Muñoz', rut: '177157775' },
+    { nombre: 'Cesar Antonio Veas Perez', rut: '15976575K' },
+    { nombre: 'Nelida De Las Mercedes Vergara Tobar', rut: '132005419' },
+    { nombre: 'Francisca Pilar Videla Salinas', rut: '187511976' },
+    { nombre: 'Paula Pamela Videla Villagra', rut: '142627124' },
+    { nombre: 'Nicolas Gonzalez Gonzalez', rut: '188485723' },
+    { nombre: 'Vivanne Barroso Hernandez', rut: '282276631' },
+    { nombre: 'Karolan Vergdugo Muñoz', rut: '196966382' },
+    { nombre: 'Daniel Mendez Chavez', rut: '202996167' },
+    { nombre: 'Pablo Andres Sandoval Ortiz', rut: '207529370' },
+    { nombre: 'Jose Salgado Godoy', rut: '169136653' },
+    { nombre: 'Bernardita Morales Fredes', rut: '201438519' },
+    { nombre: 'Marisol Vergara Tobar', rut: '142472082' },
+    { nombre: 'Francisca Rivas Rojaz', rut: '187226252' },
+    { nombre: 'Belen Galarce Pno', rut: '203350767' }
+  ];
+
+  document.getElementById('totalNomina').textContent = NOMINA.length;
+
+  // Estado en memoria de cada fila: 'pendiente' | 'ya-existe' | 'creando' | 'creada' | 'error'
+  let filas = NOMINA.map(f => ({ ...f, estado: 'pendiente', mensaje: '' }));
+  let filtroActual = 'todos';
+
+  document.getElementById('adminAuthForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const status = document.getElementById('admin-auth-status');
+    const btn = document.getElementById('adminAuthBtn');
+    const claveIngresada = document.getElementById('admin-secret').value;
+
+    btn.disabled = true;
+    status.style.color = 'var(--gray)';
+    status.textContent = 'Verificando...';
+
+    try {
+      const res = await fetch('/api/admin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adminSecret: claveIngresada, accion: 'verificar_clave' })
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        status.style.color = '#B33A3A';
+        status.textContent = '❌ Clave incorrecta.';
+        btn.disabled = false;
+        return;
+      }
+
+      adminSecret = claveIngresada;
+      document.getElementById('panelCard').style.display = 'block';
+      document.getElementById('adminAuthForm').closest('.card').style.display = 'none';
+    } catch (err) {
+      status.style.color = '#B33A3A';
+      status.textContent = 'Error de conexión. Inténtalo nuevamente.';
+      btn.disabled = false;
+      console.error(err);
+    }
+  });
+
+  function actualizarResumen() {
+    document.getElementById('numYaExiste').textContent = filas.filter(f => f.estado === 'ya-existe').length;
+    document.getElementById('numPendiente').textContent = filas.filter(f => f.estado === 'pendiente' || f.estado === 'creando').length;
+    document.getElementById('numError').textContent = filas.filter(f => f.estado === 'error').length;
+  }
+
+  function etiquetaEstado(estado) {
+    switch (estado) {
+      case 'ya-existe': return '<span class="estado ya-existe">Ya tiene cuenta</span>';
+      case 'pendiente': return '<span class="estado pendiente">Pendiente</span>';
+      case 'creando': return '<span class="estado creando">Creando...</span>';
+      case 'creada': return '<span class="estado creada">✅ Creada</span>';
+      case 'error': return '<span class="estado error">❌ Error</span>';
+      default: return estado;
+    }
+  }
+
+  function renderTabla() {
+    const body = document.getElementById('tablaBody');
+    const visibles = filas.filter(f => filtroActual === 'todos' || f.estado === filtroActual);
+    body.innerHTML = visibles.map(f =>
+      '<tr>' +
+        '<td>' + f.nombre + '</td>' +
+        '<td class="rut">' + formatearRut(f.rut) + '</td>' +
+        '<td>' + etiquetaEstado(f.estado) + (f.mensaje ? ' <span class="hint" style="display:inline;margin:0;">' + f.mensaje + '</span>' : '') + '</td>' +
+      '</tr>'
+    ).join('');
+    actualizarResumen();
+  }
+
+  document.getElementById('filtros').addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-filtro]');
+    if (!btn) return;
+    filtroActual = btn.dataset.filtro;
+    document.querySelectorAll('#filtros button').forEach(b => b.classList.toggle('activo', b === btn));
+    renderTabla();
+  });
+
+  document.getElementById('verificarBtn').addEventListener('click', async () => {
+    const status = document.getElementById('panel-status');
+    const btn = document.getElementById('verificarBtn');
+    btn.disabled = true;
+    status.style.color = 'var(--gray)';
+    status.textContent = 'Consultando cuentas existentes...';
+
+    try {
+      const res = await fetch('/api/admin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adminSecret, accion: 'listar_funcionarios' })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'No se pudo consultar el listado.');
+
+      const rutsExistentes = new Set((data.funcionarios || []).map(f => normalizarRut(f.rut)));
+
+      filas = NOMINA.map(f => ({
+        ...f,
+        estado: rutsExistentes.has(normalizarRut(f.rut)) ? 'ya-existe' : 'pendiente',
+        mensaje: ''
+      }));
+
+      document.getElementById('filtros').style.display = 'flex';
+      document.getElementById('tablaWrap').style.display = 'block';
+      filtroActual = 'todos';
+      document.querySelectorAll('#filtros button').forEach(b => b.classList.toggle('activo', b.dataset.filtro === 'todos'));
+      renderTabla();
+
+      const pendientes = filas.filter(f => f.estado === 'pendiente').length;
+      status.style.color = 'var(--teal)';
+      status.textContent = '✅ Comparación lista: ' + (filas.length - pendientes) + ' ya tienen cuenta, ' + pendientes + ' están pendientes de crear.';
+      document.getElementById('crearBtn').style.display = pendientes > 0 ? 'block' : 'none';
+      btn.disabled = false;
+    } catch (err) {
+      status.style.color = '#B33A3A';
+      status.textContent = '❌ ' + (err.message || 'Error de conexión. Inténtalo nuevamente.');
+      btn.disabled = false;
+      console.error(err);
+    }
+  });
+
+  document.getElementById('crearBtn').addEventListener('click', async () => {
+    const status = document.getElementById('panel-status');
+    const btn = document.getElementById('crearBtn');
+    const verificarBtn = document.getElementById('verificarBtn');
+
+    const pendientes = filas.filter(f => f.estado === 'pendiente');
+    if (pendientes.length === 0) {
+      status.textContent = 'No hay cuentas pendientes por crear.';
+      return;
+    }
+
+    if (!confirm('Se crearán ' + pendientes.length + ' cuentas nuevas con la contraseña genérica "123456". Las cuentas que ya existen no se modificarán. ¿Continuar?')) {
+      return;
+    }
+
+    btn.disabled = true;
+    verificarBtn.disabled = true;
+
+    let creadas = 0;
+    let conError = 0;
+
+    for (const f of pendientes) {
+      f.estado = 'creando';
+      renderTabla();
+      status.style.color = 'var(--gray)';
+      status.textContent = 'Creando cuenta ' + (creadas + conError + 1) + ' de ' + pendientes.length + ': ' + f.nombre + '...';
+
+      try {
+        const res = await fetch('/api/admin', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            adminSecret,
+            accion: 'crear_funcionario',
+            nombre: f.nombre,
+            rut: f.rut,
+            password: '123456'
+          })
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+          f.estado = 'error';
+          f.mensaje = data.error || 'No se pudo crear.';
+          conError++;
+        } else {
+          f.estado = 'creada';
+          creadas++;
+        }
+      } catch (err) {
+        f.estado = 'error';
+        f.mensaje = 'Error de conexión.';
+        conError++;
+        console.error(err);
+      }
+
+      renderTabla();
+    }
+
+    status.style.color = conError > 0 ? '#B33A3A' : 'var(--teal)';
+    status.textContent = '✅ Proceso terminado: ' + creadas + ' cuentas creadas' + (conError > 0 ? ', ' + conError + ' con error (revisa la tabla).' : '.');
+    btn.disabled = true;
+    btn.style.display = 'none';
+    verificarBtn.disabled = false;
+  });
+</script>
+
+</body>
+</html>
