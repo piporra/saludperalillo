@@ -152,6 +152,16 @@
               <p class="hint" style="margin-top:-12px;">Hasta (opcional, si dura varios días)</p>
             </div>
           </div>
+          <div class="fila-fechas" id="reg-horario-cometido" style="display:none;">
+            <div>
+              <input type="time" id="reg-hora-desde">
+              <p class="hint" style="margin-top:-12px;">Hora desde</p>
+            </div>
+            <div>
+              <input type="time" id="reg-hora-hasta">
+              <p class="hint" style="margin-top:-12px;">Hora hasta</p>
+            </div>
+          </div>
           <label for="reg-detalle">Observación (opcional)</label>
           <textarea id="reg-detalle" placeholder="Ej: Trámite médico, capacitación en Rancagua..."></textarea>
           <button type="submit" id="regBtn" disabled>Guardar registro</button>
@@ -200,11 +210,11 @@
   </div>
 
   <div class="card" id="listadoCard" style="display:none;">
-    <h1>📋 Todos los registros manuales</h1>
-    <p class="sub">Los últimos 200 permisos/cometidos ingresados aquí, de cualquier funcionario. Esto no incluye los marcajes reales del reloj.</p>
-    <input type="text" id="listado-buscador" placeholder="🔎 Buscar por nombre o RUT...">
+    <h1>📋 Registros manuales de <span id="listadoFuncionarioNombre">—</span></h1>
+    <p class="sub">Permisos y cometidos manuales ingresados para el funcionario seleccionado arriba. Esto no incluye los marcajes reales del reloj.</p>
+    <input type="text" id="listado-buscador" placeholder="🔎 Buscar por tipo u observación..." style="display:none;">
     <div id="listadoRegistros">
-      <p class="hint" style="margin:0;">Cargando...</p>
+      <p class="hint" style="margin:0;">Selecciona un funcionario arriba para ver aquí sus registros manuales.</p>
     </div>
   </div>
 
@@ -267,6 +277,14 @@
     licencia_mutual: 'Licencia médica (Mutual)',
     sin_goce_remuneraciones: 'Sin goce de remuneraciones'
   };
+
+  // El horario (desde/hasta) solo tiene sentido para "Cometido funcionario"
+  // (salida puntual del CESFAM por horas, igual que el formulario de
+  // cometido.html) — se oculta para el resto de los tipos para no confundir.
+  document.getElementById('reg-tipo').addEventListener('change', (e) => {
+    document.getElementById('reg-horario-cometido').style.display =
+      e.target.value === 'cometido_funcionario' ? 'grid' : 'none';
+  });
 
   function escapeHtml(str) {
     return String(str == null ? '' : str).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -359,6 +377,8 @@
     const nombreReg = document.getElementById('regFuncionarioNombre');
     const marcajesCard = document.getElementById('marcajesCard');
     const marcajesPlaceholder = document.getElementById('marcajesPlaceholder');
+    const listadoFuncionarioNombre = document.getElementById('listadoFuncionarioNombre');
+    const listadoBuscador = document.getElementById('listado-buscador');
 
     if (funcionarioSeleccionado) {
       const rutTexto = formatearRut(funcionarioSeleccionado.rut);
@@ -368,12 +388,23 @@
       marcajesCard.style.display = 'block';
       marcajesPlaceholder.style.display = 'none';
       cargarMarcajesFuncionarioDelMes();
+
+      listadoFuncionarioNombre.textContent = funcionarioSeleccionado.nombre;
+      listadoBuscador.style.display = 'block';
     } else {
       nombreReg.textContent = '— ninguno seleccionado —';
       regBtn.disabled = true;
       marcajesCard.style.display = 'none';
       marcajesPlaceholder.style.display = 'block';
+
+      listadoFuncionarioNombre.textContent = '—';
+      listadoBuscador.style.display = 'none';
+      listadoBuscador.value = '';
     }
+    // El listado de registros manuales de abajo se filtra al funcionario
+    // seleccionado arriba (antes mostraba los de todos mezclados) — se
+    // vuelve a pintar cada vez que cambia la selección.
+    renderListado(listadoBuscador.value);
   }
 
   // ===== Registrar permiso o cometido para el funcionario seleccionado =====
@@ -391,12 +422,25 @@
     const tipo = document.getElementById('reg-tipo').value;
     const fechaInicio = document.getElementById('reg-fecha-inicio').value;
     const fechaFin = document.getElementById('reg-fecha-fin').value;
-    const detalle = document.getElementById('reg-detalle').value.trim();
+    let detalle = document.getElementById('reg-detalle').value.trim();
 
     if (!fechaInicio) {
       status.style.color = '#B33A3A';
       status.textContent = '❌ Ingresa la fecha del permiso o cometido.';
       return;
+    }
+
+    // Para "Cometido funcionario", el horario (desde/hasta) se antepone a la
+    // observación como texto — así queda guardado junto con el motivo y se
+    // ve de inmediato en "Mis marcajes" (y en el PDF), sin tocar la base de
+    // datos: sigue siendo el mismo campo "detalle" de siempre.
+    if (tipo === 'cometido_funcionario') {
+      const horaDesde = document.getElementById('reg-hora-desde').value;
+      const horaHasta = document.getElementById('reg-hora-hasta').value;
+      if (horaDesde && horaHasta) {
+        const horario = 'De ' + horaDesde + ' a ' + horaHasta + ' hrs';
+        detalle = detalle ? horario + ' — ' + detalle : horario;
+      }
     }
 
     btn.disabled = true;
@@ -421,6 +465,9 @@
       status.style.color = 'var(--teal)';
       status.textContent = '✅ Registrado (' + data.dias + (data.dias === 1 ? ' día' : ' días') + ').';
       document.getElementById('reg-tipo').selectedIndex = 0;
+      document.getElementById('reg-horario-cometido').style.display = 'none';
+      document.getElementById('reg-hora-desde').value = '';
+      document.getElementById('reg-hora-hasta').value = '';
       document.getElementById('reg-fecha-inicio').value = '';
       document.getElementById('reg-fecha-fin').value = '';
       document.getElementById('reg-detalle').value = '';
@@ -697,16 +744,28 @@
 
   document.getElementById('btnDescargarPDFM').addEventListener('click', descargarReportePDFAdmin);
 
-  // ===== Historial de todos los registros manuales (todos los funcionarios) =====
+  // ===== Historial de registros manuales DEL FUNCIONARIO SELECCIONADO =====
+  // Antes mostraba los últimos 200 registros de TODOS los funcionarios
+  // mezclados (con buscador por nombre/RUT); ahora, a pedido del usuario,
+  // se filtra solo a los del funcionario abierto arriba — el buscador pasó
+  // a filtrar por tipo/observación dentro de sus propios registros.
   function renderListado(filtro) {
     const cont = document.getElementById('listadoRegistros');
+
+    if (!funcionarioSeleccionado) {
+      cont.innerHTML = '<p class="hint" style="margin:0;">Selecciona un funcionario arriba para ver aquí sus registros manuales.</p>';
+      return;
+    }
+
+    const rutSinDvSeleccionado = normalizarRut(funcionarioSeleccionado.rut).slice(0, -1);
     const f = (filtro || '').trim().toLowerCase();
     const filtrados = todosLosRegistros.filter((r) =>
-      !f || r.nombre.toLowerCase().includes(f) || r.rut_sin_dv.toLowerCase().includes(f)
+      r.rut_sin_dv === rutSinDvSeleccionado &&
+      (!f || (r.detalle || '').toLowerCase().includes(f) || (ETIQUETAS[r.estado] || r.estado || '').toLowerCase().includes(f))
     );
 
     if (filtrados.length === 0) {
-      cont.innerHTML = '<p class="hint" style="margin:0;">No hay registros manuales todavía.</p>';
+      cont.innerHTML = '<p class="hint" style="margin:0;">Este funcionario no tiene registros manuales todavía.</p>';
       return;
     }
 
@@ -717,8 +776,7 @@
       div.className = 'reg-item';
       div.innerHTML =
         '<div class="reg-info">' +
-          '<h3>' + escapeHtml(r.nombre) + '</h3>' +
-          '<p>RUT (sin DV): ' + escapeHtml(r.rut_sin_dv) + ' · ' + fechaTexto + '</p>' +
+          '<h3>' + fechaTexto + '</h3>' +
           (r.detalle ? '<p>' + escapeHtml(r.detalle) + '</p>' : '') +
           '<span class="reg-badge">' + (ETIQUETAS[r.estado] || escapeHtml(r.estado)) + '</span>' +
         '</div>' +
