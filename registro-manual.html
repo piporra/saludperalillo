@@ -115,8 +115,16 @@
         <option value="cometido_funcionario">Cometido funcionario</option>
         <option value="feriado_legal">Feriado legal (vacaciones)</option>
         <option value="licencia_medica">Licencia médica</option>
+        <option value="fuero_gremial">Fuero gremial</option>
+        <option value="fallecimiento">Fallecimiento</option>
+        <option value="matrimonio_auc">Matrimonio / Acuerdo de Unión Civil</option>
+        <option value="capacitacion">Capacitación</option>
+        <option value="nacimiento_hijo">Nacimiento de hijo/a</option>
+        <option value="postnatal_parental">Postnatal parental</option>
+        <option value="licencia_mutual">Licencia médica (Mutual)</option>
+        <option value="sin_goce_remuneraciones">Sin goce de remuneraciones</option>
       </select>
-      <p class="hint" style="margin-top:-12px;">Si es medio día, el sistema deja igual la marcación real del reloj de la otra mitad de la jornada (la que sí se trabajó) — no la reemplaza. Si eliges Feriado legal, se registran solo los días hábiles del rango — los fines de semana y los feriados no cuentan como días de vacaciones. Si eliges Licencia médica, se registran TODOS los días corridos del rango — los fines de semana y los feriados sí cuentan como días de licencia.</p>
+      <p class="hint" style="margin-top:-12px;">Si es medio día, el sistema deja igual la marcación real del reloj de la otra mitad de la jornada (la que sí se trabajó) — no la reemplaza. <strong>Cuentan solo días hábiles del rango</strong> (se saltan fines de semana y feriados): Feriado legal, Fuero gremial, Matrimonio/AUC, Capacitación y Nacimiento de hijo/a. <strong>Cuentan TODOS los días corridos del rango</strong> (fines de semana y feriados también cuentan): Licencia médica, Licencia médica (Mutual), Postnatal parental, Sin goce de remuneraciones y Fallecimiento — para Fallecimiento, ojo: si es cónyuge/hijo corresponden más días (corridos) que si es padre/madre/hermano (hábiles), así que ajusta tú el rango de fechas según el caso antes de guardar.</p>
       <label>Fecha</label>
       <div class="fila-fechas">
         <div>
@@ -199,7 +207,15 @@
     medio_dia_administrativo_manana: 'Medio día administrativo (mañana)',
     medio_dia_administrativo_tarde: 'Medio día administrativo (tarde)',
     feriado_legal: 'Feriado legal',
-    licencia_medica: 'Licencia médica'
+    licencia_medica: 'Licencia médica',
+    fuero_gremial: 'Fuero gremial',
+    fallecimiento: 'Fallecimiento',
+    matrimonio_auc: 'Matrimonio / Unión Civil',
+    capacitacion: 'Capacitación',
+    nacimiento_hijo: 'Nacimiento de hijo/a',
+    postnatal_parental: 'Postnatal parental',
+    licencia_mutual: 'Licencia médica (Mutual)',
+    sin_goce_remuneraciones: 'Sin goce de remuneraciones'
   };
 
   function escapeHtml(str) {
