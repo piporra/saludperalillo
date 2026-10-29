@@ -14,13 +14,19 @@
 //   accion: "listar_jefes"            → { adminSecret }
 //   accion: "registrar_marcaje_manual" → { adminSecret, rut, tipo, fechaInicio, fechaFin, detalle }
 //     (usado por registro-manual.html para agregar permisos administrativos,
-//      cometidos funcionarios, feriados legales o licencias médicas directamente
-//      al historial de "Mis marcajes". Para tipo="feriado_legal", el rango
-//      fechaInicio..fechaFin solo genera registros de lunes a viernes — los
-//      fines de semana y feriados no cuentan como días de feriado legal, como
-//      indica el Código del Trabajo. Para tipo="licencia_medica" es al revés:
-//      se generan TODOS los días corridos del rango, feriados y fines de
-//      semana incluidos, porque la licencia médica se cuenta por días corridos)
+//      cometidos funcionarios, feriados legales, licencias médicas y otros
+//      permisos (ver TIPOS_SOLO_DIAS_HABILES más abajo) directamente al
+//      historial de "Mis marcajes". Para los tipos en TIPOS_SOLO_DIAS_HABILES
+//      (feriado_legal, matrimonio_auc, nacimiento_hijo, fuero_gremial,
+//      capacitacion), el rango fechaInicio..fechaFin solo genera registros de
+//      lunes a viernes sin feriados. Para el resto (licencia_medica,
+//      licencia_mutual, postnatal_parental, sin_goce_remuneraciones,
+//      fallecimiento) se generan TODOS los días corridos del rango, feriados
+//      y fines de semana incluidos. Caso especial: "fallecimiento" — la ley
+//      chilena da una cantidad de días distinta según el parentesco (días
+//      corridos para cónyuge/hijo, días hábiles para padre/madre/hermano) —
+//      este sistema no pregunta el parentesco, así que RRHH debe ingresar el
+//      rango de fechas ya ajustado al caso real antes de guardar)
 //   accion: "listar_marcajes_manual"  → { adminSecret }
 //   accion: "eliminar_marcaje_manual" → { adminSecret, id }
 //   accion: "listar_marcajes_funcionario" → { adminSecret, rut, anio, mes }
@@ -89,7 +95,15 @@ const HORA_ANCLA_POR_TIPO = {
   medio_dia_administrativo_manana: 7,
   medio_dia_administrativo_tarde: 13,
   feriado_legal: 12,
-  licencia_medica: 12
+  licencia_medica: 12,
+  fuero_gremial: 12,
+  fallecimiento: 12,
+  matrimonio_auc: 12,
+  capacitacion: 12,
+  nacimiento_hijo: 12,
+  postnatal_parental: 12,
+  licencia_mutual: 12,
+  sin_goce_remuneraciones: 12
 };
 
 // Tipos de registro cuyo rango de fechas solo debe generar filas en días
@@ -102,7 +116,37 @@ const HORA_ANCLA_POR_TIPO = {
 // La licencia médica NO va en este conjunto a propósito: se cuenta en días
 // corridos (continuos), así que fines de semana y feriados SÍ cuentan como
 // días de licencia — por eso licencia_medica no está en TIPOS_SOLO_DIAS_HABILES.
-const TIPOS_SOLO_DIAS_HABILES = new Set(["feriado_legal"]);
+//
+// Mismo criterio aplicado a los tipos agregados el 2026-10-28 (permisos del
+// Código del Trabajo / Ley 19.296, verificados en dt.gob.cl y la propia Ley
+// 19.296 antes de clasificarlos):
+//   - matrimonio_auc: Art. 207 bis CT — 5 días hábiles continuos (la DT
+//     excluye explícitamente sábado, domingo y festivos).
+//   - nacimiento_hijo: Art. 195 inc. 2º CT — 5 días "excluyendo el descanso
+//     semanal"; se aproxima con días hábiles (igual criterio que feriado
+//     legal: sábado, domingo y feriados no cuentan).
+//   - fuero_gremial: Ley 19.296 (asociaciones de funcionarios públicos) —
+//     el permiso gremial semanal se mide en horas, no en días, pero la
+//     única franquicia expresada en días (Art. 32: hasta 5 días hábiles al
+//     año para actividades/capacitación gremial) es la que este registro
+//     por rango de fechas puede representar.
+//   - capacitacion: no tiene un artículo específico para este registro
+//     manual, pero por naturaleza ocurre en días de funcionamiento normal
+//     del CESFAM — mismo criterio que fuero_gremial.
+// fallecimiento, postnatal_parental, licencia_mutual y sin_goce_remuneraciones
+// se dejaron FUERA de este set (días corridos) — ver detalle en el comentario
+// del bloque accion:"registrar_marcaje_manual" más abajo, especialmente la
+// advertencia sobre "fallecimiento" (su cantidad de días legal varía según
+// el parentesco, y en algunos casos son días hábiles — este sistema no
+// pregunta el parentesco, así que es RRHH quien debe ajustar el rango de
+// fechas ingresado según corresponda).
+const TIPOS_SOLO_DIAS_HABILES = new Set([
+  "feriado_legal",
+  "matrimonio_auc",
+  "nacimiento_hijo",
+  "fuero_gremial",
+  "capacitacion"
+]);
 
 // Feriados legales nacionales de Chile. ⚠️ Esta lista hay que revisarla y
 // actualizarla cada año (varias fechas, como Viernes Santo, cambian según
