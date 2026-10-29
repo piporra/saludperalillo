@@ -217,10 +217,14 @@
         doc.setFontSize(10);
       }
 
-      // Fila FECHA
+      // Fila FECHA | HORARIO — la celda de la izquierda venía en blanco en el
+      // formulario original; se aprovecha para dejar bien identificado el
+      // horario del cometido (desde/hasta), a pedido del usuario, sin tener
+      // que agrandar el formulario ni tocar el resto del layout oficial.
       h = 7;
       celda(xCol1, colW, h);
       celda(xCol2, colW, h);
+      etiquetaValor('HORARIO:', ' Desde ' + d.desde + '  Hasta ' + d.hasta, xCol1, y + 4.8, 18);
       etiquetaValor('FECHA:', new Date().toLocaleDateString('es-CL'), xCol2, y + 4.8, 16);
       y += h;
 
