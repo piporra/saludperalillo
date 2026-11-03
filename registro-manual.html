@@ -491,21 +491,32 @@
     let diaActual = null;
 
     marcajesAscendentes.forEach((m) => {
-      const fechaISO = m.fecha_hora.slice(0, 10);
-      const horaTexto = new Date(m.fecha_hora).toLocaleTimeString('es-CL', {
-        hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+      // OJO: antes esto usaba m.fecha_hora.slice(0, 10), que toma la fecha
+      // tal cual viene en UTC — pero Chile va 3-4 horas detrás de UTC, así
+      // que una marca nocturna (ej. 21:02 hora Chile) puede quedar guardada
+      // con fecha UTC del día SIGUIENTE (ej. 00:02 UTC), y esa marca
+      // terminaba agrupada en el día equivocado. Ahora se calculan fecha y
+      // hora a partir de la hora de Chile explícitamente, para que calcen.
+      // (Misma corrección que en mis-marcajes.html.)
+      const fechaObjM = new Date(m.fecha_hora);
+      const fechaISO = fechaObjM.toLocaleDateString('en-CA', { timeZone: 'America/Santiago' });
+      const horaTexto = fechaObjM.toLocaleTimeString('es-CL', {
+        timeZone: 'America/Santiago', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
       });
 
       if (!diaActual || diaActual.fechaISO !== fechaISO) {
-        diaActual = { fechaISO, turnos: [] };
+        diaActual = { fechaISO, turnos: [], etiquetas: [] };
         dias.push(diaActual);
       }
 
       if (ETIQUETAS[m.estado]) {
-        diaActual.turnos.push({ etiqueta: ETIQUETAS[m.estado], detalle: m.detalle || null, id: m.id });
+        // Permiso/cometido manual: se guarda aparte (no en "turnos") para
+        // que no corte el emparejamiento de las marcas reales del reloj ese
+        // día — se agrega al final de la lista de turnos del día más abajo.
+        diaActual.etiquetas.push({ etiqueta: ETIQUETAS[m.estado], detalle: m.detalle || null, id: m.id });
       } else if (m.estado === '1') {
         const ultimo = diaActual.turnos[diaActual.turnos.length - 1];
-        if (ultimo && !ultimo.salida && !ultimo.etiqueta) {
+        if (ultimo && !ultimo.salida) {
           ultimo.salida = horaTexto;
         } else {
           diaActual.turnos.push({ entrada: null, salida: horaTexto });
@@ -513,6 +524,41 @@
       } else {
         diaActual.turnos.push({ entrada: horaTexto, salida: null });
       }
+    });
+
+    // Los permisos/cometidos manuales van siempre al final de la lista de
+    // turnos del día, después de todas las marcas reales del reloj — así
+    // el día queda ordenado y nunca cortan el emparejamiento entrada/salida.
+    dias.forEach((dia) => {
+      dia.turnos = dia.turnos.concat(dia.etiquetas);
+      delete dia.etiquetas;
+    });
+
+    // El reloj a veces queda desincronizado (marca "entrada" cuando en
+    // realidad fue una salida, o viceversa) — esto se nota solo en las filas
+    // "sueltas" (una sola marca ese turno, sin su par). Para esas filas
+    // sueltas, en vez de confiar ciegamente en lo que dijo el reloj,
+    // corregimos según la hora: antes de las 14:00 se asume entrada,
+    // después se asume salida. Los turnos que ya están completos (con
+    // entrada Y salida) no se tocan — esta corrección es solo para el caso
+    // de una marca sola que haya quedado mal etiquetada. (Misma corrección
+    // que en mis-marcajes.html.)
+    const UMBRAL_HORA_ENTRADA = 14;
+    dias.forEach((dia) => {
+      dia.turnos.forEach((t) => {
+        if (t.etiqueta) return;
+        const soloEntrada = t.entrada && !t.salida;
+        const soloSalida = !t.entrada && t.salida;
+        if (!soloEntrada && !soloSalida) return;
+        const hora = parseInt((t.entrada || t.salida).split(':')[0], 10);
+        if (hora < UMBRAL_HORA_ENTRADA && soloSalida) {
+          t.entrada = t.salida;
+          t.salida = null;
+        } else if (hora >= UMBRAL_HORA_ENTRADA && soloEntrada) {
+          t.salida = t.entrada;
+          t.entrada = null;
+        }
+      });
     });
 
     return dias;
