@@ -89,6 +89,23 @@
   .vacio{padding:36px 16px; text-align:center; color:var(--gray);}
   .mini-eliminar{width:auto; background:none; border:none; color:#B33A3A; cursor:pointer; font-size:.82rem; padding:0 0 0 8px; display:inline;}
   .mini-eliminar:hover{text-decoration:underline;}
+
+  /* ===== Reportes masivos (varios funcionarios a la vez, un PDF) ===== */
+  .masivo-controles{display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end; margin-bottom:16px;}
+  .masivo-controles > div{margin-bottom:0;}
+  .masivo-controles input[type="month"]{width:auto; margin-bottom:0;}
+  .masivo-controles input[type="text"]{flex:1; min-width:200px; margin-bottom:0;}
+  .btn-secundario{
+    width:auto; background:#fff; color:var(--teal-deep); border:1.5px solid var(--line);
+    padding:10px 16px; border-radius:10px; font-weight:700; font-size:.85rem;
+    cursor:pointer; font-family:var(--font-body); white-space:nowrap;
+  }
+  .btn-secundario:hover{background:var(--teal-light);}
+  .masivo-lista{max-height:340px; overflow-y:auto; border:1px solid var(--line); border-radius:10px; padding:6px; margin-bottom:16px;}
+  .masivo-item{display:flex; align-items:center; gap:10px; padding:8px 10px; border-radius:8px; font-size:.88rem; font-weight:400; cursor:pointer;}
+  .masivo-item:hover{background:var(--teal-light);}
+  .masivo-item input[type="checkbox"]{width:auto; margin:0; accent-color:var(--teal-deep);}
+  .masivo-progreso{font-size:.85rem; color:var(--gray); margin:10px 0 0;}
 </style>
 </head>
 <body>
@@ -218,6 +235,28 @@
     </div>
   </div>
 
+  <div class="card" id="reportesMasivosCard" style="display:none;">
+    <h1>🖨️ Reportes masivos</h1>
+    <p class="sub">Genera un solo PDF con el reporte mensual de varios funcionarios a la vez — uno por hoja de oficio, listo para imprimir.</p>
+
+    <div class="masivo-controles">
+      <div>
+        <label for="masivo-mes" style="margin-bottom:4px;">Mes</label>
+        <input type="month" id="masivo-mes">
+      </div>
+      <button type="button" id="btnSeleccionarTodos" class="btn-secundario">Seleccionar todos</button>
+      <button type="button" id="btnQuitarSeleccion" class="btn-secundario">Quitar selección</button>
+      <input type="text" id="masivo-buscador" placeholder="🔎 Buscar funcionario...">
+    </div>
+
+    <div class="masivo-lista" id="masivoListaFuncionarios">
+      <p class="hint" style="margin:0;">Cargando funcionarios...</p>
+    </div>
+
+    <button type="button" id="btnGenerarMasivo" class="btn-pdf" style="width:auto;">📄 Generar reportes seleccionados</button>
+    <p class="masivo-progreso" id="masivoEstado"></p>
+  </div>
+
   <a class="back" href="dashboard.html">← Volver al portal</a>
 </div>
 
@@ -320,7 +359,11 @@
       document.getElementById('formCard').style.display = 'block';
       document.getElementById('marcajesPlaceholder').style.display = 'block';
       document.getElementById('listadoCard').style.display = 'block';
+      document.getElementById('reportesMasivosCard').style.display = 'block';
       document.getElementById('adminAuthForm').closest('.card').style.display = 'none';
+      const hoyMasivo = new Date();
+      document.getElementById('masivo-mes').value =
+        hoyMasivo.getFullYear() + '-' + String(hoyMasivo.getMonth() + 1).padStart(2, '0');
       cargarFuncionarios();
       cargarListado();
     } catch (err) {
@@ -344,11 +387,230 @@
       if (!res.ok) throw new Error(data.error);
       funcionarios = data.funcionarios || [];
       renderFuncionarioSelect('');
+      renderMasivoLista('');
     } catch (err) {
       console.error('No se pudo cargar la lista de funcionarios:', err);
       sel.innerHTML = '<option value="">No se pudo cargar la lista de funcionarios</option>';
     }
   }
+
+  // ===== Reportes masivos: varios funcionarios a la vez, en un solo PDF =====
+  const masivoSeleccionados = new Set(); // RUTs marcados (se mantiene aunque se filtre la lista)
+
+  function renderMasivoLista(filtro) {
+    const cont = document.getElementById('masivoListaFuncionarios');
+    const f = (filtro || '').trim().toLowerCase();
+    const filtrados = funcionarios
+      .filter((x) => !f || x.nombre.toLowerCase().includes(f) || x.rut.toLowerCase().includes(f))
+      .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
+
+    if (!funcionarios.length) {
+      cont.innerHTML = '<p class="hint" style="margin:0;">No se pudo cargar la lista de funcionarios.</p>';
+      return;
+    }
+    if (!filtrados.length) {
+      cont.innerHTML = '<p class="hint" style="margin:0;">Ningún funcionario calza con esa búsqueda.</p>';
+      return;
+    }
+
+    cont.innerHTML = filtrados.map((x) => `
+      <label class="masivo-item">
+        <input type="checkbox" class="masivo-check" value="${escapeHtml(x.rut)}" ${masivoSeleccionados.has(x.rut) ? 'checked' : ''}>
+        ${escapeHtml(x.nombre)} — ${escapeHtml(formatearRut(x.rut))}
+      </label>
+    `).join('');
+
+    cont.querySelectorAll('.masivo-check').forEach((chk) => {
+      chk.addEventListener('change', () => {
+        if (chk.checked) masivoSeleccionados.add(chk.value);
+        else masivoSeleccionados.delete(chk.value);
+      });
+    });
+  }
+
+  document.getElementById('masivo-buscador').addEventListener('input', (e) => renderMasivoLista(e.target.value));
+
+  document.getElementById('btnSeleccionarTodos').addEventListener('click', () => {
+    // Selecciona TODOS los funcionarios (no solo los que calzan con el
+    // filtro actual de búsqueda), para que sea realmente "todos".
+    funcionarios.forEach((x) => masivoSeleccionados.add(x.rut));
+    renderMasivoLista(document.getElementById('masivo-buscador').value);
+  });
+
+  document.getElementById('btnQuitarSeleccion').addEventListener('click', () => {
+    masivoSeleccionados.clear();
+    renderMasivoLista(document.getElementById('masivo-buscador').value);
+  });
+
+  // Dibuja el reporte mensual de UN funcionario en el "doc" de jsPDF que se
+  // le pase, en la página actual (quien llama decide cuándo agregar una
+  // página nueva antes de invocar esto). Misma lógica que usaba el botón
+  // "Descargar reporte del mes (PDF)" de un solo funcionario, separada en
+  // su propia función para poder reutilizarla también en el reporte
+  // masivo (un documento con una página por funcionario).
+  function dibujarReportePDF(doc, funcionario, marcajesDelFuncionario, anio, mesIndice0) {
+    const nombre = funcionario.nombre;
+    const rut = formatearRut(funcionario.rut);
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const margen = 40;
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(14);
+    doc.text('CESFAM Peralillo', margen, 50);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.text("Servicio de Salud O'Higgins", margen, 66);
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(13);
+    doc.text('Reporte mensual de asistencia', margen, 96);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.text('Mes: ' + MESES[mesIndice0] + ' ' + anio, margen, 118);
+    doc.text('Funcionario: ' + nombre, margen, 134);
+    doc.text('RUT: ' + rut, margen, 150);
+
+    const ascendente = marcajesDelFuncionario.slice().reverse();
+    const diasPdf = completarDiasDelMes(agruparEnTurnos(ascendente), anio, mesIndice0);
+    const filas = [];
+    diasPdf.forEach((dia) => {
+      const fechaTexto = fechaTextoDesdeISO(dia.fechaISO, true);
+      const esDiaFeriado = esFeriado(dia.fechaISO);
+      const textoFecha = esDiaFeriado ? fechaTexto + '  (Feriado)' : fechaTexto;
+      const n = dia.turnos.length;
+      dia.turnos.forEach((turno, idx) => {
+        const celdaFecha = { content: textoFecha, rowSpan: n, styles: esDiaFeriado ? { textColor: [179, 58, 58], fontStyle: 'bold' } : {} };
+        if (turno.etiqueta) {
+          const texto = turno.detalle ? turno.etiqueta + ' — ' + turno.detalle : turno.etiqueta;
+          const celdaEtiqueta = { content: texto, colSpan: 2, styles: { fontStyle: 'bold' } };
+          filas.push(idx === 0 ? [celdaFecha, celdaEtiqueta] : [celdaEtiqueta]);
+        } else {
+          const resto = [turno.entrada || '—', turno.salida || '—'];
+          filas.push(idx === 0 ? [celdaFecha, ...resto] : resto);
+        }
+      });
+    });
+
+    doc.autoTable({
+      startY: 170,
+      head: [['Fecha', 'Hora entrada', 'Hora salida']],
+      body: filas,
+      margin: { left: margen, right: margen },
+      styles: { font: 'helvetica', fontSize: 9, cellPadding: 5 },
+      headStyles: { fillColor: [10, 61, 115], textColor: 255 },
+      theme: 'grid'
+    });
+
+    const totalMarcajes = marcajesDelFuncionario.length;
+    const diasUnicos = new Set(marcajesDelFuncionario.map((m) => m.fecha_hora.slice(0, 10))).size;
+
+    let y = doc.lastAutoTable.finalY + 22;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.text('Total de marcajes: ' + totalMarcajes + '     Días con marcaje: ' + diasUnicos, margen, y);
+
+    const alturaBloqueFirmas = 90;
+    let firmaY = pageHeight - 70;
+    if (y + 20 > firmaY - alturaBloqueFirmas) {
+      doc.addPage(); // hereda el mismo tamaño de hoja del documento
+      firmaY = pageHeight - 70;
+    }
+
+    const espacioEntreColumnas = 40;
+    const anchoColumna = (pageWidth - margen * 2 - espacioEntreColumnas) / 2;
+    const xIzquierda = margen;
+    const xDerecha = margen + anchoColumna + espacioEntreColumnas;
+
+    doc.setLineWidth(0.6);
+    doc.line(xIzquierda, firmaY, xIzquierda + anchoColumna, firmaY);
+    doc.line(xDerecha, firmaY, xDerecha + anchoColumna, firmaY);
+
+    doc.setFontSize(10);
+    doc.text('Firma del funcionario', xIzquierda, firmaY + 16);
+    doc.setFont('helvetica', 'bold');
+    doc.text(nombre, xIzquierda, firmaY + 32);
+
+    doc.setFont('helvetica', 'normal');
+    doc.text('Firma del jefe directo', xDerecha, firmaY + 16);
+  }
+
+  async function generarReportesMasivos() {
+    const btn = document.getElementById('btnGenerarMasivo');
+    const estado = document.getElementById('masivoEstado');
+    const mesInput = document.getElementById('masivo-mes').value; // "YYYY-MM"
+
+    if (!mesInput) {
+      alert('Selecciona el mes de los reportes.');
+      return;
+    }
+    const [anioStr, mesStr] = mesInput.split('-');
+    const anio = Number(anioStr);
+    const mesIndice0 = Number(mesStr) - 1;
+
+    const seleccionados = funcionarios
+      .filter((f) => masivoSeleccionados.has(f.rut))
+      .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
+
+    if (seleccionados.length === 0) {
+      alert('Selecciona al menos un funcionario.');
+      return;
+    }
+
+    btn.disabled = true;
+    const errores = [];
+    let generados = 0;
+
+    try {
+      const { jsPDF } = window.jspdf;
+      // Hoja de oficio chilena (≈216 x 330 mm = 8.5 x 13 in = 612 x 936 pt),
+      // para que cada reporte salga listo para imprimir en ese tamaño.
+      const doc = new jsPDF({ unit: 'pt', format: [612, 936] });
+
+      for (let i = 0; i < seleccionados.length; i++) {
+        const func = seleccionados[i];
+        estado.textContent = `Generando ${i + 1} de ${seleccionados.length} — ${func.nombre}...`;
+
+        let marcajesDelFuncionario = [];
+        try {
+          const res = await fetch('/api/admin', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ adminSecret, accion: 'listar_marcajes_funcionario', rut: func.rut, anio, mes: mesIndice0 + 1 })
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || 'Error desconocido');
+          marcajesDelFuncionario = data.marcajes || [];
+        } catch (err) {
+          console.error('No se pudieron obtener los marcajes de ' + func.nombre + ':', err);
+          errores.push(func.nombre);
+          continue; // sigue con el resto del lote, no lo aborta todo
+        }
+
+        if (generados > 0) doc.addPage();
+        dibujarReportePDF(doc, func, marcajesDelFuncionario, anio, mesIndice0);
+        generados++;
+      }
+
+      if (generados === 0) {
+        estado.textContent = '❌ No se pudo generar ningún reporte (falló la conexión para todos los funcionarios seleccionados).';
+      } else {
+        const nombreArchivo = 'reportes-asistencia-' + MESES[mesIndice0] + '-' + anio + '.pdf';
+        doc.save(nombreArchivo);
+        estado.textContent = errores.length === 0
+          ? `✅ Listo: ${generados} reporte(s) generado(s) en un solo PDF, uno por hoja de oficio.`
+          : `⚠️ Generados ${generados} de ${seleccionados.length}. No se pudo obtener de: ${errores.join(', ')}.`;
+      }
+    } catch (err) {
+      console.error('No se pudo generar el PDF masivo:', err);
+      estado.textContent = '❌ Ocurrió un error generando el PDF. Intenta de nuevo.';
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  document.getElementById('btnGenerarMasivo').addEventListener('click', generarReportesMasivos);
 
   function renderFuncionarioSelect(filtro) {
     const sel = document.getElementById('funcionarioSelect');
@@ -685,97 +947,10 @@
 
     try {
       const nombre = funcionarioSeleccionado.nombre;
-      const rut = formatearRut(funcionarioSeleccionado.rut);
-
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF({ unit: 'pt', format: 'a4' });
-      const pageWidth = doc.internal.pageSize.getWidth();
-      const pageHeight = doc.internal.pageSize.getHeight();
-      const margen = 40;
 
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(14);
-      doc.text('CESFAM Peralillo', margen, 50);
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(10);
-      doc.text("Servicio de Salud O'Higgins", margen, 66);
-
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(13);
-      doc.text('Reporte mensual de asistencia', margen, 96);
-
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(10);
-      doc.text('Mes: ' + MESES[mesActual] + ' ' + anioActual, margen, 118);
-      doc.text('Funcionario: ' + nombre, margen, 134);
-      doc.text('RUT: ' + rut, margen, 150);
-
-      const ascendente = marcajesActuales.slice().reverse();
-      const diasPdf = completarDiasDelMes(agruparEnTurnos(ascendente), anioActual, mesActual);
-      const filas = [];
-      diasPdf.forEach((dia) => {
-        const fechaTexto = fechaTextoDesdeISO(dia.fechaISO, true);
-        const esDiaFeriado = esFeriado(dia.fechaISO);
-        const textoFecha = esDiaFeriado ? fechaTexto + '  (Feriado)' : fechaTexto;
-        const n = dia.turnos.length;
-        dia.turnos.forEach((turno, idx) => {
-          // Igual que en pantalla: la celda de fecha solo va en la primera
-          // fila del día, extendida con rowSpan sobre el resto de sus filas
-          // (jspdf-autotable: las filas cubiertas por el rowSpan simplemente
-          // no incluyen esa columna).
-          const celdaFecha = { content: textoFecha, rowSpan: n, styles: esDiaFeriado ? { textColor: [179, 58, 58], fontStyle: 'bold' } : {} };
-          if (turno.etiqueta) {
-            const texto = turno.detalle ? turno.etiqueta + ' — ' + turno.detalle : turno.etiqueta;
-            const celdaEtiqueta = { content: texto, colSpan: 2, styles: { fontStyle: 'bold' } };
-            filas.push(idx === 0 ? [celdaFecha, celdaEtiqueta] : [celdaEtiqueta]);
-          } else {
-            const resto = [turno.entrada || '—', turno.salida || '—'];
-            filas.push(idx === 0 ? [celdaFecha, ...resto] : resto);
-          }
-        });
-      });
-
-      doc.autoTable({
-        startY: 170,
-        head: [['Fecha', 'Hora entrada', 'Hora salida']],
-        body: filas,
-        margin: { left: margen, right: margen },
-        styles: { font: 'helvetica', fontSize: 9, cellPadding: 5 },
-        headStyles: { fillColor: [10, 61, 115], textColor: 255 },
-        theme: 'grid'
-      });
-
-      const totalMarcajes = marcajesActuales.length;
-      const diasUnicos = new Set(marcajesActuales.map((m) => m.fecha_hora.slice(0, 10))).size;
-
-      let y = doc.lastAutoTable.finalY + 22;
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(10);
-      doc.text('Total de marcajes: ' + totalMarcajes + '     Días con marcaje: ' + diasUnicos, margen, y);
-
-      const alturaBloqueFirmas = 90;
-      let firmaY = pageHeight - 70;
-      if (y + 20 > firmaY - alturaBloqueFirmas) {
-        doc.addPage();
-        firmaY = pageHeight - 70;
-      }
-
-      const espacioEntreColumnas = 40;
-      const anchoColumna = (pageWidth - margen * 2 - espacioEntreColumnas) / 2;
-      const xIzquierda = margen;
-      const xDerecha = margen + anchoColumna + espacioEntreColumnas;
-
-      doc.setLineWidth(0.6);
-      doc.line(xIzquierda, firmaY, xIzquierda + anchoColumna, firmaY);
-      doc.line(xDerecha, firmaY, xDerecha + anchoColumna, firmaY);
-
-      doc.setFontSize(10);
-      doc.text('Firma del funcionario', xIzquierda, firmaY + 16);
-      doc.setFont('helvetica', 'bold');
-      doc.text(nombre, xIzquierda, firmaY + 32);
-
-      doc.setFont('helvetica', 'normal');
-      doc.text('Firma del jefe directo', xDerecha, firmaY + 16);
+      dibujarReportePDF(doc, funcionarioSeleccionado, marcajesActuales, anioActual, mesActual);
 
       const nombreArchivo = 'reporte-asistencia-' + nombre.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-' + MESES[mesActual] + '-' + anioActual + '.pdf';
       doc.save(nombreArchivo);
