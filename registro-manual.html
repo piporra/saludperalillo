@@ -511,11 +511,17 @@
     doc.setFontSize(10);
     doc.text('Total de marcajes: ' + totalMarcajes + '     Días con marcaje: ' + diasUnicos, margen, y);
 
-    const alturaBloqueFirmas = 90;
-    let firmaY = pageHeight - 70;
-    if (y + 20 > firmaY - alturaBloqueFirmas) {
+    // La firma va pegada justo debajo de la tabla (no fija al borde inferior
+    // de la hoja) — así no queda un espacio en blanco enorme cuando la
+    // tabla termina mucho antes del final de la página, algo que se nota
+    // mucho en la hoja de oficio (más alta que A4) del reporte masivo. Solo
+    // se salta a una página nueva si de verdad no alcanza el espacio.
+    const margenInferior = 40;
+    const alturaBloqueFirmas = 70;
+    let firmaY = y + 50;
+    if (firmaY + alturaBloqueFirmas > pageHeight - margenInferior) {
       doc.addPage(); // hereda el mismo tamaño de hoja del documento
-      firmaY = pageHeight - 70;
+      firmaY = margen + 40;
     }
 
     const espacioEntreColumnas = 40;
