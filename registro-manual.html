@@ -455,22 +455,28 @@
     const pageHeight = doc.internal.pageSize.getHeight();
     const margen = 40;
 
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(14);
-    doc.text('CESFAM Peralillo', margen, 50);
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(10);
-    doc.text("Servicio de Salud O'Higgins", margen, 66);
-
+    // Encabezado compacto: antes ocupaba desde y=50 hasta que la tabla
+    // empezaba en y=170 (120pt solo de encabezado). Se comprimió a ~118pt
+    // de arranque para que reportes con bastantes marcaciones (varios días
+    // con 2 entradas/salidas, ej. turno partido) alcancen a caer en una
+    // sola hoja en vez de dejar una segunda página casi vacía solo por la
+    // firma — a pedido del usuario. Funcionario y RUT ahora van en una
+    // sola línea en vez de dos.
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(13);
-    doc.text('Reporte mensual de asistencia', margen, 96);
+    doc.text('CESFAM Peralillo', margen, 40);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.text("Servicio de Salud O'Higgins", margen, 53);
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.text('Reporte mensual de asistencia', margen, 74);
 
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(10);
-    doc.text('Mes: ' + MESES[mesIndice0] + ' ' + anio, margen, 118);
-    doc.text('Funcionario: ' + nombre, margen, 134);
-    doc.text('RUT: ' + rut, margen, 150);
+    doc.setFontSize(9.5);
+    doc.text('Mes: ' + MESES[mesIndice0] + ' ' + anio, margen, 91);
+    doc.text('Funcionario: ' + nombre + '     RUT: ' + rut, margen, 105);
 
     const ascendente = marcajesDelFuncionario.slice().reverse();
     const diasPdf = completarDiasDelMes(agruparEnTurnos(ascendente), anio, mesIndice0);
@@ -494,11 +500,11 @@
     });
 
     doc.autoTable({
-      startY: 170,
+      startY: 118,
       head: [['Fecha', 'Hora entrada', 'Hora salida']],
       body: filas,
       margin: { left: margen, right: margen },
-      styles: { font: 'helvetica', fontSize: 9, cellPadding: 5 },
+      styles: { font: 'helvetica', fontSize: 8.5, cellPadding: 3.5 },
       headStyles: { fillColor: [10, 61, 115], textColor: 255 },
       theme: 'grid'
     });
@@ -506,9 +512,9 @@
     const totalMarcajes = marcajesDelFuncionario.length;
     const diasUnicos = new Set(marcajesDelFuncionario.map((m) => m.fecha_hora.slice(0, 10))).size;
 
-    let y = doc.lastAutoTable.finalY + 22;
+    let y = doc.lastAutoTable.finalY + 12;
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(10);
+    doc.setFontSize(9.5);
     doc.text('Total de marcajes: ' + totalMarcajes + '     Días con marcaje: ' + diasUnicos, margen, y);
 
     // La firma va pegada justo debajo de la tabla (no fija al borde inferior
@@ -516,9 +522,12 @@
     // tabla termina mucho antes del final de la página, algo que se nota
     // mucho en la hoja de oficio (más alta que A4) del reporte masivo. Solo
     // se salta a una página nueva si de verdad no alcanza el espacio.
-    const margenInferior = 40;
+    const margenInferior = 30;
     const alturaBloqueFirmas = 70;
-    let firmaY = y + 50;
+    // Espacio en blanco arriba de la línea de firma para que la persona
+    // pueda firmar a mano de verdad (antes quedaba muy pegado a la tabla,
+    // dejando lugar solo para una firma muy chica).
+    let firmaY = y + 55;
     if (firmaY + alturaBloqueFirmas > pageHeight - margenInferior) {
       doc.addPage(); // hereda el mismo tamaño de hoja del documento
       firmaY = margen + 40;
