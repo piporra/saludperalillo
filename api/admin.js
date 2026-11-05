@@ -78,6 +78,28 @@ function pad2(n) {
   return String(n).padStart(2, "0");
 }
 
+// Límites de un mes calendario EN HORA DE CHILE, como instante UTC exacto
+// (ej. 00:00:00 del 1 de octubre en Chile, no en UTC). Antes el filtro de
+// "marcajes de este mes" comparaba contra fechas UTC a secas ('2026-10-01'),
+// que Postgres interpreta como medianoche UTC — como Chile va 3-4 horas
+// detrás, cualquier marca entre ~21:00 y medianoche hora Chile del último
+// día del mes queda guardada con fecha/hora UTC ya del día 1 del mes
+// SIGUIENTE, así que ese filtro la dejaba fuera del mes al que en realidad
+// pertenece (o la mostraba en el mes equivocado). Mismo tipo de bug que ya
+// se corrigió en agruparEnTurnos() para el agrupamiento en pantalla, pero
+// acá pasa antes, al traer los datos desde la base.
+function inicioFinMesChile(anioNum, mesNum) {
+  const offsetInicio = offsetChileParaFecha(anioNum, mesNum, 1, 0, 0, 0);
+  const inicio = `${anioNum}-${pad2(mesNum)}-01T00:00:00${offsetInicio}`;
+
+  const anioSiguiente = mesNum === 12 ? anioNum + 1 : anioNum;
+  const mesSiguiente = mesNum === 12 ? 1 : mesNum + 1;
+  const offsetFin = offsetChileParaFecha(anioSiguiente, mesSiguiente, 1, 0, 0, 0);
+  const fin = `${anioSiguiente}-${pad2(mesSiguiente)}-01T00:00:00${offsetFin}`;
+
+  return { inicio, fin };
+}
+
 function construirFechaHoraISO(fechaYMD, hora) {
   const [y, mo, d] = fechaYMD.split("-").map(Number);
   const offset = offsetChileParaFecha(y, mo, d, hora, 0, 0);
@@ -531,13 +553,12 @@ export default async function handler(req, res) {
       }
 
       const rutSinDv = normalizarRut(rut).slice(0, -1);
-      const inicio = `${anioNum}-${pad2(mesNum)}-01`;
-      const fin = new Date(Date.UTC(anioNum, mesNum, 1)).toISOString().slice(0, 10);
+      const { inicio, fin } = inicioFinMesChile(anioNum, mesNum);
 
       const url = `${process.env.SUPABASE_URL}/rest/v1/marcajes?select=*`
         + `&rut_sin_dv=eq.${encodeURIComponent(rutSinDv)}`
-        + `&fecha_hora=gte.${inicio}`
-        + `&fecha_hora=lt.${fin}`
+        + `&fecha_hora=gte.${encodeURIComponent(inicio)}`
+        + `&fecha_hora=lt.${encodeURIComponent(fin)}`
         + `&order=fecha_hora.desc`;
 
       const listRes = await fetch(url, {
