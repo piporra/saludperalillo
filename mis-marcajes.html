@@ -170,6 +170,38 @@
 
   function pad2(n) { return String(n).padStart(2, '0'); }
 
+  // Mismo helper que usa api/admin.js (construirFechaHoraISO) para saber el
+  // offset UTC real de Chile en una fecha dada (-03:00 o -04:00 según
+  // horario de verano/invierno).
+  function offsetChileParaFecha(y, mo, d, h, mi, s) {
+    const fechaAprox = new Date(Date.UTC(y, mo - 1, d, h, mi, s));
+    const partes = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'America/Santiago',
+      timeZoneName: 'longOffset'
+    }).formatToParts(fechaAprox);
+    const tz = partes.find((p) => p.type === 'timeZoneName');
+    const match = tz && tz.value.match(/GMT([+-]\d{2}:\d{2})/);
+    return match ? match[1] : '-03:00';
+  }
+
+  // Límites de un mes calendario EN HORA DE CHILE, como instante UTC exacto.
+  // Antes se comparaba contra fechas UTC a secas ('2026-10-01'), que Postgres
+  // interpreta como medianoche UTC — como Chile va 3-4 horas detrás, una
+  // marca entre ~21:00 y medianoche hora Chile del último día del mes queda
+  // guardada con fecha/hora UTC ya del día 1 del mes SIGUIENTE, y ese filtro
+  // la dejaba fuera del mes al que en realidad pertenece.
+  function inicioFinMesChile(anioNum, mesNum1a12) {
+    const offsetInicio = offsetChileParaFecha(anioNum, mesNum1a12, 1, 0, 0, 0);
+    const inicio = `${anioNum}-${pad2(mesNum1a12)}-01T00:00:00${offsetInicio}`;
+
+    const anioSiguiente = mesNum1a12 === 12 ? anioNum + 1 : anioNum;
+    const mesSiguiente = mesNum1a12 === 12 ? 1 : mesNum1a12 + 1;
+    const offsetFin = offsetChileParaFecha(anioSiguiente, mesSiguiente, 1, 0, 0, 0);
+    const fin = `${anioSiguiente}-${pad2(mesSiguiente)}-01T00:00:00${offsetFin}`;
+
+    return { inicio, fin };
+  }
+
   function escapeHtml(str) {
     return String(str == null ? '' : str).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   }
@@ -233,15 +265,18 @@
       } else if (m.estado === '1') {
         // Salida: cierra el turno abierto más reciente de este día, o si no
         // había ninguno abierto (dato suelto), crea una fila solo con salida.
+        // Se guarda también el "metodo" (de qué reloj vino) para la
+        // corrección de marcas sueltas más abajo.
         const ultimo = diaActual.turnos[diaActual.turnos.length - 1];
         if (ultimo && !ultimo.salida) {
           ultimo.salida = horaTexto;
+          ultimo.metodoSalida = m.metodo;
         } else {
-          diaActual.turnos.push({ entrada: null, salida: horaTexto });
+          diaActual.turnos.push({ entrada: null, salida: horaTexto, metodoSalida: m.metodo });
         }
       } else {
         // Entrada (estado === '0') u otro valor no reconocido: abre turno nuevo.
-        diaActual.turnos.push({ entrada: horaTexto, salida: null });
+        diaActual.turnos.push({ entrada: horaTexto, salida: null, metodoEntrada: m.metodo });
       }
     });
 
@@ -253,21 +288,31 @@
       delete dia.etiquetas;
     });
 
-    // El reloj a veces queda desincronizado (marca "entrada" cuando en
-    // realidad fue una salida, o viceversa) — esto se nota solo en las filas
-    // "sueltas" (una sola marca ese turno, sin su par). Para esas filas
-    // sueltas, en vez de confiar ciegamente en lo que dijo el reloj,
-    // corregimos según la hora: antes de las 14:00 se asume entrada,
-    // después se asume salida. Los turnos que ya están completos (con
-    // entrada Y salida) no se tocan — esta corrección es solo para el caso
-    // de una marca sola que haya quedado mal etiquetada.
+    // El reloj ORIGINAL del CESFAM (ya retirado, metodo='1') quedaba a veces
+    // desincronizado y marcaba "entrada" cuando en realidad fue una salida,
+    // o viceversa — esto se nota solo en las filas "sueltas" (una sola marca
+    // ese turno, sin su par). Para esas filas sueltas Y QUE VENGAN DE ESE
+    // RELOJ, en vez de confiar ciegamente en lo que dijo, se corrige según
+    // la hora: antes de las 14:00 se asume entrada, después se asume salida.
+    // Los relojes actuales (Workera, Depto. de Salud, Posta Los Cardos,
+    // registros manuales) nunca mostraron este problema — confirmado al
+    // comparar con un reporte oficial de otro sistema (caso de Eligio
+    // Machado, 31-10-2026): una marca de ENTRADA suelta a las 22:02 era
+    // real (turno nocturno sin salida registrada todavía), y esta
+    // corrección la habría cambiado mal a "salida" si se aplicara sin
+    // distinguir el reloj de origen. Por eso ahora solo se aplica a
+    // metodo==='1'. Los turnos que ya están completos (con entrada Y
+    // salida) nunca se tocan, venga de donde venga la marca.
     const UMBRAL_HORA_ENTRADA = 14;
+    const RELOJ_CON_DESINCRONIZACION_CONOCIDA = '1';
     dias.forEach((dia) => {
       dia.turnos.forEach((t) => {
         if (t.etiqueta) return;
         const soloEntrada = t.entrada && !t.salida;
         const soloSalida = !t.entrada && t.salida;
         if (!soloEntrada && !soloSalida) return;
+        const metodoDeLaMarca = soloEntrada ? t.metodoEntrada : t.metodoSalida;
+        if (metodoDeLaMarca !== RELOJ_CON_DESINCRONIZACION_CONOCIDA) return;
         const hora = parseInt((t.entrada || t.salida).split(':')[0], 10);
         if (hora < UMBRAL_HORA_ENTRADA && soloSalida) {
           t.entrada = t.salida;
@@ -276,6 +321,16 @@
           t.salida = t.entrada;
           t.entrada = null;
         }
+      });
+    });
+
+    // Limpieza: el campo "metodo" solo se usaba para la corrección de
+    // arriba, no para mostrar nada — se saca para no dejar basura en el
+    // objeto que consumen la tabla en pantalla y el PDF.
+    dias.forEach((dia) => {
+      dia.turnos.forEach((t) => {
+        delete t.metodoEntrada;
+        delete t.metodoSalida;
       });
     });
 
@@ -339,13 +394,11 @@
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
 
-      const inicio = `${anioActual}-${pad2(mesActual + 1)}-01`;
-      const finMesDate = new Date(anioActual, mesActual + 1, 1);
-      const fin = `${finMesDate.getFullYear()}-${pad2(finMesDate.getMonth() + 1)}-01`;
+      const { inicio, fin } = inicioFinMesChile(anioActual, mesActual + 1);
 
       const url = SUPABASE_URL + '/rest/v1/marcajes?select=*'
-        + '&fecha_hora=gte.' + inicio
-        + '&fecha_hora=lt.' + fin
+        + '&fecha_hora=gte.' + encodeURIComponent(inicio)
+        + '&fecha_hora=lt.' + encodeURIComponent(fin)
         + '&order=fecha_hora.desc';
 
       const res = await fetch(url, {
